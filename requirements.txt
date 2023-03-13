@@ -1,0 +1,8 @@
+tornado==6.2
+WTForms==2.3.3
+WTForms-JSON==0.3.3
+wtforms-tornado==0.0.2
+APScheduler==3.7.0
+PyJWT==1.7.1
+pymongo==3.11.4
+redis==3.5.3

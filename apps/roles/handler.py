@@ -1,0 +1,160 @@
+import json
+import re
+
+from apps.roles.forms import RoleForm
+from apps.roles.models import Role
+from bases import utils
+from bases.decorators import authenticated_async
+from bases.handler import BaseHandler
+from bases.res import resFunc
+
+
+# 添加
+class AddHandler(BaseHandler):
+    '''
+        post -> /role/add/
+        payload:
+            {
+                "name": "角色",
+                "describe": "描述"
+            }
+    '''
+
+    @authenticated_async
+    async def post(self):
+        res = resFunc({})
+        data = self.request.body.decode("utf-8")
+        data = json.loads(data)
+        form = RoleForm.from_json(data)
+        name = form.name.data
+        describe = form.describe.data
+        # 查找角色是否存在
+        role_db = Role()
+        role = await role_db.find_one({"name": name})
+        if role is not None:
+            res['code'] = 50000
+            res['message'] = '该角色已存在'
+        else:
+            role_db.name = name
+            role_db.describe = describe
+            await role_db.insert_one(role_db.get_add_json())
+        self.write(res)
+
+
+# 删除
+class DeleteHandler(BaseHandler):
+    '''
+        post -> /role/delete/
+        payload:
+            {
+                "id": "角色编号"
+            }
+    '''
+
+    @authenticated_async
+    async def post(self):
+        res = resFunc({})
+        data = self.request.body.decode("utf-8")
+        data = json.loads(data)
+        form = RoleForm.from_json(data)
+        _id = form.id.data
+        # 删除数据
+        role_db = Role()
+        await role_db.delete_one({"_id": _id})
+        self.write(res)
+
+
+# 修改
+class UpdateHandler(BaseHandler):
+    '''
+        post -> /role/update/
+        payload:
+            {
+                "id": "用户编号",
+                "name": "角色",
+                "describe": "描述"
+            }
+    '''
+
+    @authenticated_async
+    async def post(self):
+        res = resFunc({})
+        data = self.request.body.decode("utf-8")
+        data = json.loads(data)
+        form = RoleForm.from_json(data)
+        _id = form.id.data
+        name = form.name.data
+        describe = form.describe.data
+        # 修改数据
+        role_db = Role()
+        await role_db.update_one({"_id": _id}, {"$set": {"name": name, "describe": describe}})
+        self.write(res)
+
+
+# 列表
+class ListHandler(BaseHandler):
+    '''
+       post -> /role/list/
+       payload:
+           {
+               "currentPage": 1,
+               "pageSize": 10,
+               "searchKey": "关键字",
+           }
+    '''
+
+    @authenticated_async
+    async def post(self):
+        res = resFunc({})
+        data = self.request.body.decode('utf-8')
+        data = json.loads(data)
+        form = RoleForm.from_json(data)
+        current_page = form.currentPage.data
+        page_size = form.pageSize.data
+        search_key = form.searchKey.data
+        role_db = Role()
+        # 查询条件
+        query_criteria = {"_id": {"$ne": "sequence_id"}}
+        if search_key is not None:
+            query_criteria["$or"] = [{"name": re.compile(search_key)}, {"describe": re.compile(search_key)}]
+        # 查询分页
+        query = await role_db.find_page(page_size, current_page, [("add_time", -1)], query_criteria)
+
+        # 查询总数
+        total = role_db.query_count(query)
+        pages = utils.get_pages(total, page_size)
+
+        results = []
+        for item in query:
+            item["id"] = item["_id"]
+            results.append(item)
+
+        data = {
+            "total": total,
+            "pages": pages,
+            "size": page_size,
+            "current": current_page,
+            "results": results
+        }
+
+        res['data'] = data
+        self.write(json.dumps(res, default=utils.json_serial))
+
+
+# 所有列表
+class GetListHandler(BaseHandler):
+    '''
+       get -> /role/getList/
+    '''
+
+    @authenticated_async
+    async def get(self):
+        res = resFunc([])
+        role_db = Role()
+        query = await role_db.find_all({"_id": {"$ne": "sequence_id"}})
+        results = []
+        for item in query:
+            obj = {"id": item["_id"], "name": item["name"], "describe": item["describe"]}
+            results.append(obj)
+        res['data'] = results
+        self.write(json.dumps(res, default=utils.json_serial))

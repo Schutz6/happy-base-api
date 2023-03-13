@@ -1,15 +1,16 @@
-from functools import wraps
-from threading import Thread
-
 import jwt
 
+from functools import wraps
+from threading import Thread
 from apps.logs.models import Log
 from apps.users.service import UserService
 from bases.res import resFunc
+from bases.settings import settings
 
 
 # 用户认证，日志记录
 def authenticated_async(func):
+
     async def wrapper(self, *args, **kwargs):
         res = resFunc({})
         authorization = self.request.headers.get('Authorization', None)
@@ -43,13 +44,13 @@ def authenticated_async(func):
 
         if authorization:
             try:
-                jwt_expire = self.settings['app_jwt_expire']
+                jwt_expire = settings['app_jwt_expire']
                 if channel == "web_admin":
                     # 如果是后台管理
-                    jwt_expire = self.settings['admin_jwt_expire']
+                    jwt_expire = settings['admin_jwt_expire']
                 data = jwt.decode(
                     authorization,
-                    self.settings['secret_key'],
+                    settings['secret_key'],
                     leeway=jwt_expire,
                     options={"verify_exp": True}
                 )

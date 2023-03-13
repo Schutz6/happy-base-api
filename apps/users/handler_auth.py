@@ -60,7 +60,7 @@ class LoginHandler(BaseHandler):
                         'username': user['username'],
                         'exp': datetime.utcnow()
                     }
-                    token = jwt.encode(payload, self.settings["secret_key"], algorithm='HS256')
+                    token = jwt.encode(payload, settings["secret_key"], algorithm='HS256')
                     res['data'] = {"token": token.decode('utf-8')}
                     # 存储用户令牌
                     UserService.save_login_token(user["_id"], channel, token.decode('utf-8'))

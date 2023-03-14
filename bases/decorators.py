@@ -9,6 +9,9 @@ from apps.users.service import UserService
 from bases.res import resFunc
 from bases.settings import settings
 
+# 过滤文件上传接口
+filter_upload_uris = ['/file/upload/', '/file/headupload/']
+
 
 # 用户认证，日志记录
 def authenticated_async(func):
@@ -70,10 +73,17 @@ def authenticated_async(func):
                     finish_time = round(time.time()*1000, 2)
                     # 访问时间
                     times = round(finish_time - start_time, 2)
-                    # 记录日志
-                    await add_log(user['username'], self.request.method, self.request.uri,
-                                  str(self.request.body, encoding="utf-8"),
-                                  self.request.remote_ip, times)
+                    # 上传文件处理一下
+                    if self.request.uri in filter_upload_uris:
+                        # 记录日志
+                        await add_log("", self.request.method, self.request.uri,
+                                      "文件上传",
+                                      self.request.remote_ip, times)
+                    else:
+                        # 记录日志
+                        await add_log("", self.request.method, self.request.uri,
+                                      str(self.request.body, encoding="utf-8"),
+                                      self.request.remote_ip, times)
                 else:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
@@ -108,10 +118,17 @@ def log_async(func):
         finish_time = round(time.time()*1000, 2)
         # 访问时间
         times = round(finish_time - start_time, 2)
-        # 记录日志
-        await add_log("", self.request.method, self.request.uri,
-                      str(self.request.body, encoding="utf-8"),
-                      self.request.remote_ip, times)
+        # 上传文件处理一下
+        if self.request.uri in filter_upload_uris:
+            # 记录日志
+            await add_log("", self.request.method, self.request.uri,
+                          "文件上传",
+                          self.request.remote_ip, times)
+        else:
+            # 记录日志
+            await add_log("", self.request.method, self.request.uri,
+                          str(self.request.body, encoding="utf-8"),
+                          self.request.remote_ip, times)
     return wrapper
 
 

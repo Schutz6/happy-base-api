@@ -39,6 +39,10 @@ class User(MongoModel):
     introduction = None
     # 生日
     birthday = None
+    # 最后访问时间
+    last_time = None
+    # 最后访问IP
+    last_ip = None
 
     # 格式化json
     def get_add_json(self):

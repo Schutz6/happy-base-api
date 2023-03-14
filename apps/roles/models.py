@@ -16,6 +16,8 @@ class Role(MongoModel):
     describe = None
     # 备注
     remarks = None
+    # 排序
+    sort = 0
 
     # 格式化json
     def get_add_json(self):
@@ -23,4 +25,5 @@ class Role(MongoModel):
                 "name": self.name,
                 "describe": self.describe,
                 "remarks": self.remarks,
+                "sort": self.sort,
                 "add_time": now()}

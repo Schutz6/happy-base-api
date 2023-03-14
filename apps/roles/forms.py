@@ -1,4 +1,4 @@
-from wtforms import StringField
+from wtforms import StringField, IntegerField
 
 from bases.forms import BaseForm
 
@@ -8,3 +8,4 @@ class RoleForm(BaseForm):
     name = StringField("唯一ID")
     describe = StringField("角色")
     remarks = StringField("备注")
+    sort = IntegerField("排序")

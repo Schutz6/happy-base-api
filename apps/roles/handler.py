@@ -17,7 +17,8 @@ class AddHandler(BaseHandler):
             {
                 "name": "唯一ID",
                 "describe": "角色",
-                "remarks": "备注"
+                "remarks": "备注",
+                "sort": "排序"
             }
     '''
 
@@ -30,6 +31,7 @@ class AddHandler(BaseHandler):
         name = form.name.data
         describe = form.describe.data
         remarks = form.remarks.data
+        sort = form.sort.data
         # 查找角色是否存在
         role_db = Role()
         role = await role_db.find_one({"name": name})
@@ -40,6 +42,7 @@ class AddHandler(BaseHandler):
             role_db.name = name
             role_db.describe = describe
             role_db.remarks = remarks
+            role_db.sort = sort
             await role_db.insert_one(role_db.get_add_json())
         self.write(res)
 
@@ -90,9 +93,11 @@ class UpdateHandler(BaseHandler):
         name = form.name.data
         describe = form.describe.data
         remarks = form.remarks.data
+        sort = form.sort.data
         # 修改数据
         role_db = Role()
-        await role_db.update_one({"_id": _id}, {"$set": {"name": name, "describe": describe, "remarks": remarks}})
+        await role_db.update_one({"_id": _id},
+                                 {"$set": {"name": name, "describe": describe, "remarks": remarks, "sort": sort}})
         self.write(res)
 
 
@@ -123,7 +128,8 @@ class ListHandler(BaseHandler):
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"describe": re.compile(search_key)}]
         # 查询分页
-        query = await role_db.find_page(page_size, current_page, [("_id", -1), ("add_time", -1)], query_criteria)
+        query = await role_db.find_page(page_size, current_page, [("sort", -1), ("_id", -1), ("add_time", -1)],
+                                        query_criteria)
 
         # 查询总数
         total = await role_db.query_count(query)
@@ -157,9 +163,10 @@ class GetListHandler(BaseHandler):
         res = resFunc([])
         role_db = Role()
         query = await role_db.find_all({"_id": {"$ne": "sequence_id"}})
+        query = await role_db.query_sort(query, [("sort", -1), ("_id", -1)])
         results = []
         for item in query:
-            obj = {"name": item["name"], "describe": item["describe"]}
+            obj = {"value": item["name"], "text": item["describe"]}
             results.append(obj)
         res['data'] = results
         self.write(json.dumps(res, default=utils.json_serial))

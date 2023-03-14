@@ -1,3 +1,5 @@
+import time
+
 import jwt
 
 from functools import wraps
@@ -61,14 +63,17 @@ def authenticated_async(func):
                     # 获取用户信息
                     user = await UserService.get_user_by_id(user_id)
                     self._current_user = user
-
+                    # 开始时间
+                    start_time = round(time.time()*1000, 2)
+                    await func(self, *args, **kwargs)
+                    # 结束时间
+                    finish_time = round(time.time()*1000, 2)
+                    # 访问时间
+                    times = round(finish_time - start_time, 2)
                     # 记录日志
                     await add_log(user['username'], self.request.method, self.request.uri,
                                   str(self.request.body, encoding="utf-8"),
-                                  self.request.remote_ip)
-
-                    result = await func(self, *args, **kwargs)
-                    return result
+                                  self.request.remote_ip, times)
                 else:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
@@ -96,12 +101,17 @@ def owner_required(func):
 # 日志记录
 def log_async(func):
     async def wrapper(self, *args, **kwargs):
+        # 开始时间
+        start_time = round(time.time()*1000, 2)
+        await func(self, *args, **kwargs)
+        # 结束时间
+        finish_time = round(time.time()*1000, 2)
+        # 访问时间
+        times = round(finish_time - start_time, 2)
         # 记录日志
         await add_log("", self.request.method, self.request.uri,
                       str(self.request.body, encoding="utf-8"),
-                      self.request.remote_ip)
-        await func(self, *args, **kwargs)
-
+                      self.request.remote_ip, times)
     return wrapper
 
 
@@ -115,11 +125,12 @@ def run_async(func):
 
 
 # 异步执行添加日志
-async def add_log(username, method, uri, params, ip):
-    log = Log()
-    log.username = username
-    log.method = method
-    log.uri = uri
-    log.params = params
-    log.ip = ip
-    await log.insert_one(log.get_add_json())
+async def add_log(username, method, uri, params, ip, times):
+    log_db = Log()
+    log_db.username = username
+    log_db.method = method
+    log_db.uri = uri
+    log_db.params = params
+    log_db.ip = ip
+    log_db.times = times
+    await log_db.insert_one(log_db.get_add_json())

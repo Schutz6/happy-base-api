@@ -2,7 +2,6 @@ import json
 import re
 
 from apps.logs.forms import LogForm
-from apps.logs.func import clear_log
 from apps.logs.models import Log
 from bases import utils
 from bases.decorators import authenticated_async
@@ -20,7 +19,8 @@ class ClearHandler(BaseHandler):
     async def get(self):
         res = resFunc({})
         # 清空日志
-        clear_log()
+        log_db = Log()
+        await log_db.delete_many({})
         self.write(res)
 
 
@@ -49,12 +49,13 @@ class ListHandler(BaseHandler):
         # 查询条件
         query_criteria = {"_id": {"$ne": "sequence_id"}}
         if search_key is not None:
-            query_criteria["$or"] = [{"username": re.compile(search_key)}, {"uri": re.compile(search_key)}]
+            query_criteria["$or"] = [{"username": re.compile(search_key)}, {"uri": re.compile(search_key)},
+                                     {"ip": re.compile(search_key)}]
         # 查询分页
-        query = await log_db.find_page(page_size, current_page, [("add_time", -1)], query_criteria)
+        query = await log_db.find_page(page_size, current_page, [("_id", -1), ("add_time", -1)], query_criteria)
 
         # 查询总数
-        total = log_db.query_count(query)
+        total = await log_db.query_count(query)
         pages = utils.get_pages(total, page_size)
 
         results = []

@@ -10,9 +10,9 @@ from urllib.parse import urlparse
 
 def json_serial(obj):
     if isinstance(obj, datetime):
-        return obj.strftime("%Y-%m-%d %H:%M:%S")
+        return obj.strftime("%Y/%m/%d %H:%M:%S")
     if isinstance(obj, date):
-        return obj.strftime("%Y-%m-%d")
+        return obj.strftime("%Y/%m/%d")
     if isinstance(obj, Decimal):
         return str(Decimal(obj).quantize(Decimal('0.00')))
     raise TypeError("Type {}s not serializable".format(obj))
@@ -51,7 +51,12 @@ def show_error_log(msg):
 
 # 获取当前时间
 def now():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now().strftime("%Y/%m/%d %H:%M:%S.%f")
+
+
+# 获取当前时间（UTC）
+def now_utc():
+    return datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S.%f")
 
 
 # 获取上n分钟
@@ -61,12 +66,12 @@ def now_last_minute(minute):
     # 减去n分钟
     add_time = timedelta(minutes=minute)
     # 增加后时间
-    return (old_time + add_time).strftime("%Y-%m-%d %H:%M:%S")
+    return (old_time + add_time).strftime("%Y/%m/%d %H:%M:%S")
 
 
 # 获取当前日期
 def now_day():
-    return datetime.now().strftime("%Y-%m-%d")
+    return datetime.now().strftime("%Y/%m/%d")
 
 
 # 获取当前时间目录
@@ -101,17 +106,17 @@ def get_random_num(num):
 # 获取增加天数时间
 def get_add_time(_time, days):
     # 原时间
-    old_time = datetime.strptime(_time, "%Y-%m-%d %H:%M:%S")
+    old_time = datetime.strptime(_time, "%Y/%m/%d %H:%M:%S")
     # 增加时间
     add_time = timedelta(days=days)
     # 增加后时间
-    return (old_time + add_time).strftime("%Y-%m-%d %H:%M:%S")
+    return (old_time + add_time).strftime("%Y/%m/%d %H:%M:%S")
 
 
 # 比较时间的大小
 def time_cmp(first_time, second_time):
-    _strftime = datetime.strptime(first_time, "%Y-%m-%d %H:%M:%S")
-    strftime2 = datetime.strptime(second_time, "%Y-%m-%d %H:%M:%S")
+    _strftime = datetime.strptime(first_time, "%Y/%m/%d %H:%M:%S")
+    strftime2 = datetime.strptime(second_time, "%Y/%m/%d %H:%M:%S")
     return _strftime > strftime2
 
 

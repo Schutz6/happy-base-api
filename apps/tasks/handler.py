@@ -140,10 +140,10 @@ class ListHandler(BaseHandler):
             query_criteria["$or"] = [{"name": re.compile(search_key)}]
         task_db = Task()
         # 查询分页
-        query = await task_db.find_page(page_size, current_page, [("add_time", -1)], query_criteria)
+        query = await task_db.find_page(page_size, current_page, [("_id", -1), ("add_time", -1)], query_criteria)
 
         # 查询总数
-        total = task_db.query_count(query)
+        total = await task_db.query_count(query)
         pages = utils.get_pages(total, page_size)
 
         results = []

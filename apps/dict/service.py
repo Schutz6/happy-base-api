@@ -17,7 +17,7 @@ class DictService(BaseService):
         if dictValues is None:
             dictValue_db = DictValue()
             query = await dictValue_db.find_all({"dict_tid": dict_tid})
-            dictValues = dictValue_db.query_sort(query, [("sort", 1)])
+            dictValues = dictValue_db.query_sort(query, [("sort", 1), ("_id", -1)])
             for dictValue in dictValues:
                 dictValue["id"] = dictValue["_id"]
                 results.append(dictValue)

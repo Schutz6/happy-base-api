@@ -7,7 +7,7 @@ from bases.utils import now
 class Files(MongoModel):
 
     def __init__(self):
-        super(Files, self).__init__(settings['mongo']['name'], "files")
+        super(Files, self).__init__(settings['mongo']['name'], "Files")
 
     """数据库字段说明"""
     # 文件名

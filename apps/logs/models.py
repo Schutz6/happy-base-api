@@ -20,6 +20,8 @@ class Log(MongoModel):
     params = None
     # ip
     ip = None
+    # 请求时间
+    times = None
 
     # 格式化json
     def get_add_json(self):
@@ -29,4 +31,5 @@ class Log(MongoModel):
                 "uri": self.uri,
                 "params": self.params,
                 "ip": self.ip,
+                "times": self.times,
                 "add_time": now()}

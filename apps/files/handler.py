@@ -67,7 +67,7 @@ class UploadHandler(BaseHandler):
     @authenticated_async
     async def post(self, *args, **kwargs):
         res = resFunc({})
-        time_path = time.strftime("%Y-%m-%d", time.localtime())
+        time_path = time.strftime("%Y%m%d", time.localtime())
         upload_path = os.path.join(os.path.dirname(__file__), settings['SAVE_URL'] + '/files', time_path)
         # 判断文件夹是否存在
         if os.path.isdir(upload_path) is False:
@@ -155,7 +155,7 @@ class HeadUploadHandler(BaseHandler):
     @authenticated_async
     async def post(self, *args, **kwargs):
         res = resFunc({})
-        time_path = time.strftime("%Y-%m-%d", time.localtime())
+        time_path = time.strftime("%Y%m%d", time.localtime())
         upload_path = os.path.join(os.path.dirname(__file__), settings['SAVE_URL'] + '/heads', time_path)
         # 判断文件夹是否存在
         if os.path.isdir(upload_path) is False:
@@ -256,10 +256,10 @@ class ListHandler(BaseHandler):
         if search_key is not None:
             query_criteria["name"] = re.compile(search_key)
         # 查询分页
-        query = file_db.find_page(page_size, current_page, [("add_time", -1)], query_criteria)
+        query = await file_db.find_page(page_size, current_page, [("_id", -1), ("add_time", -1)], query_criteria)
 
         # 查询总数
-        total = file_db.query_count(query)
+        total = await file_db.query_count(query)
         pages = utils.get_pages(total, page_size)
 
         results = []

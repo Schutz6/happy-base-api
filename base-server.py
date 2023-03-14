@@ -17,7 +17,7 @@ define("debug", default=True, help="以调试模式运行")
 # 设置日志打印格式
 logging.basicConfig(level=logging.ERROR,
                     format="%(asctime)s %(name)s %(levelname)s %(message)s",
-                    datefmt='%Y-%m-%d  %H:%M:%S %a')
+                    datefmt='%Y/%m/%d  %H:%M:%S %a')
 
 
 # 初始化定时任务

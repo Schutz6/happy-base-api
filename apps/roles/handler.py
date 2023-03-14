@@ -15,8 +15,9 @@ class AddHandler(BaseHandler):
         post -> /role/add/
         payload:
             {
-                "name": "角色",
-                "describe": "描述"
+                "name": "唯一ID",
+                "describe": "角色",
+                "remarks": "备注"
             }
     '''
 
@@ -28,15 +29,17 @@ class AddHandler(BaseHandler):
         form = RoleForm.from_json(data)
         name = form.name.data
         describe = form.describe.data
+        remarks = form.remarks.data
         # 查找角色是否存在
         role_db = Role()
         role = await role_db.find_one({"name": name})
         if role is not None:
             res['code'] = 50000
-            res['message'] = '该角色已存在'
+            res['message'] = '该唯一ID已存在'
         else:
             role_db.name = name
             role_db.describe = describe
+            role_db.remarks = remarks
             await role_db.insert_one(role_db.get_add_json())
         self.write(res)
 
@@ -71,8 +74,9 @@ class UpdateHandler(BaseHandler):
         payload:
             {
                 "id": "用户编号",
-                "name": "角色",
-                "describe": "描述"
+                "name": "唯一ID",
+                "describe": "角色",
+                "remarks": "备注"
             }
     '''
 
@@ -85,9 +89,10 @@ class UpdateHandler(BaseHandler):
         _id = form.id.data
         name = form.name.data
         describe = form.describe.data
+        remarks = form.remarks.data
         # 修改数据
         role_db = Role()
-        await role_db.update_one({"_id": _id}, {"$set": {"name": name, "describe": describe}})
+        await role_db.update_one({"_id": _id}, {"$set": {"name": name, "describe": describe, "remarks": remarks}})
         self.write(res)
 
 
@@ -118,10 +123,10 @@ class ListHandler(BaseHandler):
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"describe": re.compile(search_key)}]
         # 查询分页
-        query = await role_db.find_page(page_size, current_page, [("add_time", -1)], query_criteria)
+        query = await role_db.find_page(page_size, current_page, [("_id", -1), ("add_time", -1)], query_criteria)
 
         # 查询总数
-        total = role_db.query_count(query)
+        total = await role_db.query_count(query)
         pages = utils.get_pages(total, page_size)
 
         results = []
@@ -154,7 +159,7 @@ class GetListHandler(BaseHandler):
         query = await role_db.find_all({"_id": {"$ne": "sequence_id"}})
         results = []
         for item in query:
-            obj = {"id": item["_id"], "name": item["name"], "describe": item["describe"]}
+            obj = {"name": item["name"], "describe": item["describe"]}
             results.append(obj)
         res['data'] = results
         self.write(json.dumps(res, default=utils.json_serial))

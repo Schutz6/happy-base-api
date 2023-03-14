@@ -7,7 +7,7 @@ from bases.utils import now
 class DictType(MongoModel):
 
     def __init__(self):
-        super(DictType, self).__init__(settings['mongo']['name'], "dicttype")
+        super(DictType, self).__init__(settings['mongo']['name'], "DictType")
 
     """数据库字段说明"""
     # 类型名称
@@ -27,7 +27,7 @@ class DictType(MongoModel):
 class DictValue(MongoModel):
 
     def __init__(self):
-        super(DictValue, self).__init__(settings['mongo']['name'], "dictvalue")
+        super(DictValue, self).__init__(settings['mongo']['name'], "DictValue")
 
     """数据库字段说明"""
     # 字典类型编号

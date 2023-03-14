@@ -23,7 +23,7 @@ class ListDictTypeHandler(BaseHandler):
         # 查询所有
         query = await dictType_db.find_all({"_id": {"$ne": "sequence_id"}})
         # 排序
-        dictTypes = dictType_db.query_sort(query, [("add_time", -1)])
+        dictTypes = await dictType_db.query_sort(query, [("_id", -1), ("add_time", -1)])
         results = []
         for dictType in dictTypes:
             dictType["id"] = dictType["_id"]

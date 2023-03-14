@@ -7,7 +7,7 @@ from bases.utils import now
 class User(MongoModel):
 
     def __init__(self):
-        super(User, self).__init__(settings['mongo']['name'], "user")
+        super(User, self).__init__(settings['mongo']['name'], "User")
 
     """"数据库字段声明"""
     # 昵称

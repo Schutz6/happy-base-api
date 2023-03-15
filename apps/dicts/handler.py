@@ -1,8 +1,8 @@
 import json
 
-from apps.dict.forms import DictTypeForm, DictValueForm
-from apps.dict.models import DictType, DictValue
-from apps.dict.service import DictService
+from apps.dicts.forms import DictTypeForm, DictValueForm
+from apps.dicts.models import DictType, DictValue
+from apps.dicts.service import DictService
 from bases.handler import BaseHandler
 from bases.decorators import log_async, authenticated_admin_async
 from bases.res import resFunc

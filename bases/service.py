@@ -21,7 +21,7 @@ class BaseService:
     # 字典缓存Key
     dictKey = appName+"dict:"
 
-    # 系统设置
-    settingKey = appName + "setting"
+    # 参数设置
+    paramsKey = appName + "params:"
 
 

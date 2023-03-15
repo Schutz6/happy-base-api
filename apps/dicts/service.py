@@ -1,6 +1,6 @@
 import json
 
-from apps.dict.models import DictValue
+from apps.dicts.models import DictValue
 from bases import utils
 from bases.service import BaseService
 

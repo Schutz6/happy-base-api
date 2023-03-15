@@ -4,7 +4,7 @@ import re
 from apps.tasks.forms import TaskForm
 from apps.tasks.models import Task
 from bases import utils
-from bases.decorators import authenticated_async
+from bases.decorators import authenticated_admin_async
 from bases.handler import BaseHandler
 from bases.res import resFunc
 from bases.utils import show_error_log
@@ -25,7 +25,7 @@ class AddHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
@@ -61,7 +61,7 @@ class DeleteHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
@@ -91,7 +91,7 @@ class UpdateHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
@@ -125,7 +125,7 @@ class ListHandler(BaseHandler):
            }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode('utf-8')
@@ -140,7 +140,7 @@ class ListHandler(BaseHandler):
             query_criteria["$or"] = [{"name": re.compile(search_key)}]
         task_db = Task()
         # 查询分页
-        query = await task_db.find_page(page_size, current_page, [("_id", -1), ("add_time", -1)], query_criteria)
+        query = await task_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
         # 查询总数
         total = await task_db.query_count(query)
@@ -173,7 +173,7 @@ class StartTaskHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
@@ -218,7 +218,7 @@ class EndTaskHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")

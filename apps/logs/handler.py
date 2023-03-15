@@ -4,7 +4,7 @@ import re
 from apps.logs.forms import LogForm
 from apps.logs.models import Log
 from bases import utils
-from bases.decorators import authenticated_async
+from bases.decorators import authenticated_admin_async
 from bases.handler import BaseHandler
 from bases.res import resFunc
 
@@ -15,7 +15,7 @@ class ClearHandler(BaseHandler):
         get -> /log/clear/
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def get(self):
         res = resFunc({})
         # 清空日志
@@ -36,7 +36,7 @@ class ListHandler(BaseHandler):
            }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode('utf-8')
@@ -52,7 +52,7 @@ class ListHandler(BaseHandler):
             query_criteria["$or"] = [{"username": re.compile(search_key)}, {"uri": re.compile(search_key)},
                                      {"ip": re.compile(search_key)}]
         # 查询分页
-        query = await log_db.find_page(page_size, current_page, [("_id", -1), ("add_time", -1)], query_criteria)
+        query = await log_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
         # 查询总数
         total = await log_db.query_count(query)

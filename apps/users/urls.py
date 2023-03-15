@@ -1,6 +1,6 @@
 from tornado.web import url
 
-from apps.users.handler import AddHandler, Deletehandler, UpdateHandler, ListHandler, UpdatePasswordHandler
+from apps.users.handler import AddHandler, Deletehandler, UpdateHandler, ListHandler
 from apps.users.handler_auth import LoginHandler, UserHandler, LogoutHandler, ChangePwdHandler, RefreshLoginHandler
 
 urlpatterns = [
@@ -15,7 +15,6 @@ urlpatterns = [
     url('/user/add/', AddHandler),
     url('/user/delete/', Deletehandler),
     url('/user/update/', UpdateHandler),
-    url('/user/list/', ListHandler),
-    url('/user/updatePassword/', UpdatePasswordHandler)
+    url('/user/list/', ListHandler)
 
 ]

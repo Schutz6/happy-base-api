@@ -4,7 +4,7 @@ import re
 from apps.roles.forms import RoleForm
 from apps.roles.models import Role
 from bases import utils
-from bases.decorators import authenticated_async
+from bases.decorators import authenticated_admin_async
 from bases.handler import BaseHandler
 from bases.res import resFunc
 
@@ -22,7 +22,7 @@ class AddHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
@@ -57,7 +57,7 @@ class DeleteHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
@@ -83,7 +83,7 @@ class UpdateHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
@@ -113,7 +113,7 @@ class ListHandler(BaseHandler):
            }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode('utf-8')
@@ -128,8 +128,7 @@ class ListHandler(BaseHandler):
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"describe": re.compile(search_key)}]
         # 查询分页
-        query = await role_db.find_page(page_size, current_page, [("sort", -1), ("_id", -1), ("add_time", -1)],
-                                        query_criteria)
+        query = await role_db.find_page(page_size, current_page, [("sort", -1), ("_id", -1)], query_criteria)
 
         # 查询总数
         total = await role_db.query_count(query)
@@ -158,15 +157,26 @@ class GetListHandler(BaseHandler):
        get -> /role/getList/
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def get(self):
         res = resFunc([])
+
+        current_user = self.current_user
+
         role_db = Role()
         query = await role_db.find_all({"_id": {"$ne": "sequence_id"}})
         query = await role_db.query_sort(query, [("sort", -1), ("_id", -1)])
         results = []
-        for item in query:
-            obj = {"value": item["name"], "text": item["describe"]}
-            results.append(obj)
+        if 'superadmin' in current_user["roles"]:
+            for item in query:
+                # 全部角色
+                obj = {"value": item["name"], "text": item["describe"]}
+                results.append(obj)
+        elif 'admin' in current_user["roles"]:
+            for item in query:
+                # 过滤超管角色
+                if item["name"] != 'superadmin':
+                    obj = {"value": item["name"], "text": item["describe"]}
+                    results.append(obj)
         res['data'] = results
         self.write(json.dumps(res, default=utils.json_serial))

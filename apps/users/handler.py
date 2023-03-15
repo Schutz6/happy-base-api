@@ -5,7 +5,7 @@ from apps.users.forms import UserForm
 from apps.users.models import User
 from apps.users.service import UserService
 from bases import utils
-from bases.decorators import authenticated_async
+from bases.decorators import authenticated_admin_async
 from bases.handler import BaseHandler
 from bases.res import resFunc
 from bases.utils import get_md5, get_random_head
@@ -22,11 +22,12 @@ class AddHandler(BaseHandler):
                 "email": "邮箱",
                 "gender": "性别",
                 "password": "密码",
-                "roles": "角色列表"
+                "roles": "角色列表",
+                "status": "状态"
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
@@ -38,11 +39,12 @@ class AddHandler(BaseHandler):
         gender = form.gender.data
         password = form.password.data
         roles = form.roles.data
+        status = form.status.data
 
         user_db = User()
 
         # 查找账号是否存在
-        user = await user_db.find_aone({"username": username})
+        user = await user_db.find_one({"username": username})
         if user is not None:
             res['code'] = 50000
             res['message'] = '该账号已存在'
@@ -64,7 +66,7 @@ class AddHandler(BaseHandler):
         user_db.gender = gender
         user_db.password = get_md5(password)
         user_db.has_password = 1
-        user_db.status = 1
+        user_db.status = status
         user_db.avatar = get_random_head()
         user_db.roles = roles
         await user_db.insert_one(user_db.get_add_json())
@@ -82,7 +84,7 @@ class Deletehandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
@@ -107,11 +109,12 @@ class UpdateHandler(BaseHandler):
                 "name": "昵称",
                 "gender": "性别",
                 "status": "状态 1正常 2注销",
-                "roles": "角色列表"
+                "roles": "角色列表",
+                "password": "密码"
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
@@ -122,6 +125,7 @@ class UpdateHandler(BaseHandler):
         gender = form.gender.data
         status = form.status.data
         roles = form.roles.data
+        password = form.password.data
 
         user_db = User()
 
@@ -129,6 +133,9 @@ class UpdateHandler(BaseHandler):
         await user_db.update_one({"_id": _id},
                                  {"$set": {"name": name, "gender": gender, "status": status,
                                            "roles": roles}})
+        # 修改密码
+        if password is not None:
+            await user_db.update_one({"_id": _id}, {"$set": {"password": get_md5(password)}})
         # 删除缓存
         UserService.delete_cache(_id)
         self.write(res)
@@ -143,10 +150,11 @@ class ListHandler(BaseHandler):
                "currentPage": 1,
                "pageSize": 10,
                "searchKey": "关键字",
+               "status": "状态"
            }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc([])
         data = self.request.body.decode('utf-8')
@@ -155,13 +163,16 @@ class ListHandler(BaseHandler):
         current_page = form.currentPage.data
         page_size = form.pageSize.data
         search_key = form.searchKey.data
+        status = form.status.data
         # 查询条件
         query_criteria = {"_id": {"$ne": "sequence_id"}}
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"username": re.compile(search_key)}]
+        if status is not None:
+            query_criteria["status"] = status
         user_db = User()
         # 查询分页
-        query = await user_db.find_page(page_size, current_page, [("_id", -1), ("add_time", -1)], query_criteria)
+        query = await user_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
         # 查询总数
         total = await user_db.query_count(query)
@@ -184,28 +195,3 @@ class ListHandler(BaseHandler):
         res['data'] = data
         self.write(json.dumps(res, default=utils.json_serial))
 
-
-# 修改密码
-class UpdatePasswordHandler(BaseHandler):
-    '''
-        post -> /user/updatePassword/
-        payload:
-            {
-                "id": "用户编号",
-                "password": "密码"
-            }
-    '''
-
-    @authenticated_async
-    async def post(self):
-        res = resFunc({})
-        data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = UserForm.from_json(data)
-        _id = form.id.data
-        password = form.password.data
-        user_db = User()
-        await user_db.update_one({"_id": _id}, {"$set": {"password": get_md5(password)}})
-        # 删除缓存
-        UserService.delete_cache(_id)
-        self.write(res)

@@ -6,7 +6,7 @@ import time
 from apps.files.forms import FileForm
 from apps.files.models import Files
 from bases import utils
-from bases.decorators import authenticated_async
+from bases.decorators import authenticated_async, authenticated_admin_async
 from bases.settings import settings
 from bases.handler import BaseHandler
 from bases.res import resFunc
@@ -87,8 +87,7 @@ class UploadHandler(BaseHandler):
                     "name": files_item['name'],
                     "download_path": settings['SITE_URL'] + files_item['download_path'],
                     "type": files_item['type'],
-                    "size": files_item['size'],
-                    "picture": settings['SITE_URL'] + files_item['picture']
+                    "size": files_item['size']
                 }
                 res['data'] = data
                 self.write(json.dumps(res, default=utils.json_serial))
@@ -127,8 +126,7 @@ class UploadHandler(BaseHandler):
                         "name": files.name,
                         "download_path": settings['SITE_URL'] + files.download_path,
                         "type": files.type,
-                        "size": files.size,
-                        "picture": settings['SITE_URL'] + files.picture
+                        "size": files.size
                     }
                     res['data'] = data
                     break
@@ -144,7 +142,7 @@ class UploadHandler(BaseHandler):
 # 头像上传
 class HeadUploadHandler(BaseHandler):
     '''
-    post -> /file/headupload/
+    post -> /file/upload/head/
     payload:
         {
             "md5": "文件md5值"
@@ -174,8 +172,7 @@ class HeadUploadHandler(BaseHandler):
                     "name": files_item['name'],
                     "download_path": settings['SITE_URL'] + files_item['download_path'],
                     "type": files_item['type'],
-                    "size": files_item['size'],
-                    "picture": settings['SITE_URL'] + files_item['picture']
+                    "size": files_item['size']
                 }
                 res['data'] = data
                 self.write(json.dumps(res, default=utils.json_serial))
@@ -215,8 +212,7 @@ class HeadUploadHandler(BaseHandler):
                         "name": files.name,
                         "download_path": settings['SITE_URL'] + files.download_path,
                         "type": files.type,
-                        "size": files.size,
-                        "picture": settings['SITE_URL'] + files.picture
+                        "size": files.size
                     }
                     res['data'] = data
                     break
@@ -241,7 +237,7 @@ class ListHandler(BaseHandler):
            }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self, *args, **kwargs):
         res = resFunc({})
         data = self.request.body.decode('utf-8')
@@ -256,7 +252,7 @@ class ListHandler(BaseHandler):
         if search_key is not None:
             query_criteria["name"] = re.compile(search_key)
         # 查询分页
-        query = await file_db.find_page(page_size, current_page, [("_id", -1), ("add_time", -1)], query_criteria)
+        query = await file_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
         # 查询总数
         total = await file_db.query_count(query)
@@ -265,8 +261,6 @@ class ListHandler(BaseHandler):
         results = []
         for item in query:
             item["id"] = item["_id"]
-            if item.get("picture", None) is not None:
-                item["picture"] = settings['SITE_URL'] + item["picture"]
             item["download_path"] = settings['SITE_URL'] + item["download_path"]
             results.append(item)
 

@@ -3,7 +3,7 @@ import json
 from apps.setting.forms import SettingForm
 from apps.setting.service import SettingService
 from bases import utils
-from bases.decorators import authenticated_async, log_async
+from bases.decorators import log_async, authenticated_admin_async
 from bases.handler import BaseHandler
 from bases.res import resFunc
 
@@ -18,20 +18,14 @@ class SaveHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self, *args, **kwargs):
         res = resFunc({})
         data = self.request.body.decode("utf-8")
         data = json.loads(data)
         form = SettingForm.from_json(data)
         content = form.content.data
-        current_user = self.current_user
-        if 1 in current_user['roles'] or 3 in current_user['roles']:
-            # 管理员才能操作
-            SettingService.save_system_setting(json.loads(content))
-        else:
-            res['code'] = 50000
-            res['message'] = '权限不够'
+        SettingService.save_system_setting(json.loads(content))
         self.write(res)
 
 

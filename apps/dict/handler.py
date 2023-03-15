@@ -4,7 +4,7 @@ from apps.dict.forms import DictTypeForm, DictValueForm
 from apps.dict.models import DictType, DictValue
 from apps.dict.service import DictService
 from bases.handler import BaseHandler
-from bases.decorators import authenticated_async, log_async
+from bases.decorators import log_async, authenticated_admin_async
 from bases.res import resFunc
 from bases import utils
 from bases.settings import settings
@@ -16,7 +16,7 @@ class ListDictTypeHandler(BaseHandler):
         post -> /dictType/list/
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc([])
         dictType_db = DictType()
@@ -46,7 +46,7 @@ class AddDictTypeHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode('utf-8')
@@ -78,7 +78,7 @@ class DeleteDictTypeHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode('utf-8')
@@ -110,6 +110,7 @@ class ListDictValueHandler(BaseHandler):
             }
     '''
 
+    @log_async
     async def post(self):
         res = resFunc([])
         data = self.request.body.decode('utf-8')
@@ -135,7 +136,7 @@ class AddDictValueHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode('utf-8')
@@ -175,7 +176,7 @@ class DeleteDictValueHandler(BaseHandler):
             }
     '''
 
-    @authenticated_async
+    @authenticated_admin_async
     async def post(self):
         res = resFunc({})
         data = self.request.body.decode('utf-8')

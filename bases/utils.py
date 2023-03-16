@@ -37,6 +37,11 @@ def show_error_log(msg):
     logging.error(msg)
 
 
+# 格式化时间
+def format_time(_time, fmt):
+    return datetime.fromtimestamp(_time/1000).strftime(fmt)
+
+
 # 获取当前时间戳（UTC）
 def now():
     return int(datetime.utcnow().timestamp() * 1000)

@@ -2,6 +2,7 @@ import json
 import re
 
 from apps.tasks.forms import TaskForm
+from apps.tasks.func import run_task
 from apps.tasks.models import Task
 from bases import utils
 from bases.decorators import authenticated_admin_async
@@ -18,10 +19,10 @@ class AddHandler(BaseHandler):
             {
                 "name": "任务名称",
                 "func": "执行方法",
-                "type": "任务类型 1定时任务 2周期任务",
-                "exec_data": "定时任务执行时间",
+                "type": "任务类型",
                 "exec_cron": "周期任务执行时间",
-                "exec_interval": "间隔任务执行时间"
+                "exec_interval": "间隔任务执行时间",
+                "options": "配置参数"
             }
     '''
 
@@ -34,17 +35,17 @@ class AddHandler(BaseHandler):
         name = form.name.data
         func = form.func.data
         _type = form.type.data
-        exec_data = form.exec_data.data
         exec_cron = form.exec_cron.data
         exec_interval = form.exec_interval.data
+        options = form.options.data
 
         task_db = Task()
         task_db.name = name
         task_db.func = func
         task_db.type = _type
-        task_db.exec_data = exec_data
         task_db.exec_cron = exec_cron
         task_db.exec_interval = exec_interval
+        task_db.options = options
 
         await task_db.insert_one(task_db.get_add_json())
 
@@ -84,10 +85,10 @@ class UpdateHandler(BaseHandler):
                 "id": "用户编号",
                 "name": "任务名称",
                 "func": "执行方法",
-                "type": "任务类型 1定时任务 2周期任务 3间隔任务",
-                "exec_data": "定时任务执行时间",
+                "type": "任务类型",
                 "exec_cron": "周期任务执行时间",
-                "exec_interval": "间隔任务执行时间"
+                "exec_interval": "间隔任务执行时间",
+                "options": "配置参数"
             }
     '''
 
@@ -101,15 +102,16 @@ class UpdateHandler(BaseHandler):
         name = form.name.data
         func = form.func.data
         _type = form.type.data
-        exec_data = form.exec_data.data
         exec_cron = form.exec_cron.data
         exec_interval = form.exec_interval.data
+        options = form.options.data
 
         task_db = Task()
         # 修改数据
         await task_db.update_one({"_id": _id}, {
             "$set": {"name": name, "func": func, "type": _type,
-                     "exec_data": exec_data, "exec_cron": exec_cron, "exec_interval": exec_interval, "status": 0}})
+                     "exec_cron": exec_cron, "exec_interval": exec_interval, "status": 0,
+                     "options": options}})
         self.write(json.dumps(res))
 
 
@@ -185,24 +187,7 @@ class StartTaskHandler(BaseHandler):
         task = await task_db.find_one({"_id": _id})
         if task is not None:
             if task['status'] != 1:
-                if task['type'] == 1:
-                    # 定时任务类型
-                    self.application.scheduler.add_job(task['func'], 'date', run_date=task['exec_data'], id=str(_id),
-                                                       args=[str(_id)])
-                elif task['type'] == 2:
-                    # 周期任务类型
-                    exec_cron = task['exec_cron']
-                    hour = exec_cron[0:2]
-                    minute = exec_cron[3:5]
-                    self.application.scheduler.add_job(task['func'], 'cron', hour=int(hour),
-                                                       minute=int(minute), id=str(_id),
-                                                       args=[str(_id)])
-                elif task['type'] == 3:
-                    # 间隔任务类型
-                    seconds = task['exec_interval']
-                    self.application.scheduler.add_job(task['func'], 'interval', seconds=int(seconds),
-                                                       id=str(_id),
-                                                       args=[str(_id)])
+                await run_task(self.application.scheduler, task)
                 # 修改数据状态
                 await task_db.update_one({"_id": _id}, {"$set": {"status": 1}})
         self.write(json.dumps(res))

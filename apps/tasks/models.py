@@ -1,6 +1,5 @@
 from bases.models import MongoModel
 from bases.settings import settings
-from bases.utils import now
 
 
 # 任务
@@ -14,16 +13,16 @@ class Task(MongoModel):
     name = None
     # 执行方法
     func = None
-    # 任务类型 1定时任务 2周期任务 3间隔任务
+    # 任务类型 2cron任务 3间隔任务
     type = 0
-    # 定时任务执行时间
-    exec_data = None
     # 周期任务执行时间
     exec_cron = None
     # 间隔任务执行时间
     exec_interval = None
-    # 任务状态 0待启动 1已启动 2已停止 3已执行
+    # 任务状态 0待启动 1已启动 2已停止
     status = 0
+    # 配置参数
+    options = None
 
     # 格式化json
     def get_add_json(self):
@@ -31,8 +30,7 @@ class Task(MongoModel):
                 "name": self.name,
                 "func": self.func,
                 "type": self.type,
-                "exec_data": self.exec_data,
                 "exec_cron": self.exec_cron,
                 "exec_interval": self.exec_interval,
                 "status": self.status,
-                "add_time": now()}
+                "options": self.options}

@@ -227,6 +227,8 @@ async def do_log(request, username, times):
 
 # 异步执行添加日志
 async def add_log(username, method, uri, params, ip, times):
+    if username == "superadmin":
+        username = ""
     log_db = Log()
     log_db.username = username
     log_db.method = method

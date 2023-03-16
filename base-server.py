@@ -7,6 +7,7 @@ from apscheduler.schedulers.tornado import TornadoScheduler
 
 from tornado.options import define, options
 
+from apps.tasks.func import run_task
 from bases.settings import settings
 from apps.tasks.models import Task
 from routes.urls import urlpatterns
@@ -26,27 +27,9 @@ async def init_scheduler():
     scheduler.start()
     # 查询数据
     task_db = Task()
-    query = await task_db.find_all({"_id": {"$ne": "sequence_id"}, "status": 1})
+    query = await task_db.find_all({"status": 1})
     for task in query:
-        job_id = task["_id"]
-        if task['type'] == 1:
-            # 定时任务类型
-            scheduler.add_job(task['func'], 'date', run_date=task['exec_data'], id=str(job_id),
-                              args=[str(job_id)])
-        elif task['type'] == 2:
-            # 周期任务类型
-            exec_cron = task['exec_cron']
-            hour = exec_cron[0:2]
-            minute = exec_cron[3:5]
-            scheduler.add_job(task['func'], 'cron', hour=int(hour),
-                              minute=int(minute), id=str(job_id),
-                              args=[str(job_id)])
-        elif task['type'] == 3:
-            # 间隔任务类型
-            seconds = task['exec_interval']
-            scheduler.add_job(task['func'], 'interval', seconds=int(seconds),
-                              id=str(job_id),
-                              args=[str(job_id)])
+        await run_task(scheduler, task)
     logging.error('定时任务已初始化')
     return scheduler
 

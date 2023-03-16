@@ -21,7 +21,7 @@ class ClearHandler(BaseHandler):
         # 清空日志
         log_db = Log()
         await log_db.delete_many({})
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 日志列表
@@ -72,4 +72,4 @@ class ListHandler(BaseHandler):
         }
 
         res['data'] = data
-        self.write(json.dumps(res, default=utils.json_serial))
+        self.write(json.dumps(res))

@@ -39,18 +39,18 @@ def get_size(path):
 
 
 # 格式化文件大小kb\m\g
-def format_size(bytes):
-    bytes = float(bytes)
-    kb = bytes / 1024
+def format_size(_bytes):
+    _bytes = float(_bytes)
+    kb = _bytes / 1024
     if kb >= 1024:
-        M = kb / 1024
-        if M >= 1024:
-            G = M / 1024
-            return "%.2fG" % (G)
+        m = kb / 1024
+        if m >= 1024:
+            g = m / 1024
+            return "%.2fG" % g
         else:
-            return "%.2fM" % (M)
+            return "%.2fM" % m
     else:
-        return "%.2fkb" % (kb)
+        return "%.2fkb" % kb
 
 
 # 文件上传
@@ -65,7 +65,7 @@ class UploadHandler(BaseHandler):
     '''
 
     @authenticated_async
-    async def post(self, *args, **kwargs):
+    async def post(self):
         res = resFunc({})
         time_path = time.strftime("%Y%m%d", time.localtime())
         upload_path = os.path.join(os.path.dirname(__file__), settings['SAVE_URL'] + '/files', time_path)
@@ -90,7 +90,7 @@ class UploadHandler(BaseHandler):
                     "size": files_item['size']
                 }
                 res['data'] = data
-                self.write(json.dumps(res, default=utils.json_serial))
+                self.write(json.dumps(res))
                 return
 
         if not file_metas:
@@ -136,7 +136,7 @@ class UploadHandler(BaseHandler):
                 res['code'] = 50000
                 res['message'] = '操作失败'
 
-        self.write(json.dumps(res, default=utils.json_serial))
+        self.write(json.dumps(res))
 
 
 # 头像上传
@@ -151,7 +151,7 @@ class HeadUploadHandler(BaseHandler):
     '''
 
     @authenticated_async
-    async def post(self, *args, **kwargs):
+    async def post(self):
         res = resFunc({})
         time_path = time.strftime("%Y%m%d", time.localtime())
         upload_path = os.path.join(os.path.dirname(__file__), settings['SAVE_URL'] + '/heads', time_path)
@@ -175,7 +175,7 @@ class HeadUploadHandler(BaseHandler):
                     "size": files_item['size']
                 }
                 res['data'] = data
-                self.write(json.dumps(res, default=utils.json_serial))
+                self.write(json.dumps(res))
                 return
 
         if not file_metas:
@@ -222,7 +222,7 @@ class HeadUploadHandler(BaseHandler):
                 res['code'] = 50000
                 res['message'] = '操作失败'
 
-        self.write(json.dumps(res, default=utils.json_serial))
+        self.write(json.dumps(res))
 
 
 # 列表
@@ -238,7 +238,7 @@ class ListHandler(BaseHandler):
     '''
 
     @authenticated_admin_async
-    async def post(self, *args, **kwargs):
+    async def post(self):
         res = resFunc({})
         data = self.request.body.decode('utf-8')
         data = json.loads(data)
@@ -273,4 +273,4 @@ class ListHandler(BaseHandler):
         }
 
         res['data'] = data
-        self.write(json.dumps(res, default=utils.json_serial))
+        self.write(json.dumps(res))

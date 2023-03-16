@@ -1,7 +1,6 @@
 import json
 
 from apps.users.models import User
-from bases import utils
 from bases.service import BaseService
 from bases.settings import settings
 from bases.utils import get_random_num
@@ -64,7 +63,7 @@ class UserService(BaseService):
                 # 清空密码
                 user["id"] = user["_id"]
                 user['password'] = ''
-                UserService.redis.set(UserService.userKey + str(_id), json.dumps(user, default=utils.json_serial))
+                UserService.redis.set(UserService.userKey + str(_id), json.dumps(user))
         else:
             user = json.loads(user)
         return user

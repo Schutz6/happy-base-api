@@ -48,7 +48,7 @@ class AddHandler(BaseHandler):
         if user is not None:
             res['code'] = 50000
             res['message'] = '该账号已存在'
-            self.write(res)
+            self.write(json.dumps(res))
             return
 
         # 判断邮箱是否存在
@@ -56,7 +56,7 @@ class AddHandler(BaseHandler):
         if user is not None:
             res['code'] = 50000
             res['message'] = '该邮箱已存在'
-            self.write(res)
+            self.write(json.dumps(res))
             return
 
         # 新增
@@ -71,7 +71,7 @@ class AddHandler(BaseHandler):
         user_db.roles = roles
         await user_db.insert_one(user_db.get_add_json())
 
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 删除
@@ -96,7 +96,7 @@ class Deletehandler(BaseHandler):
         await user_db.delete_one({"_id": _id})
         # 删除缓存
         UserService.delete_cache(_id)
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 修改
@@ -138,7 +138,7 @@ class UpdateHandler(BaseHandler):
             await user_db.update_one({"_id": _id}, {"$set": {"password": get_md5(password)}})
         # 删除缓存
         UserService.delete_cache(_id)
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 列表
@@ -165,7 +165,7 @@ class ListHandler(BaseHandler):
         search_key = form.searchKey.data
         status = form.status.data
         # 查询条件
-        query_criteria = {"_id": {"$ne": "sequence_id"}}
+        query_criteria = {"_id": {"$ne": "sequence_id"}, "username": {"$ne": "superadmin"}}
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"username": re.compile(search_key)}]
         if status is not None:
@@ -193,5 +193,5 @@ class ListHandler(BaseHandler):
         }
 
         res['data'] = data
-        self.write(json.dumps(res, default=utils.json_serial))
+        self.write(json.dumps(res))
 

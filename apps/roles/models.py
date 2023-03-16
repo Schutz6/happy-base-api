@@ -1,6 +1,5 @@
 from bases.models import MongoModel
 from bases.settings import settings
-from bases.utils import now
 
 
 # 角色
@@ -25,5 +24,4 @@ class Role(MongoModel):
                 "name": self.name,
                 "describe": self.describe,
                 "remarks": self.remarks,
-                "sort": self.sort,
-                "add_time": now()}
+                "sort": self.sort}

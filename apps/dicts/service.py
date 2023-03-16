@@ -1,7 +1,6 @@
 import json
 
 from apps.dicts.models import DictValue
-from bases import utils
 from bases.service import BaseService
 
 
@@ -17,11 +16,11 @@ class DictService(BaseService):
         if dictValues is None:
             dictValue_db = DictValue()
             query = await dictValue_db.find_all({"dict_tid": dict_tid})
-            dictValues = dictValue_db.query_sort(query, [("sort", 1), ("_id", -1)])
+            dictValues = await dictValue_db.query_sort(query, [("sort", -1), ("_id", -1)])
             for dictValue in dictValues:
                 dictValue["id"] = dictValue["_id"]
                 results.append(dictValue)
-            DictService.redis.set(DictService.dictKey + str(dict_tid), json.dumps(results, default=utils.json_serial))
+            DictService.redis.set(DictService.dictKey + str(dict_tid), json.dumps(results))
         else:
             results = json.loads(dictValues)
         return results

@@ -6,38 +6,40 @@ from apps.dicts.service import DictService
 from bases.handler import BaseHandler
 from bases.decorators import log_async, authenticated_admin_async
 from bases.res import resFunc
-from bases import utils
 from bases.settings import settings
 
 
 # 获取字典类型列表
 class ListDictTypeHandler(BaseHandler):
     '''
-        post -> /dictType/list/
+        get -> /dict/typeList/
     '''
 
     @authenticated_admin_async
-    async def post(self):
+    async def get(self):
         res = resFunc([])
         dictType_db = DictType()
         # 查询所有
         query = await dictType_db.find_all({"_id": {"$ne": "sequence_id"}})
         # 排序
-        dictTypes = await dictType_db.query_sort(query, [("_id", -1), ("add_time", -1)])
+        dictTypes = await dictType_db.query_sort(query, [("_id", -1)])
         results = []
         for dictType in dictTypes:
             dictType["id"] = dictType["_id"]
+            # 查询子集
+            dictType["children"] = await DictService.get_dict_list(dictType["_id"])
+
             results.append(dictType)
 
         res['data'] = results
 
-        self.write(json.dumps(res, default=utils.json_serial))
+        self.write(json.dumps(res))
 
 
 # 新增字典类型
 class AddDictTypeHandler(BaseHandler):
     '''
-        post -> /dictType/add/
+        post -> /dict/typeAdd/
         payload:
             {
                 "id": "编号",
@@ -54,24 +56,25 @@ class AddDictTypeHandler(BaseHandler):
         form = DictTypeForm.from_json(data)
         _id = form.id.data
         name = form.name.data
+        describe = form.describe.data
         dictType = DictType()
         if _id is not None:
             # 编辑
-            await dictType.update_one({"_id": _id}, {"$set": {"name": name}})
+            await dictType.update_one({"_id": _id}, {"$set": {"name": name, "describe": describe}})
         else:
             # 新增
             dictType.name = name
-            dictType.describe = form.describe.data
+            dictType.describe = describe
             await dictType.insert_one(dictType.get_add_json())
         res['message'] = '保存成功'
 
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 删除字典类型
 class DeleteDictTypeHandler(BaseHandler):
     '''
-        post -> /dictType/delete/
+        post -> /dict/typeDelete/
         payload:
             {
                 "id":"编号"
@@ -97,13 +100,13 @@ class DeleteDictTypeHandler(BaseHandler):
         DictService.delete_cache(dictType.id)
 
         res['message'] = '删除成功'
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 获取字典值列表
 class ListDictValueHandler(BaseHandler):
     '''
-        post -> /dictValue/list/
+        post -> /dict/valueList/
         payload:
             {
                 "dict_tid": "字典类型编号"
@@ -119,13 +122,13 @@ class ListDictValueHandler(BaseHandler):
 
         res['data'] = await DictService.get_dict_list(form.dict_tid.data)
 
-        self.write(json.dumps(res, default=utils.json_serial))
+        self.write(json.dumps(res))
 
 
 # 新增字典值
 class AddDictValueHandler(BaseHandler):
     '''
-        post -> /dictValue/add/
+        post -> /dict/valueAdd/
         payload:
             {
                 "id": "编号",
@@ -162,13 +165,13 @@ class AddDictValueHandler(BaseHandler):
         # 删除缓存
         DictService.delete_cache(dict_tid)
 
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 删除字典值
 class DeleteDictValueHandler(BaseHandler):
     '''
-        post -> /dictValue/delete/
+        post -> /dict/valueDelete/
         payload:
             {
                 "id":"编号",
@@ -189,7 +192,7 @@ class DeleteDictValueHandler(BaseHandler):
         # 删除缓存
         DictService.delete_cache(form.dict_tid.data)
 
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 获取字典列表
@@ -223,4 +226,4 @@ class GetDictListHandler(BaseHandler):
             else:
                 results = query
             res['data'] = results
-        self.write(json.dumps(res, default=utils.json_serial))
+        self.write(json.dumps(res))

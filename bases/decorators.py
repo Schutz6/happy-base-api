@@ -1,3 +1,4 @@
+import json
 import time
 
 import jwt
@@ -13,7 +14,7 @@ from bases.settings import settings
 # 管理员用户认证，日志记录
 def authenticated_admin_async(func):
 
-    async def wrapper(self, *args, **kwargs):
+    async def wrapper(self):
         res = resFunc({})
         authorization = self.request.headers.get('Authorization', None)
         channel = self.request.headers.get('Channel', 'default')
@@ -24,23 +25,24 @@ def authenticated_admin_async(func):
                 if len(authorization) != 2:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
-                    self.finish(res)
+                    self.write(json.dumps(res))
                     return None
                 else:
                     if authorization[0] != 'JWT':
                         res['code'] = 10010
                         res['message'] = "令牌已失效"
-                        self.finish(res)
+                        self.write(json.dumps(res))
                         return None
             else:
                 res['code'] = 10010
                 res['message'] = "令牌已失效"
-                self.finish(res)
+                self.write(json.dumps(res))
                 return None
         except jwt.exceptions.PyJWTError:
             res['code'] = 10010
             res['message'] = "令牌已失效"
-            self.finish(res)
+            self.write(json.dumps(res))
+            return None
 
         authorization = authorization[1]
 
@@ -67,7 +69,7 @@ def authenticated_admin_async(func):
                     if 'admin' in user["roles"] or 'superadmin' in user["roles"]:
                         # 开始时间
                         start_time = round(time.time()*1000, 2)
-                        await func(self, *args, **kwargs)
+                        await func(self)
                         # 结束时间
                         finish_time = round(time.time()*1000, 2)
                         # 访问时间
@@ -77,19 +79,19 @@ def authenticated_admin_async(func):
                     else:
                         res['code'] = 10012
                         res['message'] = "权限不足"
-                        self.finish(res)
+                        self.write(json.dumps(res))
                 else:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
-                    self.finish(res)
+                    self.write(json.dumps(res))
             except jwt.exceptions.PyJWTError:
                 res['code'] = 10010
                 res['message'] = "令牌已失效"
-                self.finish(res)
+                self.write(json.dumps(res))
         else:
             res['code'] = 10010
             res['message'] = "令牌已失效"
-            self.finish(res)
+            self.write(json.dumps(res))
 
     return wrapper
 
@@ -97,7 +99,7 @@ def authenticated_admin_async(func):
 # 用户认证，日志记录
 def authenticated_async(func):
 
-    async def wrapper(self, *args, **kwargs):
+    async def wrapper(self):
         res = resFunc({})
         authorization = self.request.headers.get('Authorization', None)
         channel = self.request.headers.get('Channel', 'default')
@@ -108,23 +110,24 @@ def authenticated_async(func):
                 if len(authorization) != 2:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
-                    self.finish(res)
+                    self.write(json.dumps(res))
                     return None
                 else:
                     if authorization[0] != 'JWT':
                         res['code'] = 10010
                         res['message'] = "令牌已失效"
-                        self.finish(res)
+                        self.write(json.dumps(res))
                         return None
             else:
                 res['code'] = 10010
                 res['message'] = "令牌已失效"
-                self.finish(res)
+                self.write(json.dumps(res))
                 return None
         except jwt.exceptions.PyJWTError:
             res['code'] = 10010
             res['message'] = "令牌已失效"
-            self.finish(res)
+            self.write(json.dumps(res))
+            return None
 
         authorization = authorization[1]
 
@@ -149,7 +152,7 @@ def authenticated_async(func):
                     self._current_user = user
                     # 开始时间
                     start_time = round(time.time()*1000, 2)
-                    await func(self, *args, **kwargs)
+                    await func(self)
                     # 结束时间
                     finish_time = round(time.time()*1000, 2)
                     # 访问时间
@@ -159,44 +162,48 @@ def authenticated_async(func):
                 else:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
-                    self.finish(res)
+                    self.write(json.dumps(res))
             except jwt.exceptions.PyJWTError:
                 res['code'] = 10010
                 res['message'] = "令牌已失效"
-                self.finish(res)
+                self.write(json.dumps(res))
         else:
             res['code'] = 10010
             res['message'] = "令牌已失效"
-            self.finish(res)
+            self.write(json.dumps(res))
 
     return wrapper
 
 
 def owner_required(func):
+
     @wraps(func)
-    async def wrapper(self, *args, **kwargs):
-        await func(self, *args, **kwargs)
+    async def wrapper(self):
+        await func(self)
 
     return wrapper
 
 
 # 日志记录
 def log_async(func):
-    async def wrapper(self, *args, **kwargs):
+
+    async def wrapper(self):
         # 开始时间
         start_time = round(time.time()*1000, 2)
-        await func(self, *args, **kwargs)
+        await func(self)
         # 结束时间
         finish_time = round(time.time()*1000, 2)
         # 访问时间
         times = round(finish_time - start_time, 2)
         # 处理日志
         await do_log(self.request, "", times)
+
     return wrapper
 
 
 # 异步执行方法
 def run_async(func):
+
     def wrapper(*args, **kwargs):
         thr = Thread(target=func, args=args, kwargs=kwargs)
         thr.start()

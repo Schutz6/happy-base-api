@@ -44,7 +44,7 @@ class AddHandler(BaseHandler):
             role_db.remarks = remarks
             role_db.sort = sort
             await role_db.insert_one(role_db.get_add_json())
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 删除
@@ -67,7 +67,7 @@ class DeleteHandler(BaseHandler):
         # 删除数据
         role_db = Role()
         await role_db.delete_one({"_id": _id})
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 修改
@@ -98,7 +98,7 @@ class UpdateHandler(BaseHandler):
         role_db = Role()
         await role_db.update_one({"_id": _id},
                                  {"$set": {"name": name, "describe": describe, "remarks": remarks, "sort": sort}})
-        self.write(res)
+        self.write(json.dumps(res))
 
 
 # 列表
@@ -148,7 +148,7 @@ class ListHandler(BaseHandler):
         }
 
         res['data'] = data
-        self.write(json.dumps(res, default=utils.json_serial))
+        self.write(json.dumps(res))
 
 
 # 所有列表
@@ -179,4 +179,4 @@ class GetListHandler(BaseHandler):
                     obj = {"value": item["name"], "text": item["describe"]}
                     results.append(obj)
         res['data'] = results
-        self.write(json.dumps(res, default=utils.json_serial))
+        self.write(json.dumps(res))

@@ -1,6 +1,5 @@
 from bases.models import MongoModel
 from bases.settings import settings
-from bases.utils import now
 
 
 # 字典类型表
@@ -19,8 +18,7 @@ class DictType(MongoModel):
     def get_add_json(self):
         return {"_id": self.get_next_id(),
                 "name": self.name,
-                "describe": self.describe,
-                "add_time": now()}
+                "describe": self.describe}
 
 
 # 字典值列表
@@ -45,6 +43,5 @@ class DictValue(MongoModel):
                 "dict_tid": self.dict_tid,
                 "dict_name": self.dict_name,
                 "dict_value": self.dict_value,
-                "sort": self.sort,
-                "add_time": now()}
+                "sort": self.sort}
 

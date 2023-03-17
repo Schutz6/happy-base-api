@@ -46,16 +46,22 @@ class InitDataHandler(BaseHandler):
             role_db1 = Role()
             role_db1.name = "superadmin"
             role_db1.describe = "超级管理员"
+            role_db1.remarks = "拥有所有权限（不要删）"
+            role_db1.sort = 99
             await role_db1.insert_one(role_db1.get_add_json())
 
             role_db2 = Role()
             role_db2.name = "user"
             role_db2.describe = "普通用户"
+            role_db1.remarks = "没后台权限（不要删）"
+            role_db1.sort = 97
             await role_db2.insert_one(role_db2.get_add_json())
 
             role_db3 = Role()
             role_db3.name = "admin"
             role_db3.describe = "普通管理员"
+            role_db1.remarks = "拥有部分权限（不要删）"
+            role_db1.sort = 98
             await role_db3.insert_one(role_db3.get_add_json())
 
         self.write(json.dumps(res))

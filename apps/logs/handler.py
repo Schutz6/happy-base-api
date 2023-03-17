@@ -24,6 +24,29 @@ class ClearHandler(BaseHandler):
         self.write(json.dumps(res))
 
 
+# 批量删除
+class BatchDeleteHandler(BaseHandler):
+    '''
+       post -> /log/batchDelete/
+       payload:
+           {
+                "ids": "多选ID"
+           }
+    '''
+
+    @authenticated_admin_async
+    async def post(self):
+        res = resFunc({})
+        data = self.request.body.decode('utf-8')
+        data = json.loads(data)
+        form = LogForm.from_json(data)
+        ids = form.ids.data
+        # 批量删除
+        log_db = Log()
+        await log_db.delete_many({"_id": {"$in": [int(_id) for _id in ids]}})
+        self.write(json.dumps(res))
+
+
 # 日志列表
 class ListHandler(BaseHandler):
     '''

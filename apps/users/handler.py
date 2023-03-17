@@ -165,7 +165,7 @@ class ListHandler(BaseHandler):
         search_key = form.searchKey.data
         status = form.status.data
         # 查询条件
-        query_criteria = {"_id": {"$ne": "sequence_id"}, "username": {"$ne": "superadmin"}}
+        query_criteria = {"_id": {"$ne": "sequence_id"}, "username": {"$ne": "000"}}
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"username": re.compile(search_key)}]
         if status is not None:

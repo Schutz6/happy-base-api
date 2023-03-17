@@ -7,3 +7,4 @@ from bases.forms import BaseForm
 class LogForm(BaseForm):
     username = StringField("账号")
     ip = StringField("IP")
+

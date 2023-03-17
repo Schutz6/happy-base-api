@@ -1,6 +1,6 @@
 from bases.models import MongoModel
 from bases.settings import settings
-from bases.utils import now
+from bases.utils import now_utc
 
 
 # 日志
@@ -32,4 +32,4 @@ class Log(MongoModel):
                 "params": self.params,
                 "ip": self.ip,
                 "times": self.times,
-                "add_time": now()}
+                "add_time": now_utc()}

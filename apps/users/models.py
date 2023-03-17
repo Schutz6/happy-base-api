@@ -1,6 +1,6 @@
 from bases.settings import settings
 from bases.models import MongoModel
-from bases.utils import now
+from bases.utils import now_utc
 
 
 # 用户对象
@@ -60,4 +60,4 @@ class User(MongoModel):
                 "address": self.address,
                 "introduction": self.introduction,
                 "birthday": self.birthday,
-                "add_time": now()}
+                "add_time": now_utc()}

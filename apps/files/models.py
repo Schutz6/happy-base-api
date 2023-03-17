@@ -1,6 +1,6 @@
 from bases.models import MongoModel
 from bases.settings import settings
-from bases.utils import now
+from bases.utils import now_utc
 
 
 # 文件信息表
@@ -38,4 +38,4 @@ class Files(MongoModel):
                 "picture": self.picture,
                 "md5": self.md5,
                 "status": self.status,
-                "add_time": now()}
+                "add_time": now_utc()}

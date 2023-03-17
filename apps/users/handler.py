@@ -99,6 +99,33 @@ class Deletehandler(BaseHandler):
         self.write(json.dumps(res))
 
 
+# 批量删除
+class BatchDeleteHandler(BaseHandler):
+    '''
+       post -> /user/batchDelete/
+       payload:
+           {
+                "ids": "多选ID"
+           }
+    '''
+
+    @authenticated_admin_async
+    async def post(self):
+        res = resFunc({})
+        data = self.request.body.decode('utf-8')
+        data = json.loads(data)
+        form = UserForm.from_json(data)
+        ids = form.ids.data
+        ids = [int(_id) for _id in ids]
+        # 批量删除
+        user_db = User()
+        await user_db.delete_many({"_id": {"$in": ids}})
+        for _id in ids:
+            # 删除缓存
+            UserService.delete_cache(_id)
+        self.write(json.dumps(res))
+
+
 # 修改
 class UpdateHandler(BaseHandler):
     '''

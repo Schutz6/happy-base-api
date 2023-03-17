@@ -10,7 +10,7 @@ from bases.decorators import authenticated_async, log_async
 from bases.handler import BaseHandler
 from bases.res import resFunc
 from bases.settings import settings
-from bases.utils import get_md5, now
+from bases.utils import get_md5, now_utc
 
 
 # 用户登录
@@ -98,7 +98,7 @@ class UserHandler(BaseHandler):
         # 更新登录信息
         user_db = User()
         await user_db.update_one({"_id": current_user["_id"]}, {
-            "$set": {"last_time": now(), "last_ip": self.request.remote_ip}})
+            "$set": {"last_time": now_utc(), "last_ip": self.request.remote_ip}})
         self.write(json.dumps(res))
 
     '''

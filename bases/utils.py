@@ -42,9 +42,14 @@ def format_time(_time, fmt):
     return datetime.fromtimestamp(_time/1000).strftime(fmt)
 
 
-# 获取当前时间戳（UTC）
-def now():
+# 获取UTC时间戳
+def now_utc():
     return int(datetime.utcnow().timestamp() * 1000)
+
+
+# 获取本地时间戳
+def now_local():
+    return int(datetime.now().timestamp() * 1000)
 
 
 # 本地时间转UTC时间戳

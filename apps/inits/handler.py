@@ -39,7 +39,7 @@ class InitDataHandler(BaseHandler):
             user_db1.has_password = 1
             user_db1.status = 1
             user_db1.avatar = get_random_head()
-            user_db1.roles = ["superadmin"]
+            user_db1.roles = ["admin"]
             await user_db1.insert_one(user_db1.get_add_json())
 
             # 新增角色

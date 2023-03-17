@@ -7,8 +7,8 @@ settings = {
     "secret_key": "R7gKOqXTiti9HuXG",
     "app_jwt_expire": 30 * 24 * 3600,
     "admin_jwt_expire": 24 * 3600,
-    "SAVE_URL": "/Users/huangchao/PycharmProjects/whole-api/static",
-    "SITE_URL": "http://127.0.0.1:8007/static",
+    "SAVE_URL": "/Users/huangchao/Downloads/download",
+    "SITE_URL": "http://127.0.0.1/download",
     'redis': {
         "host": "127.0.0.1",
         "port": 6379,

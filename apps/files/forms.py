@@ -7,3 +7,4 @@ from bases.forms import BaseForm
 class FileForm(BaseForm):
     name = StringField("文件名称")
     status = IntegerField("文件状态 1临时 2永存")
+    type = IntegerField("文件类型")

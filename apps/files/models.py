@@ -20,8 +20,6 @@ class Files(MongoModel):
     type = 0
     # 文件大小
     size = None
-    # 图片预览地址
-    picture = None
     # 文件md5值
     md5 = None
     # 文件状态 1临时 2永存
@@ -35,7 +33,6 @@ class Files(MongoModel):
                 "store_path": self.store_path,
                 "type": self.type,
                 "size": self.size,
-                "picture": self.picture,
                 "md5": self.md5,
                 "status": self.status,
                 "add_time": now_utc()}

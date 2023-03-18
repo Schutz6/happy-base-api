@@ -109,6 +109,7 @@ class ListHandler(BaseHandler):
                "currentPage": 1,
                "pageSize": 10,
                "searchKey": "关键字",
+               "status": "状态"
            }
     '''
 
@@ -121,12 +122,16 @@ class ListHandler(BaseHandler):
         current_page = form.currentPage.data
         page_size = form.pageSize.data
         search_key = form.searchKey.data
+        status = form.status.data
+
         param_db = Param()
         # 查询条件
         query_criteria = {"_id": {"$ne": "sequence_id"}}
         if search_key is not None:
             query_criteria["$or"] = [{"key": re.compile(search_key)}, {"value": re.compile(search_key)},
                                      {"remarks": re.compile(search_key)}]
+        if status is not None:
+            query_criteria["status"] = status
         # 查询分页
         query = await param_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 

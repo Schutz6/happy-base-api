@@ -1,5 +1,6 @@
 import json
 
+from apps.menus.models import Menu
 from apps.roles.models import Role
 from apps.users.models import User
 from bases.decorators import log_async
@@ -53,15 +54,116 @@ class InitDataHandler(BaseHandler):
             role_db2 = Role()
             role_db2.name = "user"
             role_db2.describe = "普通用户"
-            role_db1.remarks = "没后台权限（不要删）"
-            role_db1.sort = 97
+            role_db2.remarks = "没后台权限（不要删）"
+            role_db2.sort = 97
             await role_db2.insert_one(role_db2.get_add_json())
 
             role_db3 = Role()
             role_db3.name = "admin"
             role_db3.describe = "普通管理员"
-            role_db1.remarks = "拥有部分权限（不要删）"
-            role_db1.sort = 98
+            role_db3.remarks = "拥有部分权限（不要删）"
+            role_db3.sort = 98
             await role_db3.insert_one(role_db3.get_add_json())
+
+            # 新增菜单
+            menu_db = Menu()
+            menu_db.pid = 0
+            menu_db.name = "系统管理"
+            menu_db.url = "#"
+            menu_db.roles = ["superadmin", "admin"]
+            menu_db.level = 1
+            menu_db.sort = 890
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
+
+            menu_db = Menu()
+            menu_db.pid = 1
+            menu_db.name = "用户管理"
+            menu_db.url = "/pages/system/user/user"
+            menu_db.roles = ["superadmin", "admin"]
+            menu_db.level = 2
+            menu_db.sort = 880
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
+
+            menu_db = Menu()
+            menu_db.pid = 1
+            menu_db.name = "角色管理"
+            menu_db.url = "/pages/system/role/role"
+            menu_db.roles = ["superadmin"]
+            menu_db.level = 2
+            menu_db.sort = 870
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
+
+            menu_db = Menu()
+            menu_db.pid = 1
+            menu_db.name = "菜单管理"
+            menu_db.url = "/pages/system/menus/menus"
+            menu_db.roles = ["superadmin"]
+            menu_db.level = 2
+            menu_db.sort = 860
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
+
+            menu_db = Menu()
+            menu_db.pid = 1
+            menu_db.name = "字典管理"
+            menu_db.url = "/pages/system/dict/dict"
+            menu_db.roles = ["superadmin", "admin"]
+            menu_db.level = 2
+            menu_db.sort = 850
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
+
+            menu_db = Menu()
+            menu_db.pid = 1
+            menu_db.name = "参数管理"
+            menu_db.url = "/pages/system/param/param"
+            menu_db.roles = ["superadmin", "admin"]
+            menu_db.level = 2
+            menu_db.sort = 840
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
+
+            menu_db = Menu()
+            menu_db.pid = 1
+            menu_db.name = "任务管理"
+            menu_db.url = "/pages/system/task/task"
+            menu_db.roles = ["superadmin", "admin"]
+            menu_db.level = 2
+            menu_db.sort = 830
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
+
+            menu_db = Menu()
+            menu_db.pid = 1
+            menu_db.name = "文件管理"
+            menu_db.url = "/pages/system/files/files"
+            menu_db.roles = ["superadmin", "admin"]
+            menu_db.level = 2
+            menu_db.sort = 820
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
+
+            menu_db = Menu()
+            menu_db.pid = 1
+            menu_db.name = "系统日志"
+            menu_db.url = "/pages/system/logs/logs"
+            menu_db.roles = ["superadmin", "admin"]
+            menu_db.level = 2
+            menu_db.sort = 810
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
+
+            menu_db = Menu()
+            menu_db.pid = 0
+            menu_db.name = "首页概况"
+            menu_db.url = "/pages/index/index"
+            menu_db.roles = ["superadmin", "admin"]
+            menu_db.level = 1
+            menu_db.sort = 990
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
 
         self.write(json.dumps(res))

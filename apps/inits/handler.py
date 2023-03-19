@@ -24,6 +24,7 @@ class InitDataHandler(BaseHandler):
         if user is None:
             user_db.name = "超级管理员"
             user_db.username = "superadmin"
+            user_db.email = "superadmin@admin.com"
             user_db.gender = "no"
             user_db.password = get_md5("123456")
             user_db.has_password = 1
@@ -35,6 +36,7 @@ class InitDataHandler(BaseHandler):
             user_db1 = User()
             user_db1.name = "管理员"
             user_db1.username = "admin"
+            user_db1.email = "admin@admin.com"
             user_db1.gender = "no"
             user_db1.password = get_md5("123456")
             user_db1.has_password = 1

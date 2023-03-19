@@ -42,6 +42,11 @@ def format_time(_time, fmt):
     return datetime.fromtimestamp(_time/1000).strftime(fmt)
 
 
+# 字符串转时间戳
+def to_timestamp(_time_str):
+    return int(datetime.strptime(_time_str, "%Y-%m-%d %H:%M:%S").timestamp() * 1000)
+
+
 # 获取UTC时间戳
 def now_utc():
     return int(datetime.utcnow().timestamp() * 1000)

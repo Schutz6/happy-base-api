@@ -190,7 +190,7 @@ class ChangePwdHandler(BaseHandler):
         new_password = form.newPassword.data
         if form.validate():
             user_db = User()
-            user = user_db.find_one({"_id": user["_id"]})
+            user = await user_db.find_one({"_id": user["_id"]})
             if user is not None:
                 # 判断是否第一次修改密码
                 if user["has_password"] == 1:

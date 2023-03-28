@@ -191,8 +191,19 @@ class ListHandler(BaseHandler):
         page_size = form.pageSize.data
         search_key = form.searchKey.data
         status = form.status.data
+
+        current_user = self.current_user
+
         # 查询条件
         query_criteria = {"_id": {"$ne": "sequence_id"}, "username": {"$ne": "000"}}
+        # 查询角色
+        roles = ["user"]
+        if 'admin' in current_user["roles"]:
+            roles.append("admin")
+        if 'superadmin' in current_user["roles"]:
+            roles.append("admin")
+            roles.append("superadmin")
+        query_criteria["roles"] = {"$in": roles}
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"username": re.compile(search_key)}]
         if status is not None:

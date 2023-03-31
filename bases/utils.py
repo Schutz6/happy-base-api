@@ -29,7 +29,7 @@ def get_md5(value):
 
 # 获取随机头像
 def get_random_head():
-    return '/users/default.png'
+    return '/avatars/default.png'
 
 
 # 打印错误日志

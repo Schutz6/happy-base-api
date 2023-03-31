@@ -154,7 +154,7 @@ class HeadUploadHandler(BaseHandler):
     async def post(self):
         res = resFunc({})
         time_path = time.strftime("%Y%m%d", time.localtime())
-        upload_path = os.path.join(os.path.dirname(__file__), settings['SAVE_URL'] + '/heads', time_path)
+        upload_path = os.path.join(os.path.dirname(__file__), settings['SAVE_URL'] + '/avatars', time_path)
         # 判断文件夹是否存在
         if os.path.isdir(upload_path) is False:
             os.makedirs(upload_path)
@@ -195,7 +195,7 @@ class HeadUploadHandler(BaseHandler):
                     if file_md5:
                         files.md5 = str(file_md5, 'utf-8')
                     files.store_path = file_path
-                    files.download_path = '/heads/' + time_path + '/' + filename
+                    files.download_path = '/avatars/' + time_path + '/' + filename
                     files.picture = files.download_path
                     files.type = get_type(suffix)
                     # 判断是否正常的文件类型

@@ -8,6 +8,7 @@ from bases import utils
 from bases.decorators import authenticated_admin_async
 from bases.handler import BaseHandler
 from bases.res import resFunc
+from bases.settings import settings
 from bases.utils import get_md5, get_random_head
 
 
@@ -19,7 +20,6 @@ class AddHandler(BaseHandler):
             {
                 "name": "昵称",
                 "username": "用户名",
-                "email": "邮箱",
                 "gender": "性别",
                 "password": "密码",
                 "roles": "角色列表",
@@ -35,7 +35,6 @@ class AddHandler(BaseHandler):
         form = UserForm.from_json(data)
         name = form.name.data
         username = form.username.data
-        email = form.email.data
         gender = form.gender.data
         password = form.password.data
         roles = form.roles.data
@@ -51,18 +50,9 @@ class AddHandler(BaseHandler):
             self.write(json.dumps(res))
             return
 
-        # 判断邮箱是否存在
-        user = await user_db.find_one({"email": email})
-        if user is not None:
-            res['code'] = 50000
-            res['message'] = '该邮箱已存在'
-            self.write(json.dumps(res))
-            return
-
         # 新增
         user_db.name = name
         user_db.username = username
-        user_db.email = email
         user_db.gender = gender
         user_db.password = get_md5(password)
         user_db.has_password = 1
@@ -137,7 +127,8 @@ class UpdateHandler(BaseHandler):
                 "gender": "性别",
                 "status": "状态 1正常 2注销",
                 "roles": "角色列表",
-                "password": "密码"
+                "password": "密码",
+                "avatar": "头像",
             }
     '''
 
@@ -153,6 +144,7 @@ class UpdateHandler(BaseHandler):
         status = form.status.data
         roles = form.roles.data
         password = form.password.data
+        avatar = form.avatar.data
 
         user_db = User()
 
@@ -163,6 +155,10 @@ class UpdateHandler(BaseHandler):
         # 修改密码
         if password is not None:
             await user_db.update_one({"_id": _id}, {"$set": {"password": get_md5(password)}})
+        # 修改头像
+        if avatar is not None:
+            avatar = avatar.replace(settings['SITE_URL'], "")
+            await user_db.update_one({"_id": _id}, {"$set": {"avatar": avatar}})
         # 删除缓存
         UserService.delete_cache(_id)
         self.write(json.dumps(res))
@@ -220,6 +216,7 @@ class ListHandler(BaseHandler):
         for item in query:
             item['password'] = ""
             item["id"] = item["_id"]
+            item["avatar"] = settings['SITE_URL'] + item["avatar"]
             results.append(item)
 
         data = {

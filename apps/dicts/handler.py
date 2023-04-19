@@ -33,7 +33,7 @@ class ListDictTypeHandler(BaseHandler):
 
         res['data'] = results
 
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 新增字典类型
@@ -68,7 +68,7 @@ class AddDictTypeHandler(BaseHandler):
             await dictType.insert_one(dictType.get_add_json())
         res['message'] = '保存成功'
 
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 删除字典类型
@@ -100,7 +100,7 @@ class DeleteDictTypeHandler(BaseHandler):
         DictService.delete_cache(dictType.id)
 
         res['message'] = '删除成功'
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 获取字典值列表
@@ -122,7 +122,7 @@ class ListDictValueHandler(BaseHandler):
 
         res['data'] = await DictService.get_dict_list(form.dict_tid.data)
 
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 新增字典值
@@ -165,7 +165,7 @@ class AddDictValueHandler(BaseHandler):
         # 删除缓存
         DictService.delete_cache(dict_tid)
 
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 删除字典值
@@ -192,7 +192,7 @@ class DeleteDictValueHandler(BaseHandler):
         # 删除缓存
         DictService.delete_cache(form.dict_tid.data)
 
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 获取字典列表
@@ -226,4 +226,4 @@ class GetDictListHandler(BaseHandler):
             else:
                 results = query
             res['data'] = results
-        self.write(json.dumps(res))
+        self.write(res)

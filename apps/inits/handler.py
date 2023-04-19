@@ -168,4 +168,4 @@ class InitDataHandler(BaseHandler):
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
 
-        self.write(json.dumps(res))
+        self.write(res)

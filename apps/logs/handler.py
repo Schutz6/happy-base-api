@@ -21,7 +21,7 @@ class ClearHandler(BaseHandler):
         # 清空日志
         log_db = Log()
         await log_db.delete_many({})
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 批量删除
@@ -44,7 +44,7 @@ class BatchDeleteHandler(BaseHandler):
         # 批量删除
         log_db = Log()
         await log_db.delete_many({"_id": {"$in": [int(_id) for _id in ids]}})
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 日志列表
@@ -95,4 +95,4 @@ class ListHandler(BaseHandler):
         }
 
         res['data'] = data
-        self.write(json.dumps(res))
+        self.write(res)

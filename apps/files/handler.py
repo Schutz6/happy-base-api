@@ -89,7 +89,7 @@ class UploadHandler(BaseHandler):
                     "size": files_item['size']
                 }
                 res['data'] = data
-                self.write(json.dumps(res))
+                self.write(res)
                 return
 
         if not file_metas:
@@ -136,7 +136,7 @@ class UploadHandler(BaseHandler):
                 res['code'] = 50000
                 res['message'] = '操作失败'
 
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 头像上传
@@ -175,7 +175,7 @@ class HeadUploadHandler(BaseHandler):
                     "size": files_item['size']
                 }
                 res['data'] = data
-                self.write(json.dumps(res))
+                self.write(res)
                 return
 
         if not file_metas:
@@ -223,7 +223,7 @@ class HeadUploadHandler(BaseHandler):
                 res['code'] = 50000
                 res['message'] = '操作失败'
 
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 列表
@@ -282,7 +282,7 @@ class ListHandler(BaseHandler):
         }
 
         res['data'] = data
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 删除
@@ -313,7 +313,7 @@ class DeleteHandler(BaseHandler):
                 os.remove(file["store_path"])
             except Exception as e:
                 show_error_log(e)
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 批量删除
@@ -345,4 +345,4 @@ class BatchDeleteHandler(BaseHandler):
                     show_error_log(e)
         # 批量删除记录
         await file_db.delete_many({"_id": {"$in": [int(_id) for _id in ids]}})
-        self.write(json.dumps(res))
+        self.write(res)

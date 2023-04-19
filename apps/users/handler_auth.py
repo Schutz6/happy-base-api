@@ -43,7 +43,7 @@ class LoginHandler(BaseHandler):
             if login_error_count >= 5:
                 res['code'] = 100061
                 res['message'] = '账号已锁定'
-                self.write(json.dumps(res, default=utils.json_serial))
+                self.write(res)
                 return
             # 判断是否已设置密码
             if user['has_password'] == 0:
@@ -77,7 +77,7 @@ class LoginHandler(BaseHandler):
         else:
             res['code'] = 10005
             res['message'] = '用户不存在'
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 用户信息
@@ -99,7 +99,7 @@ class UserHandler(BaseHandler):
         user_db = User()
         await user_db.update_one({"_id": current_user["_id"]}, {
             "$set": {"last_time": now_utc(), "last_ip": self.request.remote_ip}})
-        self.write(json.dumps(res))
+        self.write(res)
 
     '''
         部分更新用户资料
@@ -148,7 +148,7 @@ class UserHandler(BaseHandler):
         # 删除缓存
         UserService.delete_cache(user["_id"])
 
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 退出登录
@@ -165,7 +165,7 @@ class LogoutHandler(BaseHandler):
         if current_user is not None:
             UserService.remove_login_token(current_user["_id"], channel)
         res["message"] = "成功退出"
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 修改用户密码
@@ -210,7 +210,7 @@ class ChangePwdHandler(BaseHandler):
         else:
             res['code'] = 50000
             res['message'] = "参数验证失败"
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 刷新登录令牌（延长过期时间）
@@ -233,4 +233,4 @@ class RefreshLoginHandler(BaseHandler):
         res['data'] = {"token": token.decode('utf-8')}
         # 存储用户令牌
         UserService.save_login_token(user["_id"], channel, token.decode('utf-8'))
-        self.write(json.dumps(res))
+        self.write(res)

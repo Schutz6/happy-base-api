@@ -44,7 +44,7 @@ class AddHandler(BaseHandler):
             param_db.remarks = remarks
             param_db.status = status
             await param_db.insert_one(param_db.get_add_json())
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 删除
@@ -67,7 +67,7 @@ class DeleteHandler(BaseHandler):
         # 删除数据
         param_db = Param()
         await param_db.delete_one({"_id": _id})
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 修改
@@ -97,7 +97,7 @@ class UpdateHandler(BaseHandler):
         param_db = Param()
         await param_db.update_one({"_id": _id},
                                   {"$set": {"value": value, "remarks": remarks, "status": status}})
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 列表
@@ -153,7 +153,7 @@ class ListHandler(BaseHandler):
         }
 
         res['data'] = data
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 所有列表
@@ -171,4 +171,4 @@ class GetListHandler(BaseHandler):
         for item in query:
             results.append((item["key"], item["value"]))
         res['data'] = dict(results)
-        self.write(json.dumps(res))
+        self.write(res)

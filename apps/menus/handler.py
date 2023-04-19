@@ -49,7 +49,7 @@ class AddHandler(BaseHandler):
         menu_db.sort = sort
         menu_db.status = status
         await menu_db.insert_one(menu_db.get_add_json())
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 删除
@@ -72,7 +72,7 @@ class DeleteHandler(BaseHandler):
         # 删除数据
         menu_db = Menu()
         await menu_db.delete_one({"_id": _id})
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 修改
@@ -109,7 +109,7 @@ class UpdateHandler(BaseHandler):
         await menu_db.update_one({"_id": _id},
                                  {"$set": {"name": name, "icon": icon, "url": url, "roles": roles, "sort": sort,
                                            "status": status}})
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 列表
@@ -138,7 +138,7 @@ class ListHandler(BaseHandler):
                 two["id"] = two["_id"]
                 results.append(two)
         res['data'] = results
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 所有列表
@@ -169,4 +169,4 @@ class GetListHandler(BaseHandler):
                 children.append({"text": two["name"], "value": two["url"], "icon": two.get("icon")})
             results.append({"text": one["name"], "value": one["url"], "icon": one.get("icon"), "children": children})
         res['data'] = results
-        self.write(json.dumps(res))
+        self.write(res)

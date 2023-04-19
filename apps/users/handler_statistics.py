@@ -63,4 +63,4 @@ class StatisticsUserHandler(BaseHandler):
             data["month_users"] += item["count"]
 
         res["data"] = data
-        self.write(json.dumps(res))
+        self.write(res)

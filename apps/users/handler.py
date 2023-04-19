@@ -47,7 +47,7 @@ class AddHandler(BaseHandler):
         if user is not None:
             res['code'] = 50000
             res['message'] = '该账号已存在'
-            self.write(json.dumps(res))
+            self.write(res)
             return
 
         # 新增
@@ -61,7 +61,7 @@ class AddHandler(BaseHandler):
         user_db.roles = roles
         await user_db.insert_one(user_db.get_add_json())
 
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 删除
@@ -86,7 +86,7 @@ class Deletehandler(BaseHandler):
         await user_db.delete_one({"_id": _id})
         # 删除缓存
         UserService.delete_cache(_id)
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 批量删除
@@ -113,7 +113,7 @@ class BatchDeleteHandler(BaseHandler):
         for _id in ids:
             # 删除缓存
             UserService.delete_cache(_id)
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 修改
@@ -161,7 +161,7 @@ class UpdateHandler(BaseHandler):
             await user_db.update_one({"_id": _id}, {"$set": {"avatar": avatar}})
         # 删除缓存
         UserService.delete_cache(_id)
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 列表
@@ -173,6 +173,7 @@ class ListHandler(BaseHandler):
                "currentPage": 1,
                "pageSize": 10,
                "searchKey": "关键字",
+               "roles": "角色",
                "status": "状态"
            }
     '''
@@ -186,19 +187,21 @@ class ListHandler(BaseHandler):
         current_page = form.currentPage.data
         page_size = form.pageSize.data
         search_key = form.searchKey.data
+        roles = form.roles.data
         status = form.status.data
 
         current_user = self.current_user
 
         # 查询条件
-        query_criteria = {"_id": {"$ne": "sequence_id"}, "username": {"$ne": "000"}}
-        # 查询角色
-        roles = ["user"]
-        if 'admin' in current_user["roles"]:
-            roles.append("admin")
-        if 'superadmin' in current_user["roles"]:
-            roles.append("admin")
-            roles.append("superadmin")
+        query_criteria = {"_id": {"$ne": "sequence_id"}}
+        if len(roles) == 0:
+            # 查询角色
+            roles = ["user"]
+            if 'admin' in current_user["roles"]:
+                roles.append("admin")
+            if 'superadmin' in current_user["roles"]:
+                roles.append("admin")
+                roles.append("superadmin")
         query_criteria["roles"] = {"$in": roles}
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"username": re.compile(search_key)}]
@@ -228,5 +231,5 @@ class ListHandler(BaseHandler):
         }
 
         res['data'] = data
-        self.write(json.dumps(res))
+        self.write(res)
 

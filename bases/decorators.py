@@ -25,23 +25,23 @@ def authenticated_admin_async(func):
                 if len(authorization) != 2:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
-                    self.write(json.dumps(res))
+                    self.write(res)
                     return None
                 else:
                     if authorization[0] != 'JWT':
                         res['code'] = 10010
                         res['message'] = "令牌已失效"
-                        self.write(json.dumps(res))
+                        self.write(res)
                         return None
             else:
                 res['code'] = 10010
                 res['message'] = "令牌已失效"
-                self.write(json.dumps(res))
+                self.write(res)
                 return None
         except jwt.exceptions.PyJWTError:
             res['code'] = 10010
             res['message'] = "令牌已失效"
-            self.write(json.dumps(res))
+            self.write(res)
             return None
 
         authorization = authorization[1]
@@ -79,19 +79,19 @@ def authenticated_admin_async(func):
                     else:
                         res['code'] = 10012
                         res['message'] = "权限不足"
-                        self.write(json.dumps(res))
+                        self.write(res)
                 else:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
-                    self.write(json.dumps(res))
+                    self.write(res)
             except jwt.exceptions.PyJWTError:
                 res['code'] = 10010
                 res['message'] = "令牌已失效"
-                self.write(json.dumps(res))
+                self.write(res)
         else:
             res['code'] = 10010
             res['message'] = "令牌已失效"
-            self.write(json.dumps(res))
+            self.write(res)
 
     return wrapper
 
@@ -110,23 +110,23 @@ def authenticated_async(func):
                 if len(authorization) != 2:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
-                    self.write(json.dumps(res))
+                    self.write(res)
                     return None
                 else:
                     if authorization[0] != 'JWT':
                         res['code'] = 10010
                         res['message'] = "令牌已失效"
-                        self.write(json.dumps(res))
+                        self.write(res)
                         return None
             else:
                 res['code'] = 10010
                 res['message'] = "令牌已失效"
-                self.write(json.dumps(res))
+                self.write(res)
                 return None
         except jwt.exceptions.PyJWTError:
             res['code'] = 10010
             res['message'] = "令牌已失效"
-            self.write(json.dumps(res))
+            self.write(res)
             return None
 
         authorization = authorization[1]
@@ -162,15 +162,15 @@ def authenticated_async(func):
                 else:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
-                    self.write(json.dumps(res))
+                    self.write(res)
             except jwt.exceptions.PyJWTError:
                 res['code'] = 10010
                 res['message'] = "令牌已失效"
-                self.write(json.dumps(res))
+                self.write(res)
         else:
             res['code'] = 10010
             res['message'] = "令牌已失效"
-            self.write(json.dumps(res))
+            self.write(res)
 
     return wrapper
 

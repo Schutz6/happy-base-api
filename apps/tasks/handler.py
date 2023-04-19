@@ -49,7 +49,7 @@ class AddHandler(BaseHandler):
 
         await task_db.insert_one(task_db.get_add_json())
 
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 删除
@@ -73,7 +73,7 @@ class DeleteHandler(BaseHandler):
         task_db = Task()
         # 删除数据
         await task_db.delete_one({"_id": _id})
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 修改
@@ -112,7 +112,7 @@ class UpdateHandler(BaseHandler):
             "$set": {"name": name, "func": func, "type": _type,
                      "exec_cron": exec_cron, "exec_interval": exec_interval, "status": 0,
                      "options": options}})
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 列表
@@ -162,7 +162,7 @@ class ListHandler(BaseHandler):
         }
 
         res['data'] = data
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 开启任务
@@ -190,7 +190,7 @@ class StartTaskHandler(BaseHandler):
                 await run_task(self.application.scheduler, task)
                 # 修改数据状态
                 await task_db.update_one({"_id": _id}, {"$set": {"status": 1}})
-        self.write(json.dumps(res))
+        self.write(res)
 
 
 # 停止任务
@@ -222,4 +222,4 @@ class EndTaskHandler(BaseHandler):
                     show_error_log(e)
                 # 修改数据状态
                 await task_db.update_one({"_id": _id}, {"$set": {"status": 2}})
-        self.write(json.dumps(res))
+        self.write(res)

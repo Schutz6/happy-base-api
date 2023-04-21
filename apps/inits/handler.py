@@ -1,6 +1,7 @@
 import json
 
 from apps.menus.models import Menu
+from apps.params.models import Param
 from apps.roles.models import Role
 from apps.users.models import User
 from bases.decorators import log_async
@@ -167,5 +168,12 @@ class InitDataHandler(BaseHandler):
             menu_db.sort = 990
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
+
+            param_db = Param()
+            param_db.key = "siteName"
+            param_db.value = "网站名称"
+            param_db.status = 0
+            param_db.remarks = "网站名称"
+            await param_db.insert_one(param_db.get_add_json())
 
         self.write(res)

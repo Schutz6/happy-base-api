@@ -155,14 +155,14 @@ class GetListHandler(BaseHandler):
 
         menu_db = Menu()
         # 查询一级菜单
-        query_criteria = {"pid": 0, "roles": {"$in": current_user["roles"]}}
+        query_criteria = {"pid": 0, "status": 1, "roles": {"$in": current_user["roles"]}}
         query_one = await menu_db.find_all(query_criteria)
         query_one = await menu_db.query_sort(query_one, [("sort", -1), ("_id", -1)])
 
         results = []
         for one in query_one:
             # 查询二级菜单
-            query_two = await menu_db.find_all({"pid": one["_id"], "roles": {"$in": current_user["roles"]}})
+            query_two = await menu_db.find_all({"pid": one["_id"], "status": 1, "roles": {"$in": current_user["roles"]}})
             query_two = await menu_db.query_sort(query_two, [("sort", -1), ("_id", -1)])
             children = []
             for two in query_two:

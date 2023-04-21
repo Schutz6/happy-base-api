@@ -12,9 +12,9 @@ from bases.settings import settings
 from bases.utils import get_md5, get_random_head
 
 
-# 添加
 class AddHandler(BaseHandler):
     '''
+        添加
         post -> /user/add/
         payload:
             {
@@ -64,9 +64,9 @@ class AddHandler(BaseHandler):
         self.write(res)
 
 
-# 删除
 class Deletehandler(BaseHandler):
     '''
+        删除
         post -> /user/delete/
         payload:
             {
@@ -89,11 +89,11 @@ class Deletehandler(BaseHandler):
         self.write(res)
 
 
-# 批量删除
 class BatchDeleteHandler(BaseHandler):
     '''
-       post -> /user/batchDelete/
-       payload:
+        批量删除
+        post -> /user/batchDelete/
+        payload:
            {
                 "ids": "多选ID"
            }
@@ -116,9 +116,9 @@ class BatchDeleteHandler(BaseHandler):
         self.write(res)
 
 
-# 修改
 class UpdateHandler(BaseHandler):
     '''
+        修改
         post -> /user/update/
         payload:
             {
@@ -164,18 +164,18 @@ class UpdateHandler(BaseHandler):
         self.write(res)
 
 
-# 列表
 class ListHandler(BaseHandler):
     '''
-       post -> /user/list/
-       payload:
-           {
+        列表
+        post -> /user/list/
+        payload:
+            {
                "currentPage": 1,
                "pageSize": 10,
                "searchKey": "关键字",
                "roles": "角色",
                "status": "状态"
-           }
+            }
     '''
 
     @authenticated_admin_async
@@ -232,4 +232,3 @@ class ListHandler(BaseHandler):
 
         res['data'] = data
         self.write(res)
-

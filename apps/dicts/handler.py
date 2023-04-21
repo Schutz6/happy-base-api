@@ -9,9 +9,9 @@ from bases.res import resFunc
 from bases.settings import settings
 
 
-# 获取字典类型列表
 class ListDictTypeHandler(BaseHandler):
     '''
+        获取字典类型列表
         get -> /dict/typeList/
     '''
 
@@ -36,9 +36,9 @@ class ListDictTypeHandler(BaseHandler):
         self.write(res)
 
 
-# 新增字典类型
 class AddDictTypeHandler(BaseHandler):
     '''
+        新增字典类型
         post -> /dict/typeAdd/
         payload:
             {
@@ -71,9 +71,9 @@ class AddDictTypeHandler(BaseHandler):
         self.write(res)
 
 
-# 删除字典类型
 class DeleteDictTypeHandler(BaseHandler):
     '''
+        删除字典类型
         post -> /dict/typeDelete/
         payload:
             {
@@ -103,9 +103,9 @@ class DeleteDictTypeHandler(BaseHandler):
         self.write(res)
 
 
-# 获取字典值列表
 class ListDictValueHandler(BaseHandler):
     '''
+        获取字典值列表
         post -> /dict/valueList/
         payload:
             {
@@ -125,9 +125,9 @@ class ListDictValueHandler(BaseHandler):
         self.write(res)
 
 
-# 新增字典值
 class AddDictValueHandler(BaseHandler):
     '''
+        新增字典值
         post -> /dict/valueAdd/
         payload:
             {
@@ -168,9 +168,9 @@ class AddDictValueHandler(BaseHandler):
         self.write(res)
 
 
-# 删除字典值
 class DeleteDictValueHandler(BaseHandler):
     '''
+        删除字典值
         post -> /dict/valueDelete/
         payload:
             {
@@ -195,9 +195,9 @@ class DeleteDictValueHandler(BaseHandler):
         self.write(res)
 
 
-# 获取字典列表
 class GetDictListHandler(BaseHandler):
     '''
+        获取字典列表
         post -> /dict/getList/
         payload:
             {

@@ -10,10 +10,10 @@ from bases.res import resFunc
 from bases.utils import get_md5, get_random_head
 
 
-# 初始化基础数据（谨慎操作）
 class InitDataHandler(BaseHandler):
     '''
-       get -> /init/data/
+        初始化基础数据（谨慎操作）
+        get -> /init/data/
     '''
 
     @log_async

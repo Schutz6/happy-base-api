@@ -9,9 +9,9 @@ from bases.handler import BaseHandler
 from bases.res import resFunc
 
 
-# 添加
 class AddHandler(BaseHandler):
     '''
+        添加
         post -> /role/add/
         payload:
             {
@@ -47,9 +47,9 @@ class AddHandler(BaseHandler):
         self.write(res)
 
 
-# 删除
 class DeleteHandler(BaseHandler):
     '''
+        删除
         post -> /role/delete/
         payload:
             {
@@ -70,9 +70,9 @@ class DeleteHandler(BaseHandler):
         self.write(res)
 
 
-# 修改
 class UpdateHandler(BaseHandler):
     '''
+        修改
         post -> /role/update/
         payload:
             {
@@ -101,11 +101,11 @@ class UpdateHandler(BaseHandler):
         self.write(res)
 
 
-# 列表
 class ListHandler(BaseHandler):
     '''
-       post -> /role/list/
-       payload:
+        列表
+        post -> /role/list/
+        payload:
            {
                "currentPage": 1,
                "pageSize": 10,
@@ -151,10 +151,10 @@ class ListHandler(BaseHandler):
         self.write(res)
 
 
-# 所有列表
 class GetListHandler(BaseHandler):
     '''
-       get -> /role/getList/
+        所有列表
+        get -> /role/getList/
     '''
 
     @authenticated_admin_async

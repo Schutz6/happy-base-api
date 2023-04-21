@@ -5,7 +5,6 @@ from datetime import datetime
 from apps.users.forms import LoginForm, UserForm, ChangePwdForm
 from apps.users.models import User
 from apps.users.service import UserService
-from bases import utils
 from bases.decorators import authenticated_async, log_async
 from bases.handler import BaseHandler
 from bases.res import resFunc
@@ -13,9 +12,9 @@ from bases.settings import settings
 from bases.utils import get_md5, now_utc
 
 
-# 用户登录
 class LoginHandler(BaseHandler):
     '''
+        用户登录
         post -> /login/
         payload:
             {
@@ -80,7 +79,6 @@ class LoginHandler(BaseHandler):
         self.write(res)
 
 
-# 用户信息
 class UserHandler(BaseHandler):
     '''
         读取用户资料
@@ -151,9 +149,9 @@ class UserHandler(BaseHandler):
         self.write(res)
 
 
-# 退出登录
 class LogoutHandler(BaseHandler):
     '''
+        退出登录
         get -> /logout/
     '''
 
@@ -168,15 +166,15 @@ class LogoutHandler(BaseHandler):
         self.write(res)
 
 
-# 修改用户密码
 class ChangePwdHandler(BaseHandler):
     '''
-    post -> /changePwd/
-    payload:
-        {
-            "oldPassword": "旧密码"
-            "newPassword": "新密码"
-        }
+        修改用户密码
+        post -> /changePwd/
+        payload:
+            {
+                "oldPassword": "旧密码"
+                "newPassword": "新密码"
+            }
     '''
 
     @authenticated_async
@@ -213,10 +211,10 @@ class ChangePwdHandler(BaseHandler):
         self.write(res)
 
 
-# 刷新登录令牌（延长过期时间）
 class RefreshLoginHandler(BaseHandler):
     '''
-       get -> /refreshLogin/
+        刷新登录令牌（延长过期时间）
+        get -> /refreshLogin/
     '''
 
     @authenticated_async

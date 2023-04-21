@@ -11,9 +11,9 @@ from bases.res import resFunc
 from bases.utils import show_error_log
 
 
-# 添加
 class AddHandler(BaseHandler):
     '''
+        添加
         post -> /task/add/
         payload:
             {
@@ -52,9 +52,9 @@ class AddHandler(BaseHandler):
         self.write(res)
 
 
-# 删除
 class DeleteHandler(BaseHandler):
     '''
+        删除
         post -> /task/delete/
         payload:
             {
@@ -76,9 +76,9 @@ class DeleteHandler(BaseHandler):
         self.write(res)
 
 
-# 修改
 class UpdateHandler(BaseHandler):
     '''
+        修改
         post -> /task/update/
         payload:
             {
@@ -115,11 +115,11 @@ class UpdateHandler(BaseHandler):
         self.write(res)
 
 
-# 列表
 class ListHandler(BaseHandler):
     '''
-       post -> /task/list/
-       payload:
+        列表
+        post -> /task/list/
+        payload:
            {
                "currentPage": 1,
                "pageSize": 10,
@@ -165,9 +165,9 @@ class ListHandler(BaseHandler):
         self.write(res)
 
 
-# 开启任务
 class StartTaskHandler(BaseHandler):
     '''
+        开启任务
         post -> /task/start/
         payload:
             {
@@ -193,9 +193,9 @@ class StartTaskHandler(BaseHandler):
         self.write(res)
 
 
-# 停止任务
 class EndTaskHandler(BaseHandler):
     '''
+        停止任务
         post -> /task/end/
         payload:
             {

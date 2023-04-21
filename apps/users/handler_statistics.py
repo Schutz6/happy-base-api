@@ -7,10 +7,10 @@ from bases.res import resFunc
 from bases.utils import now_utc, format_time, to_timestamp, get_add_time
 
 
-# 统计用户数据
 class StatisticsUserHandler(BaseHandler):
     '''
-       get -> /statistics/user/
+        统计用户数据
+        get -> /statistics/user/
     '''
 
     @authenticated_admin_async

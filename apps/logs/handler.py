@@ -9,9 +9,9 @@ from bases.handler import BaseHandler
 from bases.res import resFunc
 
 
-# 清空日志
 class ClearHandler(BaseHandler):
     '''
+        清空日志
         get -> /log/clear/
     '''
 
@@ -24,11 +24,11 @@ class ClearHandler(BaseHandler):
         self.write(res)
 
 
-# 批量删除
 class BatchDeleteHandler(BaseHandler):
     '''
-       post -> /log/batchDelete/
-       payload:
+        批量删除
+        post -> /log/batchDelete/
+        payload:
            {
                 "ids": "多选ID"
            }
@@ -47,11 +47,11 @@ class BatchDeleteHandler(BaseHandler):
         self.write(res)
 
 
-# 日志列表
 class ListHandler(BaseHandler):
     '''
-       post -> /log/list/
-       payload:
+        日志列表
+        post -> /log/list/
+        payload:
            {
                "currentPage": 1,
                "pageSize": 10,

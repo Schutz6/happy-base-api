@@ -7,9 +7,9 @@ from bases.handler import BaseHandler
 from bases.res import resFunc
 
 
-# 添加
 class AddHandler(BaseHandler):
     '''
+        添加
         post -> /menu/add/
         payload:
             {
@@ -52,9 +52,9 @@ class AddHandler(BaseHandler):
         self.write(res)
 
 
-# 删除
 class DeleteHandler(BaseHandler):
     '''
+        删除
         post -> /menu/delete/
         payload:
             {
@@ -75,9 +75,9 @@ class DeleteHandler(BaseHandler):
         self.write(res)
 
 
-# 修改
 class UpdateHandler(BaseHandler):
     '''
+        修改
         post -> /menu/update/
         payload:
             {
@@ -112,10 +112,10 @@ class UpdateHandler(BaseHandler):
         self.write(res)
 
 
-# 列表
 class ListHandler(BaseHandler):
     '''
-       get -> /menu/list/
+        列表
+        get -> /menu/list/
     '''
 
     @authenticated_admin_async
@@ -141,10 +141,10 @@ class ListHandler(BaseHandler):
         self.write(res)
 
 
-# 所有列表
 class GetListHandler(BaseHandler):
     '''
-       get -> /menu/getList/
+        所有列表
+        get -> /menu/getList/
     '''
 
     @authenticated_async

@@ -13,8 +13,13 @@ from bases.res import resFunc
 from bases.utils import show_error_log, get_random
 
 
-# 获取文件类型
 def get_type(suffix):
+    """
+    获取文件类型
+    :param suffix:
+    :return:
+    """
+
     if suffix in ['gif', 'jpg', 'jpeg', 'png', 'webp', 'bmp', 'ico']:
         # 图片
         return 2
@@ -31,14 +36,22 @@ def get_type(suffix):
         return -1
 
 
-# 获取文件大小
 def get_size(path):
+    """
+    获取文件大小
+    :param path:
+    :return:
+    """
     size = os.path.getsize(path)
     return format_size(size)
 
 
-# 格式化文件大小kb\m\g
 def format_size(_bytes):
+    """
+    格式化文件大小kb\m\g
+    :param _bytes:
+    :return:
+    """
     _bytes = float(_bytes)
     kb = _bytes / 1024
     if kb >= 1024:
@@ -52,9 +65,9 @@ def format_size(_bytes):
         return "%.2fkb" % kb
 
 
-# 文件上传
 class UploadHandler(BaseHandler):
     '''
+    文件上传
     post -> /file/upload/
     payload:
         {
@@ -139,15 +152,15 @@ class UploadHandler(BaseHandler):
         self.write(res)
 
 
-# 头像上传
 class HeadUploadHandler(BaseHandler):
     '''
-    post -> /file/upload/head/
-    payload:
-        {
-            "md5": "文件md5值"
-            "file": "文件"
-        }
+        头像上传
+        post -> /file/upload/head/
+        payload:
+            {
+                "md5": "文件md5值"
+                "file": "文件"
+            }
     '''
 
     @authenticated_async
@@ -226,11 +239,11 @@ class HeadUploadHandler(BaseHandler):
         self.write(res)
 
 
-# 列表
 class ListHandler(BaseHandler):
     '''
-       post -> /file/list/
-       payload:
+        列表
+        post -> /file/list/
+        payload:
            {
                "currentPage": 1,
                "pageSize": 10,
@@ -285,9 +298,9 @@ class ListHandler(BaseHandler):
         self.write(res)
 
 
-# 删除
 class DeleteHandler(BaseHandler):
     '''
+        删除
         post -> /file/delete/
         payload:
             {
@@ -316,11 +329,11 @@ class DeleteHandler(BaseHandler):
         self.write(res)
 
 
-# 批量删除
 class BatchDeleteHandler(BaseHandler):
     '''
-       post -> /file/batchDelete/
-       payload:
+        批量删除
+        post -> /file/batchDelete/
+        payload:
            {
                 "ids": "多选ID"
            }

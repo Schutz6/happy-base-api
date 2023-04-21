@@ -71,11 +71,21 @@ class InitDataHandler(BaseHandler):
             # 新增菜单
             menu_db = Menu()
             menu_db.pid = 0
+            menu_db.name = "首页概况"
+            menu_db.url = "/pages/index/index"
+            menu_db.roles = ["superadmin", "admin"]
+            menu_db.level = 1
+            menu_db.sort = 900
+            menu_db.status = 1
+            await menu_db.insert_one(menu_db.get_add_json())
+
+            menu_db = Menu()
+            menu_db.pid = 0
             menu_db.name = "系统管理"
             menu_db.url = "#"
             menu_db.roles = ["superadmin", "admin"]
             menu_db.level = 1
-            menu_db.sort = 890
+            menu_db.sort = 100
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
 
@@ -85,7 +95,7 @@ class InitDataHandler(BaseHandler):
             menu_db.url = "/pages/system/user/user"
             menu_db.roles = ["superadmin", "admin"]
             menu_db.level = 2
-            menu_db.sort = 880
+            menu_db.sort = 190
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
 
@@ -95,7 +105,7 @@ class InitDataHandler(BaseHandler):
             menu_db.url = "/pages/system/role/role"
             menu_db.roles = ["superadmin"]
             menu_db.level = 2
-            menu_db.sort = 870
+            menu_db.sort = 180
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
 
@@ -105,7 +115,7 @@ class InitDataHandler(BaseHandler):
             menu_db.url = "/pages/system/menus/menus"
             menu_db.roles = ["superadmin"]
             menu_db.level = 2
-            menu_db.sort = 860
+            menu_db.sort = 170
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
 
@@ -115,7 +125,7 @@ class InitDataHandler(BaseHandler):
             menu_db.url = "/pages/system/dict/dict"
             menu_db.roles = ["superadmin", "admin"]
             menu_db.level = 2
-            menu_db.sort = 850
+            menu_db.sort = 160
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
 
@@ -125,7 +135,7 @@ class InitDataHandler(BaseHandler):
             menu_db.url = "/pages/system/param/param"
             menu_db.roles = ["superadmin", "admin"]
             menu_db.level = 2
-            menu_db.sort = 840
+            menu_db.sort = 150
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
 
@@ -135,7 +145,7 @@ class InitDataHandler(BaseHandler):
             menu_db.url = "/pages/system/task/task"
             menu_db.roles = ["superadmin", "admin"]
             menu_db.level = 2
-            menu_db.sort = 830
+            menu_db.sort = 140
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
 
@@ -145,7 +155,7 @@ class InitDataHandler(BaseHandler):
             menu_db.url = "/pages/system/files/files"
             menu_db.roles = ["superadmin", "admin"]
             menu_db.level = 2
-            menu_db.sort = 820
+            menu_db.sort = 130
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
 
@@ -155,17 +165,7 @@ class InitDataHandler(BaseHandler):
             menu_db.url = "/pages/system/logs/logs"
             menu_db.roles = ["superadmin", "admin"]
             menu_db.level = 2
-            menu_db.sort = 810
-            menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
-
-            menu_db = Menu()
-            menu_db.pid = 0
-            menu_db.name = "首页概况"
-            menu_db.url = "/pages/index/index"
-            menu_db.roles = ["superadmin", "admin"]
-            menu_db.level = 1
-            menu_db.sort = 990
+            menu_db.sort = 120
             menu_db.status = 1
             await menu_db.insert_one(menu_db.get_add_json())
 

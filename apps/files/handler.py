@@ -132,7 +132,7 @@ class UploadHandler(BaseHandler):
                     files.size = get_size(file_path)
                     # 入库
                     files.status = 1
-                    await files.insert_one(files.get_add_json())
+                    files.insert_one(files.get_add_json())
 
                     # 返回数据
                     data = {
@@ -219,7 +219,7 @@ class HeadUploadHandler(BaseHandler):
                     files.size = get_size(file_path)
                     # 入库
                     files.status = 2
-                    await files.insert_one(files.get_add_json())
+                    files.insert_one(files.get_add_json())
 
                     # 返回数据
                     data = {
@@ -274,10 +274,10 @@ class ListHandler(BaseHandler):
         if status is not None:
             query_criteria["status"] = status
         # 查询分页
-        query = await file_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
+        query = file_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
         # 查询总数
-        total = await file_db.query_count(query)
+        total = file_db.query_count(query)
         pages = utils.get_pages(total, page_size)
 
         results = []
@@ -317,10 +317,10 @@ class DeleteHandler(BaseHandler):
         _id = form.id.data
         # 删除数据
         file_db = Files()
-        file = await file_db.find_one({"_id": _id})
+        file = file_db.find_one({"_id": _id})
         if file is not None:
             # 删除记录
-            await file_db.delete_one({"_id": _id})
+            file_db.delete_one({"_id": _id})
             try:
                 # 删除本地文件
                 os.remove(file["store_path"])
@@ -349,7 +349,7 @@ class BatchDeleteHandler(BaseHandler):
         # 批量删除
         file_db = Files()
         for _id in ids:
-            file = await file_db.find_one({"_id": int(_id)})
+            file = file_db.find_one({"_id": int(_id)})
             if file is not None:
                 try:
                     # 删除本地文件
@@ -357,5 +357,5 @@ class BatchDeleteHandler(BaseHandler):
                 except Exception as e:
                     show_error_log(e)
         # 批量删除记录
-        await file_db.delete_many({"_id": {"$in": [int(_id) for _id in ids]}})
+        file_db.delete_many({"_id": {"$in": [int(_id) for _id in ids]}})
         self.write(res)

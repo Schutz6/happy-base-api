@@ -22,14 +22,14 @@ logging.basicConfig(level=logging.ERROR,
 
 
 # 初始化定时任务
-async def init_scheduler():
+def init_scheduler():
     scheduler = TornadoScheduler()
     scheduler.start()
     # 查询数据
     task_db = Task()
-    query = await task_db.find_all({"status": 1})
+    query = task_db.find_all({"status": 1})
     for task in query:
-        await run_task(scheduler, task)
+        run_task(scheduler, task)
     logging.error('定时任务已初始化')
     return scheduler
 
@@ -46,7 +46,7 @@ async def main():
     wtforms_json.init()
     app = make_app()
     app.listen(options.port, xheaders=True)
-    app.scheduler = await init_scheduler()
+    app.scheduler = init_scheduler()
     logging.error('基础API服务已启动，端口=' + str(options.port))
     await asyncio.Event().wait()
 

@@ -20,14 +20,14 @@ class ListDictTypeHandler(BaseHandler):
         res = resFunc([])
         dictType_db = DictType()
         # 查询所有
-        query = await dictType_db.find_all({"_id": {"$ne": "sequence_id"}})
+        query = dictType_db.find_all({"_id": {"$ne": "sequence_id"}})
         # 排序
-        dictTypes = await dictType_db.query_sort(query, [("_id", -1)])
+        dictTypes = dictType_db.query_sort(query, [("_id", -1)])
         results = []
         for dictType in dictTypes:
             dictType["id"] = dictType["_id"]
             # 查询子集
-            dictType["children"] = await DictService.get_dict_list(dictType["_id"])
+            dictType["children"] = DictService.get_dict_list(dictType["_id"])
 
             results.append(dictType)
 
@@ -60,12 +60,12 @@ class AddDictTypeHandler(BaseHandler):
         dictType = DictType()
         if _id is not None:
             # 编辑
-            await dictType.update_one({"_id": _id}, {"$set": {"name": name, "describe": describe}})
+            dictType.update_one({"_id": _id}, {"$set": {"name": name, "describe": describe}})
         else:
             # 新增
             dictType.name = name
             dictType.describe = describe
-            await dictType.insert_one(dictType.get_add_json())
+            dictType.insert_one(dictType.get_add_json())
         res['message'] = '保存成功'
 
         self.write(res)
@@ -90,11 +90,11 @@ class DeleteDictTypeHandler(BaseHandler):
         # 删除类型
         dictType = DictType()
         dictType.id = form.id.data
-        await dictType.delete_one({"_id": dictType.id})
+        dictType.delete_one({"_id": dictType.id})
 
         # 删除值
         dictValue = DictValue()
-        await dictValue.delete_many({"dict_tid": dictType.id})
+        dictValue.delete_many({"dict_tid": dictType.id})
 
         # 删除缓存
         DictService.delete_cache(dictType.id)
@@ -120,7 +120,7 @@ class ListDictValueHandler(BaseHandler):
         data = json.loads(data)
         form = DictValueForm.from_json(data)
 
-        res['data'] = await DictService.get_dict_list(form.dict_tid.data)
+        res['data'] = DictService.get_dict_list(form.dict_tid.data)
 
         self.write(res)
 
@@ -153,14 +153,14 @@ class AddDictValueHandler(BaseHandler):
         dictValue = DictValue()
         if _id is not None:
             # 编辑
-            await dictValue.update_one({"_id": _id},
+            dictValue.update_one({"_id": _id},
                                  {"$set": {"dict_name": dict_name, "dict_value": dict_value, "sort": sort}})
         else:
             dictValue.dict_tid = dict_tid
             dictValue.dict_name = dict_name
             dictValue.dict_value = dict_value
             dictValue.sort = sort
-            await dictValue.insert_one(dictValue.get_add_json())
+            dictValue.insert_one(dictValue.get_add_json())
             res['message'] = '添加成功'
         # 删除缓存
         DictService.delete_cache(dict_tid)
@@ -187,7 +187,7 @@ class DeleteDictValueHandler(BaseHandler):
         form = DictValueForm.from_json(data)
         dictValue = DictValue()
         dictValue.id = form.id.data
-        await dictValue.delete_one({"_id": dictValue.id})
+        dictValue.delete_one({"_id": dictValue.id})
         res['message'] = '删除成功'
         # 删除缓存
         DictService.delete_cache(form.dict_tid.data)
@@ -214,10 +214,10 @@ class GetDictListHandler(BaseHandler):
         name = form.name.data
 
         dict_type_db = DictType()
-        dict_type = await dict_type_db.find_one({"name": name})
+        dict_type = dict_type_db.find_one({"name": name})
         if dict_type is not None:
             results = []
-            query = await DictService.get_dict_list(dict_type["_id"])
+            query = DictService.get_dict_list(dict_type["_id"])
             if name == "Avatar":
                 # 头像处理
                 for item in query:

@@ -47,7 +47,7 @@ class AddHandler(BaseHandler):
         task_db.exec_interval = exec_interval
         task_db.options = options
 
-        await task_db.insert_one(task_db.get_add_json())
+        task_db.insert_one(task_db.get_add_json())
 
         self.write(res)
 
@@ -72,7 +72,7 @@ class DeleteHandler(BaseHandler):
 
         task_db = Task()
         # 删除数据
-        await task_db.delete_one({"_id": _id})
+        task_db.delete_one({"_id": _id})
         self.write(res)
 
 
@@ -108,7 +108,7 @@ class UpdateHandler(BaseHandler):
 
         task_db = Task()
         # 修改数据
-        await task_db.update_one({"_id": _id}, {
+        task_db.update_one({"_id": _id}, {
             "$set": {"name": name, "func": func, "type": _type,
                      "exec_cron": exec_cron, "exec_interval": exec_interval, "status": 0,
                      "options": options}})
@@ -142,10 +142,10 @@ class ListHandler(BaseHandler):
             query_criteria["$or"] = [{"name": re.compile(search_key)}]
         task_db = Task()
         # 查询分页
-        query = await task_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
+        query = task_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
         # 查询总数
-        total = await task_db.query_count(query)
+        total = task_db.query_count(query)
         pages = utils.get_pages(total, page_size)
 
         results = []
@@ -184,12 +184,12 @@ class StartTaskHandler(BaseHandler):
         _id = form.id.data
 
         task_db = Task()
-        task = await task_db.find_one({"_id": _id})
+        task = task_db.find_one({"_id": _id})
         if task is not None:
             if task['status'] != 1:
-                await run_task(self.application.scheduler, task)
+                run_task(self.application.scheduler, task)
                 # 修改数据状态
-                await task_db.update_one({"_id": _id}, {"$set": {"status": 1}})
+                task_db.update_one({"_id": _id}, {"$set": {"status": 1}})
         self.write(res)
 
 
@@ -212,7 +212,7 @@ class EndTaskHandler(BaseHandler):
         _id = form.id.data
 
         task_db = Task()
-        task = await task_db.find_one({"_id": _id})
+        task = task_db.find_one({"_id": _id})
         if task is not None:
             if task['status'] == 1:
                 try:
@@ -221,5 +221,5 @@ class EndTaskHandler(BaseHandler):
                 except Exception as e:
                     show_error_log(e)
                 # 修改数据状态
-                await task_db.update_one({"_id": _id}, {"$set": {"status": 2}})
+                task_db.update_one({"_id": _id}, {"$set": {"status": 2}})
         self.write(res)

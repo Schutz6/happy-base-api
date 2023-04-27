@@ -53,12 +53,12 @@ class UserService(BaseService):
 
     # 根据id获取用户对象
     @staticmethod
-    async def get_user_by_id(_id):
+    def get_user_by_id(_id):
         # 获取缓存
         user = UserService.redis.get(UserService.userKey + str(_id))
         if user is None:
             user_db = User()
-            user = await user_db.find_one({"_id": int(_id)})
+            user = user_db.find_one({"_id": int(_id)})
             if user is not None:
                 # 清空密码
                 user["id"] = user["_id"]
@@ -75,12 +75,12 @@ class UserService(BaseService):
 
     # 生成一个账号
     @staticmethod
-    async def get_account_number():
+    def get_account_number():
         username = get_random_num(6)
 
         # 判断是否已存在
         user_db = User()
-        user = await user_db.find_one({"username": username})
+        user = user_db.find_one({"username": username})
         if user is not None:
-            username = await UserService.get_account_number()
+            username = UserService.get_account_number()
         return username

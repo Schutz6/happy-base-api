@@ -1,5 +1,3 @@
-import json
-
 from apps.menus.models import Menu
 from apps.params.models import Param
 from apps.roles.models import Role
@@ -21,7 +19,7 @@ class InitDataHandler(BaseHandler):
         res = resFunc({})
         # 判断是否需要初始化用户数据
         user_db = User()
-        user = await user_db.find_one({"username": "superadmin"})
+        user = user_db.find_one({"username": "superadmin"})
         if user is None:
             user_db.name = "超级管理员"
             user_db.username = "superadmin"
@@ -32,7 +30,7 @@ class InitDataHandler(BaseHandler):
             user_db.status = 1
             user_db.avatar = get_random_head()
             user_db.roles = ["superadmin"]
-            await user_db.insert_one(user_db.get_add_json())
+            user_db.insert_one(user_db.get_add_json())
 
             user_db1 = User()
             user_db1.name = "管理员"
@@ -44,7 +42,7 @@ class InitDataHandler(BaseHandler):
             user_db1.status = 1
             user_db1.avatar = get_random_head()
             user_db1.roles = ["admin"]
-            await user_db1.insert_one(user_db1.get_add_json())
+            user_db1.insert_one(user_db1.get_add_json())
 
             # 新增角色
             role_db1 = Role()
@@ -52,21 +50,21 @@ class InitDataHandler(BaseHandler):
             role_db1.describe = "超级管理员"
             role_db1.remarks = "拥有所有权限（不要删）"
             role_db1.sort = 99
-            await role_db1.insert_one(role_db1.get_add_json())
+            role_db1.insert_one(role_db1.get_add_json())
 
             role_db2 = Role()
             role_db2.name = "user"
             role_db2.describe = "普通用户"
             role_db2.remarks = "没后台权限（不要删）"
             role_db2.sort = 97
-            await role_db2.insert_one(role_db2.get_add_json())
+            role_db2.insert_one(role_db2.get_add_json())
 
             role_db3 = Role()
             role_db3.name = "admin"
             role_db3.describe = "普通管理员"
             role_db3.remarks = "拥有部分权限（不要删）"
             role_db3.sort = 98
-            await role_db3.insert_one(role_db3.get_add_json())
+            role_db3.insert_one(role_db3.get_add_json())
 
             # 新增菜单
             menu_db = Menu()
@@ -77,7 +75,7 @@ class InitDataHandler(BaseHandler):
             menu_db.level = 1
             menu_db.sort = 900
             menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
+            menu_db.insert_one(menu_db.get_add_json())
 
             menu_db = Menu()
             menu_db.pid = 0
@@ -87,7 +85,7 @@ class InitDataHandler(BaseHandler):
             menu_db.level = 1
             menu_db.sort = 100
             menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
+            menu_db.insert_one(menu_db.get_add_json())
 
             menu_db = Menu()
             menu_db.pid = 1
@@ -97,7 +95,7 @@ class InitDataHandler(BaseHandler):
             menu_db.level = 2
             menu_db.sort = 190
             menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
+            menu_db.insert_one(menu_db.get_add_json())
 
             menu_db = Menu()
             menu_db.pid = 1
@@ -107,7 +105,7 @@ class InitDataHandler(BaseHandler):
             menu_db.level = 2
             menu_db.sort = 180
             menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
+            menu_db.insert_one(menu_db.get_add_json())
 
             menu_db = Menu()
             menu_db.pid = 1
@@ -117,7 +115,7 @@ class InitDataHandler(BaseHandler):
             menu_db.level = 2
             menu_db.sort = 170
             menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
+            menu_db.insert_one(menu_db.get_add_json())
 
             menu_db = Menu()
             menu_db.pid = 1
@@ -127,7 +125,7 @@ class InitDataHandler(BaseHandler):
             menu_db.level = 2
             menu_db.sort = 160
             menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
+            menu_db.insert_one(menu_db.get_add_json())
 
             menu_db = Menu()
             menu_db.pid = 1
@@ -137,7 +135,7 @@ class InitDataHandler(BaseHandler):
             menu_db.level = 2
             menu_db.sort = 150
             menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
+            menu_db.insert_one(menu_db.get_add_json())
 
             menu_db = Menu()
             menu_db.pid = 1
@@ -147,7 +145,7 @@ class InitDataHandler(BaseHandler):
             menu_db.level = 2
             menu_db.sort = 140
             menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
+            menu_db.insert_one(menu_db.get_add_json())
 
             menu_db = Menu()
             menu_db.pid = 1
@@ -157,7 +155,7 @@ class InitDataHandler(BaseHandler):
             menu_db.level = 2
             menu_db.sort = 130
             menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
+            menu_db.insert_one(menu_db.get_add_json())
 
             menu_db = Menu()
             menu_db.pid = 1
@@ -167,13 +165,13 @@ class InitDataHandler(BaseHandler):
             menu_db.level = 2
             menu_db.sort = 120
             menu_db.status = 1
-            await menu_db.insert_one(menu_db.get_add_json())
+            menu_db.insert_one(menu_db.get_add_json())
 
             param_db = Param()
             param_db.key = "siteName"
             param_db.value = "网站名称"
             param_db.status = 0
             param_db.remarks = "网站名称"
-            await param_db.insert_one(param_db.get_add_json())
+            param_db.insert_one(param_db.get_add_json())
 
         self.write(res)

@@ -34,7 +34,7 @@ class AddHandler(BaseHandler):
         status = form.status.data
         # 查找是否存在
         param_db = Param()
-        param = await param_db.find_one({"key": key})
+        param = param_db.find_one({"key": key})
         if param is not None:
             res['code'] = 50000
             res['message'] = '该唯一ID已存在'
@@ -43,7 +43,7 @@ class AddHandler(BaseHandler):
             param_db.value = value
             param_db.remarks = remarks
             param_db.status = status
-            await param_db.insert_one(param_db.get_add_json())
+            param_db.insert_one(param_db.get_add_json())
         self.write(res)
 
 
@@ -66,7 +66,7 @@ class DeleteHandler(BaseHandler):
         _id = form.id.data
         # 删除数据
         param_db = Param()
-        await param_db.delete_one({"_id": _id})
+        param_db.delete_one({"_id": _id})
         self.write(res)
 
 
@@ -95,8 +95,8 @@ class UpdateHandler(BaseHandler):
         status = form.status.data
         # 修改数据
         param_db = Param()
-        await param_db.update_one({"_id": _id},
-                                  {"$set": {"value": value, "remarks": remarks, "status": status}})
+        param_db.update_one({"_id": _id},
+                            {"$set": {"value": value, "remarks": remarks, "status": status}})
         self.write(res)
 
 
@@ -133,10 +133,10 @@ class ListHandler(BaseHandler):
         if status is not None:
             query_criteria["status"] = status
         # 查询分页
-        query = await param_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
+        query = param_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
         # 查询总数
-        total = await param_db.query_count(query)
+        total = param_db.query_count(query)
         pages = utils.get_pages(total, page_size)
 
         results = []
@@ -166,7 +166,7 @@ class GetListHandler(BaseHandler):
     async def get(self):
         res = resFunc({})
         param_db = Param()
-        query = await param_db.find_all({"status": 0})
+        query = param_db.find_all({"status": 0})
         results = []
         for item in query:
             results.append((item["key"], item["value"]))

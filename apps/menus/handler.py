@@ -48,7 +48,7 @@ class AddHandler(BaseHandler):
         menu_db.level = level
         menu_db.sort = sort
         menu_db.status = status
-        await menu_db.insert_one(menu_db.get_add_json())
+        menu_db.insert_one(menu_db.get_add_json())
         self.write(res)
 
 
@@ -71,7 +71,7 @@ class DeleteHandler(BaseHandler):
         _id = form.id.data
         # 删除数据
         menu_db = Menu()
-        await menu_db.delete_one({"_id": _id})
+        menu_db.delete_one({"_id": _id})
         self.write(res)
 
 
@@ -106,9 +106,9 @@ class UpdateHandler(BaseHandler):
         status = form.status.data
         # 修改数据
         menu_db = Menu()
-        await menu_db.update_one({"_id": _id},
-                                 {"$set": {"name": name, "icon": icon, "url": url, "roles": roles, "sort": sort,
-                                           "status": status}})
+        menu_db.update_one({"_id": _id},
+                           {"$set": {"name": name, "icon": icon, "url": url, "roles": roles, "sort": sort,
+                                     "status": status}})
         self.write(res)
 
 
@@ -124,16 +124,16 @@ class ListHandler(BaseHandler):
         menu_db = Menu()
         # 查询一级菜单
         query_criteria = {"pid": 0}
-        query_one = await menu_db.find_all(query_criteria)
-        query_one = await menu_db.query_sort(query_one, [("sort", -1), ("_id", -1)])
+        query_one = menu_db.find_all(query_criteria)
+        query_one = menu_db.query_sort(query_one, [("sort", -1), ("_id", -1)])
 
         results = []
         for one in query_one:
             one["id"] = one["_id"]
             results.append(one)
             # 查询二级菜单
-            query_two = await menu_db.find_all({"pid": one["_id"]})
-            query_two = await menu_db.query_sort(query_two, [("sort", -1), ("_id", -1)])
+            query_two = menu_db.find_all({"pid": one["_id"]})
+            query_two = menu_db.query_sort(query_two, [("sort", -1), ("_id", -1)])
             for two in query_two:
                 two["id"] = two["_id"]
                 results.append(two)
@@ -156,14 +156,14 @@ class GetListHandler(BaseHandler):
         menu_db = Menu()
         # 查询一级菜单
         query_criteria = {"pid": 0, "status": 1, "roles": {"$in": current_user["roles"]}}
-        query_one = await menu_db.find_all(query_criteria)
-        query_one = await menu_db.query_sort(query_one, [("sort", -1), ("_id", -1)])
+        query_one = menu_db.find_all(query_criteria)
+        query_one = menu_db.query_sort(query_one, [("sort", -1), ("_id", -1)])
 
         results = []
         for one in query_one:
             # 查询二级菜单
-            query_two = await menu_db.find_all({"pid": one["_id"], "status": 1, "roles": {"$in": current_user["roles"]}})
-            query_two = await menu_db.query_sort(query_two, [("sort", -1), ("_id", -1)])
+            query_two = menu_db.find_all({"pid": one["_id"], "status": 1, "roles": {"$in": current_user["roles"]}})
+            query_two = menu_db.query_sort(query_two, [("sort", -1), ("_id", -1)])
             children = []
             for two in query_two:
                 children.append({"text": two["name"], "value": two["url"], "icon": two.get("icon")})

@@ -38,12 +38,12 @@ class LoginHandler(BaseHandler):
         user_db = User()
         # 判断是否邮箱
         if username.find("@") > -1:
-            user = await user_db.find_one({"email": username})
+            user = user_db.find_one({"email": username})
         else:
             if area is not None:
-                user = await user_db.find_one({"area": area, "mobile": username})
+                user = user_db.find_one({"area": area, "mobile": username})
             else:
-                user = await user_db.find_one({"username": username})
+                user = user_db.find_one({"username": username})
         if user is not None:
             # 判断密码错误次数
             login_error_count = UserService.get_login_error_count(user["_id"])
@@ -103,7 +103,7 @@ class UserHandler(BaseHandler):
 
         # 更新登录信息
         user_db = User()
-        await user_db.update_one({"_id": current_user["_id"]}, {
+        user_db.update_one({"_id": current_user["_id"]}, {
             "$set": {"last_time": now_utc(), "last_ip": self.request.remote_ip}})
         self.write(res)
 
@@ -132,24 +132,24 @@ class UserHandler(BaseHandler):
         user_db = User()
         if form.gender.data:
             gender = form.gender.data
-            await user_db.update_one({"_id": user["_id"]}, {"$set": {"gender": gender}})
+            user_db.update_one({"_id": user["_id"]}, {"$set": {"gender": gender}})
         if form.introduction.data:
             introduction = form.introduction.data
-            await user_db.update_one({"_id": user["_id"]}, {"$set": {"introduction": introduction}})
+            user_db.update_one({"_id": user["_id"]}, {"$set": {"introduction": introduction}})
         if form.birthday.data:
             birthday = form.birthday.data
-            await user_db.update_one({"_id": user["_id"]}, {"$set": {"birthday": birthday}})
+            user_db.update_one({"_id": user["_id"]}, {"$set": {"birthday": birthday}})
         if form.address.data:
             address = form.address.data
-            await user_db.update_one({"_id": user["_id"]}, {"$set": {"address": address}})
+            user_db.update_one({"_id": user["_id"]}, {"$set": {"address": address}})
         if form.name.data:
             name = form.name.data
-            await user_db.update_one({"_id": user["_id"]}, {"$set": {"name": name}})
+            user_db.update_one({"_id": user["_id"]}, {"$set": {"name": name}})
         if form.avatar.data:
             avatar = form.avatar.data
             # 替换地址
             avatar = avatar.replace(settings['SITE_URL'], "")
-            await user_db.update_one({"_id": user["_id"]}, {"$set": {"avatar": avatar}})
+            user_db.update_one({"_id": user["_id"]}, {"$set": {"avatar": avatar}})
 
         # 删除缓存
         UserService.delete_cache(user["_id"])
@@ -196,7 +196,7 @@ class ChangePwdHandler(BaseHandler):
         new_password = form.newPassword.data
         if form.validate():
             user_db = User()
-            user = await user_db.find_one({"_id": user["_id"]})
+            user = user_db.find_one({"_id": user["_id"]})
             if user is not None:
                 # 判断是否第一次修改密码
                 if user["has_password"] == 1:
@@ -204,10 +204,10 @@ class ChangePwdHandler(BaseHandler):
                         res['code'] = 10006
                         res['message'] = '密码错误'
                     else:
-                        await user_db.update_one({"_id": user["_id"]}, {"$set": {"password": get_md5(new_password)}})
+                        user_db.update_one({"_id": user["_id"]}, {"$set": {"password": get_md5(new_password)}})
                 else:
-                    await user_db.update_one({"_id": user["_id"]},
-                                             {"$set": {"password": get_md5(new_password), "has_password": 1}})
+                    user_db.update_one({"_id": user["_id"]},
+                                       {"$set": {"password": get_md5(new_password), "has_password": 1}})
                     # 刷新缓存
                     UserService.delete_cache(user["_id"])
             else:

@@ -63,7 +63,7 @@ def authenticated_admin_async(func):
                 token = UserService.get_login_token(user_id, channel)
                 if token is None or token == authorization:
                     # 获取用户信息
-                    user = await UserService.get_user_by_id(user_id)
+                    user = UserService.get_user_by_id(user_id)
                     self._current_user = user
                     # 判断是否管理员
                     if 'admin' in user["roles"] or 'superadmin' in user["roles"]:
@@ -75,7 +75,7 @@ def authenticated_admin_async(func):
                         # 访问时间
                         times = round(finish_time - start_time, 2)
                         # 处理日志
-                        await do_log(self.request, user["username"], times)
+                        do_log(self.request, user["username"], times)
                     else:
                         res['code'] = 10012
                         res['message'] = "权限不足"
@@ -148,7 +148,7 @@ def authenticated_async(func):
                 token = UserService.get_login_token(user_id, channel)
                 if token is None or token == authorization:
                     # 获取用户信息
-                    user = await UserService.get_user_by_id(user_id)
+                    user = UserService.get_user_by_id(user_id)
                     self._current_user = user
                     # 开始时间
                     start_time = round(time.time()*1000, 2)
@@ -158,7 +158,7 @@ def authenticated_async(func):
                     # 访问时间
                     times = round(finish_time - start_time, 2)
                     # 处理日志
-                    await do_log(self.request, user["username"], times)
+                    do_log(self.request, user["username"], times)
                 else:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
@@ -196,7 +196,7 @@ def log_async(func):
         # 访问时间
         times = round(finish_time - start_time, 2)
         # 处理日志
-        await do_log(self.request, "", times)
+        do_log(self.request, "", times)
 
     return wrapper
 
@@ -212,7 +212,8 @@ def run_async(func):
 
 
 # 处理日志
-async def do_log(request, username, times):
+@run_async
+def do_log(request, username, times):
     # 接口参数
     params = ""
     # 过滤文件上传接口，规则：/file/upload/ 开头
@@ -222,11 +223,11 @@ async def do_log(request, username, times):
         elif request.method.upper() == "GET":
             params = request.query
     # 记录日志
-    await add_log(username, request.method, request.path, params, request.remote_ip, times)
+    add_log(username, request.method, request.path, params, request.remote_ip, times)
 
 
 # 异步执行添加日志
-async def add_log(username, method, uri, params, ip, times):
+def add_log(username, method, uri, params, ip, times):
     if uri == "/login/":
         params = json.loads(params)
         params["password"] = "***"
@@ -238,4 +239,4 @@ async def add_log(username, method, uri, params, ip, times):
     log_db.params = params
     log_db.ip = ip
     log_db.times = times
-    await log_db.insert_one(log_db.get_add_json())
+    log_db.insert_one(log_db.get_add_json())

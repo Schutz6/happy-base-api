@@ -2,7 +2,7 @@ from bases.utils import show_error_log
 
 
 # 执行任务
-async def run_task(scheduler, task):
+def run_task(scheduler, task):
     job_id = task["_id"]
     if task['type'] == 2:
         # cron任务类型

@@ -1,6 +1,7 @@
 import json
 import re
 
+from apps.logs.func import async_clear_log
 from apps.logs.forms import LogForm
 from apps.logs.models import Log
 from bases import utils
@@ -18,9 +19,8 @@ class ClearHandler(BaseHandler):
     @authenticated_admin_async
     async def get(self):
         res = resFunc({})
-        # 清空日志
-        log_db = Log()
-        await log_db.delete_many({})
+        # 清空日志(异步方法)
+        async_clear_log()
         self.write(res)
 
 
@@ -43,7 +43,7 @@ class BatchDeleteHandler(BaseHandler):
         ids = form.ids.data
         # 批量删除
         log_db = Log()
-        await log_db.delete_many({"_id": {"$in": [int(_id) for _id in ids]}})
+        log_db.delete_many({"_id": {"$in": [int(_id) for _id in ids]}})
         self.write(res)
 
 
@@ -75,10 +75,10 @@ class ListHandler(BaseHandler):
             query_criteria["$or"] = [{"username": re.compile(search_key)}, {"uri": re.compile(search_key)},
                                      {"ip": re.compile(search_key)}]
         # 查询分页
-        query = await log_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
+        query = log_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
         # 查询总数
-        total = await log_db.query_count(query)
+        total = log_db.query_count(query)
         pages = utils.get_pages(total, page_size)
 
         results = []

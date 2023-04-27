@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from apps.users.models import User
 from bases.decorators import authenticated_admin_async
@@ -28,7 +27,7 @@ class StatisticsUserHandler(BaseHandler):
         month_start = datetime(now.year, now.month, 1).strftime("%Y-%m-%d")
 
         # 总会员数
-        query = await user_db.aggregate([
+        query = user_db.aggregate([
             {"$match": {"roles": ['user']}},
             {'$group': {'_id': None, 'count': {'$sum': 1}}}
         ])
@@ -36,7 +35,7 @@ class StatisticsUserHandler(BaseHandler):
             data["total_users"] += item["count"]
 
         # 今日新增会员数
-        query = await user_db.aggregate([
+        query = user_db.aggregate([
             {"$match": {"roles": ['user'], 'add_time': {"$gt": to_timestamp(today + " 00:00:00"),
                                                         "$lt": to_timestamp(today + " 23:59:59")}}},
             {'$group': {'_id': None, 'count': {'$sum': 1}}}
@@ -45,7 +44,7 @@ class StatisticsUserHandler(BaseHandler):
             data["today_users"] += item["count"]
 
         # 昨日新增会员数
-        query = await user_db.aggregate([
+        query = user_db.aggregate([
             {"$match": {"roles": ['user'], 'add_time': {"$gt": to_timestamp(yesterday + " 00:00:00"),
                                                         "$lt": to_timestamp(yesterday + " 23:59:59")}}},
             {'$group': {'_id': None, 'count': {'$sum': 1}}}
@@ -54,7 +53,7 @@ class StatisticsUserHandler(BaseHandler):
             data["yesterday_users"] += item["count"]
 
         # 本月新增会员数
-        query = await user_db.aggregate([
+        query = user_db.aggregate([
             {"$match": {"roles": ['user'], 'add_time': {"$gt": to_timestamp(month_start + " 00:00:00"),
                                                         "$lt": to_timestamp(today + " 23:59:59")}}},
             {'$group': {'_id': None, 'count': {'$sum': 1}}}

@@ -43,7 +43,7 @@ class AddHandler(BaseHandler):
         user_db = User()
 
         # 查找账号是否存在
-        user = await user_db.find_one({"username": username})
+        user = user_db.find_one({"username": username})
         if user is not None:
             res['code'] = 50000
             res['message'] = '该账号已存在'
@@ -59,7 +59,7 @@ class AddHandler(BaseHandler):
         user_db.status = status
         user_db.avatar = get_random_head()
         user_db.roles = roles
-        await user_db.insert_one(user_db.get_add_json())
+        user_db.insert_one(user_db.get_add_json())
 
         self.write(res)
 
@@ -83,7 +83,7 @@ class Deletehandler(BaseHandler):
         _id = form.id.data
         # 删除数据
         user_db = User()
-        await user_db.delete_one({"_id": _id})
+        user_db.delete_one({"_id": _id})
         # 删除缓存
         UserService.delete_cache(_id)
         self.write(res)
@@ -109,7 +109,7 @@ class BatchDeleteHandler(BaseHandler):
         ids = [int(_id) for _id in ids]
         # 批量删除
         user_db = User()
-        await user_db.delete_many({"_id": {"$in": ids}})
+        user_db.delete_many({"_id": {"$in": ids}})
         for _id in ids:
             # 删除缓存
             UserService.delete_cache(_id)
@@ -149,16 +149,16 @@ class UpdateHandler(BaseHandler):
         user_db = User()
 
         # 修改数据
-        await user_db.update_one({"_id": _id},
-                                 {"$set": {"name": name, "gender": gender, "status": status,
-                                           "roles": roles}})
+        user_db.update_one({"_id": _id},
+                           {"$set": {"name": name, "gender": gender, "status": status,
+                                     "roles": roles}})
         # 修改密码
         if password is not None:
-            await user_db.update_one({"_id": _id}, {"$set": {"password": get_md5(password)}})
+            user_db.update_one({"_id": _id}, {"$set": {"password": get_md5(password)}})
         # 修改头像
         if avatar is not None:
             avatar = avatar.replace(settings['SITE_URL'], "")
-            await user_db.update_one({"_id": _id}, {"$set": {"avatar": avatar}})
+            user_db.update_one({"_id": _id}, {"$set": {"avatar": avatar}})
         # 删除缓存
         UserService.delete_cache(_id)
         self.write(res)
@@ -209,10 +209,10 @@ class ListHandler(BaseHandler):
             query_criteria["status"] = status
         user_db = User()
         # 查询分页
-        query = await user_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
+        query = user_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
         # 查询总数
-        total = await user_db.query_count(query)
+        total = user_db.query_count(query)
         pages = utils.get_pages(total, page_size)
 
         results = []

@@ -1,6 +1,4 @@
 from wtforms import StringField, IntegerField, SelectMultipleField
-from wtforms.validators import DataRequired
-
 from bases.forms import BaseForm
 
 
@@ -30,7 +28,5 @@ class UserForm(BaseForm):
 # 修改密码表单
 class ChangePwdForm(BaseForm):
     oldPassword = StringField('旧密码')
-    newPassword = StringField('新密码', validators=[
-        DataRequired(message='请输入新密码')
-    ])
+    newPassword = StringField('新密码')
 

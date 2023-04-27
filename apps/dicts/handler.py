@@ -222,8 +222,9 @@ class GetDictListHandler(BaseHandler):
                 # 头像处理
                 for item in query:
                     item["dict_value"] = settings['SITE_URL'] + item["dict_value"]
-                    results.append(item)
+                    results.append({"text": item["dict_name"], "value": item["dict_value"]})
             else:
-                results = query
+                for item in query:
+                    results.append({"text": item["dict_name"], "value": item["dict_value"]})
             res['data'] = results
         self.write(res)

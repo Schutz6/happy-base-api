@@ -31,11 +31,19 @@ class LoginHandler(BaseHandler):
         data = self.request.body.decode("utf-8")
         data = json.loads(data)
         form = LoginForm.from_json(data)
+        area = form.area.data
         username = form.username.data
         password = form.password.data
         # 查找账号是否存在
         user_db = User()
-        user = await user_db.find_one({"$or": [{"username": username}, {"email": username}, {"mobile": username}]})
+        # 判断是否邮箱
+        if username.find("@") > -1:
+            user = await user_db.find_one({"email": username})
+        else:
+            if area is not None:
+                user = await user_db.find_one({"area": area, "mobile": username})
+            else:
+                user = await user_db.find_one({"username": username})
         if user is not None:
             # 判断密码错误次数
             login_error_count = UserService.get_login_error_count(user["_id"])

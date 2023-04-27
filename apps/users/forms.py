@@ -6,6 +6,7 @@ from bases.forms import BaseForm
 
 # 登录表单
 class LoginForm(BaseForm):
+    area = StringField("区号")
     username = StringField("用户名")
     password = StringField("密码")
 

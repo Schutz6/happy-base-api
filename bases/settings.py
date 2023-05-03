@@ -7,8 +7,8 @@ settings = {
     "secret_key": "R7gKOqXTiti9HuXG",
     "app_jwt_expire": 30 * 24 * 3600,
     "admin_jwt_expire": 24 * 3600,
-    "SAVE_URL": "/Users/xxx/Downloads/download",
-    "SITE_URL": "http://127.0.0.1/download",
+    "SAVE_URL": "/usr/local/var/www/static",
+    "SITE_URL": "http://localhost:8080/static",
     'redis': {
         "host": "127.0.0.1",
         "port": 6379,

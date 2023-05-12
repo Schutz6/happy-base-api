@@ -116,8 +116,8 @@ class AddDictValueHandler(BaseHandler):
         _id = req_data.get("id")
         dict_name = req_data.get("dict_name")
         dict_value = req_data.get("dict_value")
-        sort = req_data.sort.get("sort", 0)
-        dict_tid = req_data.dict_tid.get("dict_tid", 0)
+        sort = req_data.get("sort", 0)
+        dict_tid = req_data.get("dict_tid", 0)
 
         if _id is not None:
             # 编辑
@@ -125,7 +125,7 @@ class AddDictValueHandler(BaseHandler):
                                           {"$set": {"dict_name": dict_name, "dict_value": dict_value, "sort": sort}})
         else:
             # 新增
-            await mongo_helper.insert_one(DictValue.collection_name, DictValue.get_json(req_data))
+            await mongo_helper.insert_one(DictValue.collection_name, await DictValue.get_json(req_data))
             res['message'] = '添加成功'
         # 删除缓存
         DictService.delete_cache(dict_tid)
@@ -144,7 +144,7 @@ class DeleteDictValueHandler(BaseHandler):
         data = self.request.body.decode('utf-8')
         req_data = json.loads(data)
         _id = req_data.get("id")
-        dict_tid = req_data.get("req_data")
+        dict_tid = req_data.get("dict_tid")
 
         if _id is not None:
             await mongo_helper.delete_one(DictValue.collection_name, {"_id": _id})

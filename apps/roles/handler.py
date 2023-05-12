@@ -68,10 +68,20 @@ class UpdateHandler(BaseHandler):
         sort = req_data.get("sort", 0)
 
         if _id is not None:
-            # 修改数据
-            await mongo_helper.update_one(Role.collection_name, {"_id": _id},
-                                          {"$set": {"name": name, "describe": describe, "remarks": remarks,
-                                                    "sort": sort}})
+            role = await mongo_helper.fetch_one(Role.collection_name, {"_id": _id})
+            if role is not None:
+                if role["name"] != name:
+                    # 角色ID发生变化，判断是否存在
+                    role = await mongo_helper.fetch_one(Role.collection_name, {"name": name})
+                    if role is not None:
+                        res['code'] = 50000
+                        res['message'] = '该唯一ID已存在'
+                        self.write(res)
+                        return
+                # 修改数据
+                await mongo_helper.update_one(Role.collection_name, {"_id": _id},
+                                              {"$set": {"name": name, "describe": describe, "remarks": remarks,
+                                                        "sort": sort}})
         self.write(res)
 
 

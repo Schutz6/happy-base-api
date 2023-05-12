@@ -7,7 +7,7 @@ from bases.decorators import authenticated_async
 from bases.handler import BaseHandler
 from bases.res import res_func
 from bases.config import settings
-from bases.utils import get_md5, mongo_helper
+from bases.utils import get_md5, mongo_helper, get_random_head
 
 
 class AddHandler(BaseHandler):
@@ -32,7 +32,9 @@ class AddHandler(BaseHandler):
             return
 
         # 新增
-        await mongo_helper.insert_one(User.collection_name, User.get_json(req_data))
+        req_data["avatar"] = get_random_head()
+        req_data["password"] = get_md5(req_data["password"])
+        await mongo_helper.insert_one(User.collection_name, await User.get_json(req_data))
         self.write(res)
 
 

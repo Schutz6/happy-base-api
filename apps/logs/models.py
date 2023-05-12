@@ -24,9 +24,7 @@ class Log(object):
     # 格式化json
     @staticmethod
     async def get_json(req_data):
-        _id = await mongo_helper.get_next_id(Log.collection_name)
-        return {"_id": _id,
-                "username": req_data.get("username"),
+        return {"username": req_data.get("username"),
                 "method": req_data.get("method"),
                 "uri": req_data.get("uri"),
                 "params": req_data.get("params"),

@@ -7,16 +7,15 @@ from bases.utils import mongo_helper
 
 # 插入日志记录
 # 10000条数据0.01秒左右
-# 100000条数据0.1秒左右
+# 100000条数据1.5秒左右
 # 1000000条数据15秒左右
 async def init_log():
     print("正在插入")
     data_list = []
     # 开始时间
     start_time = round(time.time() * 1000, 2)
-    for i in range(100000):
-        data_list.append(
-            {"_id": i, "username": "匿名", "method": "GET", "uri": "#", "params": "#", "ip": "127.0.0.1", "times": 10})
+    for i in range(1000000):
+        data_list.append({"username": "匿名", "method": "GET", "uri": "#", "params": "#", "ip": "127.0.0.1", "times": 10})
 
     # 结束时间
     finish_time1 = round(time.time() * 1000, 2)

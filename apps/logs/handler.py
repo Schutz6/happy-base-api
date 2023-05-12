@@ -37,7 +37,7 @@ class BatchDeleteHandler(BaseHandler):
 
         if ids is not None:
             # 批量删除
-            await mongo_helper.delete_many(Log.collection_name, {"_id": {"$in": [int(_id) for _id in ids]}})
+            await mongo_helper.delete_many(Log.collection_name, {"_id": {"$in": [_id for _id in ids]}})
         self.write(res)
 
 
@@ -63,14 +63,16 @@ class ListHandler(BaseHandler):
                                      {"ip": re.compile(search_key)}]
 
         # 查询分页数据
-        page_data = await mongo_helper.fetch_page_info(Log.collection_name, query_criteria, [("_id", -1)], page_size,
+        page_data = await mongo_helper.fetch_page_info(Log.collection_name, query_criteria, [("add_time", -1)],
+                                                       page_size,
                                                        current_page)
         # 查询总数
         total = await mongo_helper.fetch_count_info(Log.collection_name, query_criteria)
 
         results = []
         for item in page_data.get("list", []):
-            item["id"] = item["_id"]
+            item["id"] = str(item["_id"])
+            item.pop("_id")
             results.append(item)
 
         data = {

@@ -111,6 +111,7 @@ def authenticated_async(roles):
                 self.write(res)
 
         return wrapper
+
     return authenticated
 
 
@@ -145,6 +146,6 @@ async def handle_log(request, username, times):
         params["password"] = "***"
         params = json.dumps(params)
     # 记录日志
-    await mongo_helper.insert_one(Log.collection_name, await Log.get_json(
-        {"username": username, "method": request.method, "uri": request.path, "params": params,
-         "ip": request.remote_ip, "times": times}))
+    await mongo_helper.insert_one(Log.collection_name,
+                                  {"username": username, "method": request.method, "uri": request.path,
+                                   "params": params, "ip": request.remote_ip, "times": times})

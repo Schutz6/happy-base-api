@@ -1,94 +1,80 @@
 import json
 import re
 
-from apps.logs.func import async_clear_log
-from apps.logs.forms import LogForm
 from apps.logs.models import Log
-from bases import utils
-from bases.decorators import authenticated_admin_async
+from bases.decorators import authenticated_async
 from bases.handler import BaseHandler
-from bases.res import resFunc
+from bases.res import res_func
+from bases.utils import mongo_helper
 
 
 class ClearHandler(BaseHandler):
-    '''
+    """
         清空日志
         get -> /log/clear/
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def get(self):
-        res = resFunc({})
-        # 清空日志(异步方法)
-        async_clear_log()
+        res = res_func({})
+        # 清空日志
+        await mongo_helper.delete_many(Log.collection_name, {})
         self.write(res)
 
 
 class BatchDeleteHandler(BaseHandler):
-    '''
+    """
         批量删除
         post -> /log/batchDelete/
-        payload:
-           {
-                "ids": "多选ID"
-           }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = LogForm.from_json(data)
-        ids = form.ids.data
-        # 批量删除
-        log_db = Log()
-        log_db.delete_many({"_id": {"$in": [int(_id) for _id in ids]}})
+        req_data = json.loads(data)
+        ids = req_data.get("ids")
+
+        if ids is not None:
+            # 批量删除
+            await mongo_helper.delete_many(Log.collection_name, {"_id": {"$in": [int(_id) for _id in ids]}})
         self.write(res)
 
 
 class ListHandler(BaseHandler):
-    '''
+    """
         日志列表
         post -> /log/list/
-        payload:
-           {
-               "currentPage": 1,
-               "pageSize": 10,
-               "searchKey": "关键字",
-           }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = LogForm.from_json(data)
-        current_page = form.currentPage.data
-        page_size = form.pageSize.data
-        search_key = form.searchKey.data
-        log_db = Log()
+        req_data = json.loads(data)
+        current_page = req_data.get("currentPage", 1)
+        page_size = req_data.get("pageSize", 10)
+        search_key = req_data.get("searchKey")
+
         # 查询条件
         query_criteria = {"_id": {"$ne": "sequence_id"}}
         if search_key is not None:
             query_criteria["$or"] = [{"username": re.compile(search_key)}, {"uri": re.compile(search_key)},
                                      {"ip": re.compile(search_key)}]
-        # 查询分页
-        query = log_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
+        # 查询分页数据
+        page_data = await mongo_helper.fetch_page_info(Log.collection_name, query_criteria, [("_id", -1)], page_size,
+                                                       current_page)
         # 查询总数
-        total = log_db.query_count(query)
-        pages = utils.get_pages(total, page_size)
+        total = await mongo_helper.fetch_count_info(Log.collection_name, query_criteria)
 
         results = []
-        for item in query:
+        for item in page_data.get("list", []):
             item["id"] = item["_id"]
             results.append(item)
 
         data = {
             "total": total,
-            "pages": pages,
             "size": page_size,
             "current": current_page,
             "results": results

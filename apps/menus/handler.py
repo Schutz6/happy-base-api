@@ -1,139 +1,94 @@
 import json
 
-from apps.menus.forms import MenuForm
 from apps.menus.models import Menu
-from bases.decorators import authenticated_admin_async, authenticated_async
+from bases.decorators import authenticated_async
 from bases.handler import BaseHandler
-from bases.res import resFunc
+from bases.res import res_func
+from bases.utils import mongo_helper
 
 
 class AddHandler(BaseHandler):
-    '''
+    """
         添加
         post -> /menu/add/
-        payload:
-            {
-                "pid": "父ID",
-                "name": "名称",
-                "icon": "图标",
-                "url": "地址",
-                "roles"： "角色",
-                "level": "层级",
-                "sort": "排序",
-                "status": "状态"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = MenuForm.from_json(data)
-        pid = form.pid.data
-        name = form.name.data
-        icon = form.icon.data
-        url = form.url.data
-        roles = form.roles.data
-        level = form.level.data
-        sort = form.sort.data
-        status = form.status.data
+        req_data = json.loads(data)
 
-        menu_db = Menu()
-        menu_db.pid = pid
-        menu_db.name = name
-        menu_db.icon = icon
-        menu_db.url = url
-        menu_db.roles = roles
-        menu_db.level = level
-        menu_db.sort = sort
-        menu_db.status = status
-        menu_db.insert_one(menu_db.get_add_json())
+        await mongo_helper.insert_one(Menu.collection_name, await Menu.get_json(req_data))
         self.write(res)
 
 
 class DeleteHandler(BaseHandler):
-    '''
+    """
         删除
         post -> /menu/delete/
-        payload:
-            {
-                "id": "编号"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = MenuForm.from_json(data)
-        _id = form.id.data
-        # 删除数据
-        menu_db = Menu()
-        menu_db.delete_one({"_id": _id})
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+
+        if _id is not None:
+            # 删除数据
+            await mongo_helper.delete_one(Menu.collection_name, {"_id": _id})
         self.write(res)
 
 
 class UpdateHandler(BaseHandler):
-    '''
+    """
         修改
         post -> /menu/update/
-        payload:
-            {
-                "id": "编号",
-                "name": "名称",
-                "icon": "图标",
-                "url": "地址",
-                "roles"： "角色",
-                "sort": "排序",
-                "status": "状态"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = MenuForm.from_json(data)
-        _id = form.id.data
-        name = form.name.data
-        icon = form.icon.data
-        url = form.url.data
-        roles = form.roles.data
-        sort = form.sort.data
-        status = form.status.data
-        # 修改数据
-        menu_db = Menu()
-        menu_db.update_one({"_id": _id},
-                           {"$set": {"name": name, "icon": icon, "url": url, "roles": roles, "sort": sort,
-                                     "status": status}})
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+        name = req_data.get("name")
+        icon = req_data.get("icon")
+        url = req_data.get("url")
+        roles = req_data.get("roles", [])
+        sort = req_data.get("sort", 0)
+        status = req_data.get("status", 0)
+
+        if _id is not None:
+            # 修改数据
+            await mongo_helper.update_one(Menu.collection_name, {"_id": _id},
+                                          {"$set": {"name": name, "icon": icon, "url": url, "roles": roles,
+                                                    "sort": sort,
+                                                    "status": status}})
         self.write(res)
 
 
 class ListHandler(BaseHandler):
-    '''
+    """
         列表
         get -> /menu/list/
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def get(self):
-        res = resFunc([])
-        menu_db = Menu()
+        res = res_func([])
         # 查询一级菜单
-        query_criteria = {"pid": 0}
-        query_one = menu_db.find_all(query_criteria)
-        query_one = menu_db.query_sort(query_one, [("sort", -1), ("_id", -1)])
+        query_one = await mongo_helper.fetch_all(Menu.collection_name, {"pid": 0}, [("sort", -1), ("_id", -1)])
 
         results = []
         for one in query_one:
             one["id"] = one["_id"]
             results.append(one)
             # 查询二级菜单
-            query_two = menu_db.find_all({"pid": one["_id"]})
-            query_two = menu_db.query_sort(query_two, [("sort", -1), ("_id", -1)])
+            query_two = await mongo_helper.fetch_all(Menu.collection_name, {"pid": one["_id"]},
+                                                     [("sort", -1), ("_id", -1)])
             for two in query_two:
                 two["id"] = two["_id"]
                 results.append(two)
@@ -142,28 +97,26 @@ class ListHandler(BaseHandler):
 
 
 class GetListHandler(BaseHandler):
-    '''
+    """
         所有列表
         get -> /menu/getList/
-    '''
+    """
 
-    @authenticated_async
+    @authenticated_async(None)
     async def get(self):
-        res = resFunc([])
+        res = res_func([])
 
         current_user = self.current_user
 
-        menu_db = Menu()
-        # 查询一级菜单
-        query_criteria = {"pid": 0, "status": 1, "roles": {"$in": current_user["roles"]}}
-        query_one = menu_db.find_all(query_criteria)
-        query_one = menu_db.query_sort(query_one, [("sort", -1), ("_id", -1)])
-
+        query_one = await mongo_helper.fetch_all(Menu.collection_name,
+                                                 {"pid": 0, "status": 1, "roles": {"$in": current_user["roles"]}},
+                                                 [("sort", -1), ("_id", -1)])
         results = []
         for one in query_one:
             # 查询二级菜单
-            query_two = menu_db.find_all({"pid": one["_id"], "status": 1, "roles": {"$in": current_user["roles"]}})
-            query_two = menu_db.query_sort(query_two, [("sort", -1), ("_id", -1)])
+            query_two = await mongo_helper.fetch_all(Menu.collection_name, {"pid": one["_id"], "status": 1,
+                                                                            "roles": {"$in": current_user["roles"]}},
+                                                     [("sort", -1), ("_id", -1)])
             children = []
             for two in query_two:
                 children.append({"text": two["name"], "value": two["url"], "icon": two.get("icon")})

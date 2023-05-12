@@ -2,48 +2,40 @@ import json
 import jwt
 
 from datetime import datetime
-from apps.users.forms import LoginForm, UserForm, ChangePwdForm
 from apps.users.models import User
 from apps.users.service import UserService
 from bases.decorators import authenticated_async, log_async
 from bases.handler import BaseHandler
-from bases.res import resFunc
-from bases.settings import settings
-from bases.utils import get_md5, now_utc
+from bases.res import res_func
+from bases.config import settings
+from bases.utils import get_md5, now_utc, mongo_helper
 
 
 class LoginHandler(BaseHandler):
-    '''
+    """
         用户登录
         post -> /login/
-        payload:
-            {
-                "username": "用户名",
-                "password": "密码"
-            }
-    '''
+    """
 
     @log_async
     async def post(self):
         channel = self.request.headers.get('Channel', 'default')
-        res = resFunc({})
+        res = res_func({})
         res['data'] = {"token": ""}
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = LoginForm.from_json(data)
-        area = form.area.data
-        username = form.username.data
-        password = form.password.data
-        # 查找账号是否存在
-        user_db = User()
+        req_data = json.loads(data)
+        area = req_data.get("area")
+        username = req_data.get("username")
+        password = req_data.get("password")
+
         # 判断是否邮箱
         if username.find("@") > -1:
-            user = user_db.find_one({"email": username})
+            user = await mongo_helper.fetch_one(User.collection_name, {"email": username})
         else:
             if area is not None:
-                user = user_db.find_one({"area": area, "mobile": username})
+                user = await mongo_helper.fetch_one(User.collection_name, {"area": area, "mobile": username})
             else:
-                user = user_db.find_one({"username": username})
+                user = await mongo_helper.fetch_one(User.collection_name, {"username": username})
         if user is not None:
             # 判断密码错误次数
             login_error_count = UserService.get_login_error_count(user["_id"])
@@ -67,10 +59,10 @@ class LoginHandler(BaseHandler):
                         'username': user['username'],
                         'exp': datetime.utcnow()
                     }
-                    token = jwt.encode(payload, settings["secret_key"], algorithm='HS256')
-                    res['data'] = {"token": token.decode('utf-8')}
+                    token = jwt.encode(payload=payload, key=settings["secret_key"], algorithm='HS256')
+                    res['data'] = {"token": token}
                     # 存储用户令牌
-                    UserService.save_login_token(user["_id"], channel, token.decode('utf-8'))
+                    UserService.save_login_token(user["_id"], channel, token)
                     # 登录成功之后，删除错误次数
                     UserService.delete_login_error_cache(user["_id"])
                 else:
@@ -88,84 +80,72 @@ class LoginHandler(BaseHandler):
 
 
 class UserHandler(BaseHandler):
-    '''
+    """
         读取用户资料
         get -> /user/
-    '''
+    """
 
-    @authenticated_async
+    @authenticated_async(None)
     async def get(self):
-        res = resFunc({})
+        res = res_func({})
         current_user = self.current_user
         current_user["id"] = current_user["_id"]
         current_user["avatar"] = settings['SITE_URL'] + current_user["avatar"]
         res['data'] = current_user
 
         # 更新登录信息
-        user_db = User()
-        user_db.update_one({"_id": current_user["_id"]}, {
+        await mongo_helper.update_one(User.collection_name, {"_id": current_user["_id"]}, {
             "$set": {"last_time": now_utc(), "last_ip": self.request.remote_ip}})
         self.write(res)
 
-    '''
+    """
         部分更新用户资料
         post -> /user/
-        payload:
-            {
-                "name": "昵称",
-                "gender": "性别",
-                "introduction": "个人简介",
-                "birthday": "生日",
-                "avatar": "头像",
-                "address": "地址"
-            }
+    """
 
-    '''
-
-    @authenticated_async
+    @authenticated_async(None)
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         user = self.current_user
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = UserForm.from_json(data)
-        user_db = User()
-        if form.gender.data:
-            gender = form.gender.data
-            user_db.update_one({"_id": user["_id"]}, {"$set": {"gender": gender}})
-        if form.introduction.data:
-            introduction = form.introduction.data
-            user_db.update_one({"_id": user["_id"]}, {"$set": {"introduction": introduction}})
-        if form.birthday.data:
-            birthday = form.birthday.data
-            user_db.update_one({"_id": user["_id"]}, {"$set": {"birthday": birthday}})
-        if form.address.data:
-            address = form.address.data
-            user_db.update_one({"_id": user["_id"]}, {"$set": {"address": address}})
-        if form.name.data:
-            name = form.name.data
-            user_db.update_one({"_id": user["_id"]}, {"$set": {"name": name}})
-        if form.avatar.data:
-            avatar = form.avatar.data
+        req_data = json.loads(data)
+
+        gender = req_data.get("gender")
+        if gender is not None:
+            await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]}, {"$set": {"gender": gender}})
+        introduction = req_data.get("introduction")
+        if introduction is not None:
+            await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]},
+                                          {"$set": {"introduction": introduction}})
+        birthday = req_data.get("birthday")
+        if birthday is not None:
+            await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]}, {"$set": {"birthday": birthday}})
+        address = req_data.get("address")
+        if address is not None:
+            await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]}, {"$set": {"address": address}})
+        name = req_data.get("name")
+        if name is not None:
+            await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]}, {"$set": {"name": name}})
+        avatar = req_data.get("avatar")
+        if avatar is not None:
             # 替换地址
             avatar = avatar.replace(settings['SITE_URL'], "")
-            user_db.update_one({"_id": user["_id"]}, {"$set": {"avatar": avatar}})
+            await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]}, {"$set": {"avatar": avatar}})
 
         # 删除缓存
         UserService.delete_cache(user["_id"])
-
         self.write(res)
 
 
 class LogoutHandler(BaseHandler):
-    '''
+    """
         退出登录
         get -> /logout/
-    '''
+    """
 
     @authenticated_async
     async def get(self):
-        res = resFunc({})
+        res = res_func({})
         channel = self.request.headers.get('Channel', 'default')
         current_user = self.current_user
         if current_user is not None:
@@ -175,7 +155,7 @@ class LogoutHandler(BaseHandler):
 
 
 class ChangePwdHandler(BaseHandler):
-    '''
+    """
         修改用户密码
         post -> /changePwd/
         payload:
@@ -183,20 +163,18 @@ class ChangePwdHandler(BaseHandler):
                 "oldPassword": "旧密码"
                 "newPassword": "新密码"
             }
-    '''
+    """
 
     @authenticated_async
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         user = self.current_user
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = ChangePwdForm.from_json(data)
-        old_password = form.oldPassword.data
-        new_password = form.newPassword.data
-        if form.validate():
-            user_db = User()
-            user = user_db.find_one({"_id": user["_id"]})
+        req_data = json.loads(data)
+        old_password = req_data.get("oldPassword")
+        new_password = req_data.get("newPassword")
+        if old_password is not None and new_password is not None:
+            user = await mongo_helper.fetch_one(User.collection_name, {"_id": user["_id"]})
             if user is not None:
                 # 判断是否第一次修改密码
                 if user["has_password"] == 1:
@@ -204,10 +182,11 @@ class ChangePwdHandler(BaseHandler):
                         res['code'] = 10006
                         res['message'] = '密码错误'
                     else:
-                        user_db.update_one({"_id": user["_id"]}, {"$set": {"password": get_md5(new_password)}})
+                        await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]},
+                                                      {"$set": {"password": get_md5(new_password)}})
                 else:
-                    user_db.update_one({"_id": user["_id"]},
-                                       {"$set": {"password": get_md5(new_password), "has_password": 1}})
+                    await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]},
+                                                  {"$set": {"password": get_md5(new_password), "has_password": 1}})
                     # 刷新缓存
                     UserService.delete_cache(user["_id"])
             else:
@@ -220,23 +199,23 @@ class ChangePwdHandler(BaseHandler):
 
 
 class RefreshLoginHandler(BaseHandler):
-    '''
+    """
         刷新登录令牌（延长过期时间）
         get -> /refreshLogin/
-    '''
+    """
 
     @authenticated_async
     async def get(self):
         channel = self.request.headers.get('Channel', 'default')
-        res = resFunc({})
+        res = res_func({})
         user = self.current_user
         payload = {
             'id': user["_id"],
             'username': user["username"],
             'exp': datetime.utcnow()
         }
-        token = jwt.encode(payload, self.settings["secret_key"], algorithm='HS256')
-        res['data'] = {"token": token.decode('utf-8')}
+        token = jwt.encode(payload=payload, key=self.settings["secret_key"], algorithm='HS256')
+        res['data'] = {"token": token}
         # 存储用户令牌
-        UserService.save_login_token(user["_id"], channel, token.decode('utf-8'))
+        UserService.save_login_token(user["_id"], channel, token)
         self.write(res)

@@ -1,13 +1,11 @@
-from bases.models import MongoModel
-from bases.settings import settings
-from bases.utils import now_utc
+from bases.utils import now_utc, mongo_helper
 
 
-# 日志
-class Log(MongoModel):
+class Log(object):
+    """系统日志"""
 
-    def __init__(self):
-        super(Log, self).__init__(settings['mongo']['name'], "Log")
+    # 文档名
+    collection_name = "Log"
 
     """数据库字段说明"""
     # 账号
@@ -24,12 +22,14 @@ class Log(MongoModel):
     times = None
 
     # 格式化json
-    def get_add_json(self):
-        return {"_id": self.get_next_id(),
-                "username": self.username,
-                "method": self.method,
-                "uri": self.uri,
-                "params": self.params,
-                "ip": self.ip,
-                "times": self.times,
+    @staticmethod
+    async def get_json(req_data):
+        _id = await mongo_helper.get_next_id(Log.collection_name)
+        return {"_id": _id,
+                "username": req_data.get("username"),
+                "method": req_data.get("method"),
+                "uri": req_data.get("uri"),
+                "params": req_data.get("params"),
+                "ip": req_data.get("ip"),
+                "times": req_data.get("times"),
                 "add_time": now_utc()}

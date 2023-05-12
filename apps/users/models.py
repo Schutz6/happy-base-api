@@ -1,13 +1,11 @@
-from bases.settings import settings
-from bases.models import MongoModel
-from bases.utils import now_utc
+from bases.utils import now_utc, mongo_helper
 
 
-# 用户对象
-class User(MongoModel):
+class User(object):
+    """用户"""
 
-    def __init__(self):
-        super(User, self).__init__(settings['mongo']['name'], "User")
+    # 文档名
+    collection_name = "User"
 
     """"数据库字段声明"""
     # 昵称
@@ -45,19 +43,21 @@ class User(MongoModel):
     last_ip = None
 
     # 格式化json
-    def get_add_json(self):
-        return {"_id": self.get_next_id(),
-                "name": self.name,
-                "username": self.username,
-                "password": self.password,
-                "has_password": self.has_password,
-                "status": self.status,
-                "roles": self.roles,
-                "email": self.email,
-                "mobile": self.mobile,
-                "gender": self.gender,
-                "avatar": self.avatar,
-                "address": self.address,
-                "introduction": self.introduction,
-                "birthday": self.birthday,
+    @staticmethod
+    async def get_json(req_data):
+        _id = await mongo_helper.get_next_id(User.collection_name)
+        return {"_id": _id,
+                "name": req_data.get("name"),
+                "username": req_data.get("username"),
+                "password": req_data.get("password"),
+                "has_password": req_data.get("has_password", default=1),
+                "status": req_data.get("status", default=0),
+                "roles": req_data.get("roles", default=[]),
+                "email": req_data.get("email"),
+                "mobile": req_data.get("mobile"),
+                "gender": req_data.get("gender"),
+                "avatar": req_data.get("avatar"),
+                "address": req_data.get("address"),
+                "introduction": req_data.get("introduction"),
+                "birthday": req_data.get("birthday"),
                 "add_time": now_utc()}

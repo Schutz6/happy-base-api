@@ -1,12 +1,11 @@
-from bases.models import MongoModel
-from bases.settings import settings
+from bases.utils import mongo_helper
 
 
-# 角色
-class Role(MongoModel):
+class Role(object):
+    """角色"""
 
-    def __init__(self):
-        super(Role, self).__init__(settings['mongo']['name'], "Role")
+    # 文档名
+    collection_name = "Role"
 
     """数据库字段说明"""
     # 唯一ID
@@ -19,9 +18,11 @@ class Role(MongoModel):
     sort = 0
 
     # 格式化json
-    def get_add_json(self):
-        return {"_id": self.get_next_id(),
-                "name": self.name,
-                "describe": self.describe,
-                "remarks": self.remarks,
-                "sort": self.sort}
+    @staticmethod
+    async def get_json(req_data):
+        _id = await mongo_helper.get_next_id(Role.collection_name)
+        return {"_id": _id,
+                "name": req_data.get("name"),
+                "describe": req_data.get("describe"),
+                "remarks": req_data.get("remarks"),
+                "sort": req_data.get("sort", 0)}

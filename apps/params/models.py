@@ -1,12 +1,11 @@
-from bases.models import MongoModel
-from bases.settings import settings
+from bases.utils import mongo_helper
 
 
-# 参数设置
-class Param(MongoModel):
+class Param(object):
+    """系统参数"""
 
-    def __init__(self):
-        super(Param, self).__init__(settings['mongo']['name'], "Param")
+    # 文档名
+    collection_name = "Param"
 
     """数据库字段说明"""
     # 唯一ID
@@ -19,9 +18,11 @@ class Param(MongoModel):
     remarks = None
 
     # 格式化json
-    def get_add_json(self):
-        return {"_id": self.get_next_id(),
-                "key": self.key,
-                "value": self.value,
-                "status": self.status,
-                "remarks": self.remarks}
+    @staticmethod
+    async def get_json(req_data):
+        _id = await mongo_helper.get_next_id(Param.collection_name)
+        return {"_id": _id,
+                "key": req_data.get("key"),
+                "value": req_data.get("value"),
+                "status": req_data.get("status"),
+                "remarks": req_data.get("remarks")}

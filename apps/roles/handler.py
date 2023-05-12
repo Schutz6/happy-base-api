@@ -1,147 +1,114 @@
 import json
 import re
 
-from apps.roles.forms import RoleForm
 from apps.roles.models import Role
-from bases import utils
-from bases.decorators import authenticated_admin_async
+from bases.decorators import authenticated_async
 from bases.handler import BaseHandler
-from bases.res import resFunc
+from bases.res import res_func
+from bases.utils import mongo_helper
 
 
 class AddHandler(BaseHandler):
-    '''
+    """
         添加
         post -> /role/add/
-        payload:
-            {
-                "name": "唯一ID",
-                "describe": "角色",
-                "remarks": "备注",
-                "sort": "排序"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = RoleForm.from_json(data)
-        name = form.name.data
-        describe = form.describe.data
-        remarks = form.remarks.data
-        sort = form.sort.data
+        req_data = json.loads(data)
+        name = req_data.get("name")
+
         # 查找角色是否存在
-        role_db = Role()
-        role = role_db.find_one({"name": name})
+        role = await mongo_helper.fetch_one(Role.collection_name, {"name": name})
         if role is not None:
             res['code'] = 50000
             res['message'] = '该唯一ID已存在'
         else:
-            role_db.name = name
-            role_db.describe = describe
-            role_db.remarks = remarks
-            role_db.sort = sort
-            role_db.insert_one(role_db.get_add_json())
+            await mongo_helper.insert_one(Role.collection_name, await Role.get_json(req_data))
         self.write(res)
 
 
 class DeleteHandler(BaseHandler):
-    '''
+    """
         删除
         post -> /role/delete/
-        payload:
-            {
-                "id": "角色编号"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = RoleForm.from_json(data)
-        _id = form.id.data
-        # 删除数据
-        role_db = Role()
-        role_db.delete_one({"_id": _id})
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+
+        if _id is not None:
+            # 删除数据
+            await mongo_helper.delete_one(Role.collection_name, {"_id": _id})
         self.write(res)
 
 
 class UpdateHandler(BaseHandler):
-    '''
+    """
         修改
         post -> /role/update/
-        payload:
-            {
-                "id": "用户编号",
-                "name": "唯一ID",
-                "describe": "角色",
-                "remarks": "备注"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = RoleForm.from_json(data)
-        _id = form.id.data
-        name = form.name.data
-        describe = form.describe.data
-        remarks = form.remarks.data
-        sort = form.sort.data
-        # 修改数据
-        role_db = Role()
-        role_db.update_one({"_id": _id},
-                                 {"$set": {"name": name, "describe": describe, "remarks": remarks, "sort": sort}})
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+        name = req_data.get("name")
+        describe = req_data.get("describe")
+        remarks = req_data.get("remarks")
+        sort = req_data.get("sort", 0)
+
+        if _id is not None:
+            # 修改数据
+            await mongo_helper.update_one(Role.collection_name, {"_id": _id},
+                                          {"$set": {"name": name, "describe": describe, "remarks": remarks,
+                                                    "sort": sort}})
         self.write(res)
 
 
 class ListHandler(BaseHandler):
-    '''
+    """
         列表
         post -> /role/list/
-        payload:
-           {
-               "currentPage": 1,
-               "pageSize": 10,
-               "searchKey": "关键字",
-           }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = RoleForm.from_json(data)
-        current_page = form.currentPage.data
-        page_size = form.pageSize.data
-        search_key = form.searchKey.data
-        role_db = Role()
+        req_data = json.loads(data)
+        current_page = req_data.get("currentPage", 1)
+        page_size = req_data.get("pageSize", 10)
+        search_key = req_data.get("searchKey")
+
         # 查询条件
         query_criteria = {"_id": {"$ne": "sequence_id"}}
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"describe": re.compile(search_key)}]
-        # 查询分页
-        query = role_db.find_page(page_size, current_page, [("sort", -1), ("_id", -1)], query_criteria)
 
+        # 查询分页数据
+        page_data = await mongo_helper.fetch_page_info(Role.collection_name, query_criteria,
+                                                       [("sort", -1), ("_id", -1)], page_size,
+                                                       current_page)
         # 查询总数
-        total = role_db.query_count(query)
-        pages = utils.get_pages(total, page_size)
+        total = await mongo_helper.fetch_count_info(Role.collection_name, query_criteria)
 
         results = []
-        for item in query:
+        for item in page_data.get("list", []):
             item["id"] = item["_id"]
             results.append(item)
 
         data = {
             "total": total,
-            "pages": pages,
             "size": page_size,
             "current": current_page,
             "results": results
@@ -152,22 +119,21 @@ class ListHandler(BaseHandler):
 
 
 class GetListHandler(BaseHandler):
-    '''
+    """
         所有列表
         get -> /role/getList/
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def get(self):
-        res = resFunc([])
+        res = res_func({})
 
         current_user = self.current_user
 
-        role_db = Role()
-        query = role_db.find_all({"_id": {"$ne": "sequence_id"}})
-        query = role_db.query_sort(query, [("sort", -1), ("_id", -1)])
+        query = await mongo_helper.fetch_all(Role.collection_name, {"_id": {"$ne": "sequence_id"}},
+                                             [("sort", -1), ("_id", -1)])
         results = []
-        if 'superadmin' in current_user["roles"]:
+        if 'super' in current_user["roles"]:
             for item in query:
                 # 全部角色
                 obj = {"value": item["name"], "text": item["describe"]}
@@ -175,7 +141,7 @@ class GetListHandler(BaseHandler):
         elif 'admin' in current_user["roles"]:
             for item in query:
                 # 过滤超管角色
-                if item["name"] != 'superadmin':
+                if item["name"] != 'super':
                     obj = {"value": item["name"], "text": item["describe"]}
                     results.append(obj)
         res['data'] = results

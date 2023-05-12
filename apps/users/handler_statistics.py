@@ -1,22 +1,21 @@
 from datetime import datetime
 from apps.users.models import User
-from bases.decorators import authenticated_admin_async
+from bases.decorators import authenticated_async
 from bases.handler import BaseHandler
-from bases.res import resFunc
-from bases.utils import now_utc, format_time, to_timestamp, get_add_time
+from bases.res import res_func
+from bases.utils import now_utc, format_time, to_timestamp, get_add_time, mongo_helper
 
 
 class StatisticsUserHandler(BaseHandler):
-    '''
+    """
         统计用户数据
         get -> /statistics/user/
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def get(self):
-        res = resFunc({})
+        res = res_func({})
         data = {"total_users": 0, "today_users": 0, "yesterday_users": 0, "month_users": 0}
-        user_db = User()
 
         # 今日日期
         today = format_time(now_utc(), '%Y-%m-%d')
@@ -27,7 +26,7 @@ class StatisticsUserHandler(BaseHandler):
         month_start = datetime(now.year, now.month, 1).strftime("%Y-%m-%d")
 
         # 总会员数
-        query = user_db.aggregate([
+        query = await mongo_helper.fetch_aggregate(User.collection_name, [
             {"$match": {"roles": ['user']}},
             {'$group': {'_id': None, 'count': {'$sum': 1}}}
         ])
@@ -35,7 +34,7 @@ class StatisticsUserHandler(BaseHandler):
             data["total_users"] += item["count"]
 
         # 今日新增会员数
-        query = user_db.aggregate([
+        query = await mongo_helper.fetch_aggregate(User.collection_name, [
             {"$match": {"roles": ['user'], 'add_time': {"$gt": to_timestamp(today + " 00:00:00"),
                                                         "$lt": to_timestamp(today + " 23:59:59")}}},
             {'$group': {'_id': None, 'count': {'$sum': 1}}}
@@ -44,7 +43,7 @@ class StatisticsUserHandler(BaseHandler):
             data["today_users"] += item["count"]
 
         # 昨日新增会员数
-        query = user_db.aggregate([
+        query = await mongo_helper.fetch_aggregate(User.collection_name, [
             {"$match": {"roles": ['user'], 'add_time': {"$gt": to_timestamp(yesterday + " 00:00:00"),
                                                         "$lt": to_timestamp(yesterday + " 23:59:59")}}},
             {'$group': {'_id': None, 'count': {'$sum': 1}}}
@@ -53,7 +52,7 @@ class StatisticsUserHandler(BaseHandler):
             data["yesterday_users"] += item["count"]
 
         # 本月新增会员数
-        query = user_db.aggregate([
+        query = await mongo_helper.fetch_aggregate(User.collection_name, [
             {"$match": {"roles": ['user'], 'add_time': {"$gt": to_timestamp(month_start + " 00:00:00"),
                                                         "$lt": to_timestamp(today + " 23:59:59")}}},
             {'$group': {'_id': None, 'count': {'$sum': 1}}}

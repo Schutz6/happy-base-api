@@ -1,10 +1,4 @@
-from bases.settings import redisUtil
-
-
-# 基础服务器类
-class BaseService:
-    # redis缓存工具
-    redis = redisUtil
+class Keys(object):
 
     # 应用名称
     appName = "happy:"
@@ -25,3 +19,5 @@ class BaseService:
     paramsKey = appName + "params:"
 
 
+""" 单例对象 """
+Keys = Keys()

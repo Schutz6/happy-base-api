@@ -1,13 +1,13 @@
-'''
+"""
 返回说明
 code
 20000 成功
 50000 错误
-'''
+"""
 
 
-# 返回正常数据
-def resFunc(data, code=20000, message="Success"):
+def res_func(data, code=20000, message="Success"):
+    """返回成功"""
     res_model = {
         "data": data,
         "code": code,
@@ -16,8 +16,8 @@ def resFunc(data, code=20000, message="Success"):
     return res_model
 
 
-# 返回错误数据
-def resFailFunc(data, code=50000, message="Failed"):
+def res_fail_func(data, code=50000, message="Failed"):
+    """返回失败"""
     res_model = {
         "data": data,
         "code": code,

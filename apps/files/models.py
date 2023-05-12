@@ -1,13 +1,11 @@
-from bases.models import MongoModel
-from bases.settings import settings
-from bases.utils import now_utc
+from bases.utils import now_utc, mongo_helper
 
 
-# 文件信息表
-class Files(MongoModel):
+class Files(object):
+    """文件库"""
 
-    def __init__(self):
-        super(Files, self).__init__(settings['mongo']['name'], "Files")
+    # 文档名
+    collection_name = "Files"
 
     """数据库字段说明"""
     # 文件名
@@ -26,13 +24,15 @@ class Files(MongoModel):
     status = 0
 
     # 格式化json
-    def get_add_json(self):
-        return {"_id": self.get_next_id(),
-                "name": self.name,
-                "download_path": self.download_path,
-                "store_path": self.store_path,
-                "type": self.type,
-                "size": self.size,
-                "md5": self.md5,
-                "status": self.status,
+    @staticmethod
+    async def get_json(req_data):
+        _id = await mongo_helper.get_next_id(Files.collection_name)
+        return {"_id": _id,
+                "name": req_data.get("name"),
+                "download_path": req_data.get("download_path"),
+                "store_path": req_data.get("store_path"),
+                "type": req_data.get("type", 0),
+                "size": req_data.get("size"),
+                "md5": req_data.get("md5"),
+                "status": req_data.get("status", 0),
                 "add_time": now_utc()}

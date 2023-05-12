@@ -1,12 +1,11 @@
-from bases.models import MongoModel
-from bases.settings import settings
+from bases.utils import mongo_helper
 
 
-# 任务
-class Task(MongoModel):
+class Task(object):
+    """定时任务"""
 
-    def __init__(self):
-        super(Task, self).__init__(settings['mongo']['name'], "Task")
+    # 文档名
+    collection_name = "Task"
 
     """数据库字段说明"""
     # 任务名称
@@ -25,12 +24,14 @@ class Task(MongoModel):
     options = None
 
     # 格式化json
-    def get_add_json(self):
-        return {"_id": self.get_next_id(),
-                "name": self.name,
-                "func": self.func,
-                "type": self.type,
-                "exec_cron": self.exec_cron,
-                "exec_interval": self.exec_interval,
-                "status": self.status,
-                "options": self.options}
+    @staticmethod
+    async def get_json(req_data):
+        _id = await mongo_helper.get_next_id(Task.collection_name)
+        return {"_id": _id,
+                "name": req_data.get("name"),
+                "func": req_data.get("func"),
+                "type": req_data.get("type", 0),
+                "exec_cron": req_data.get("exec_cron"),
+                "exec_interval": req_data.get("exec_interval"),
+                "status": req_data.get("status", 0),
+                "options": req_data.get("options")}

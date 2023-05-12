@@ -1,130 +1,94 @@
 import json
 import re
 
-from apps.params.forms import ParamForm
 from apps.params.models import Param
-from bases import utils
-from bases.decorators import authenticated_admin_async, log_async
+from bases.decorators import authenticated_async, log_async
 from bases.handler import BaseHandler
-from bases.res import resFunc
+from bases.res import res_func
+from bases.utils import mongo_helper
 
 
 class AddHandler(BaseHandler):
-    '''
+    """
         添加
         post -> /param/add/
-        payload:
-            {
-                "key": "唯一ID",
-                "value": "参数值",
-                "remarks": "备注",
-                "status": "状态"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = ParamForm.from_json(data)
-        key = form.key.data
-        value = form.value.data
-        remarks = form.remarks.data
-        status = form.status.data
+        req_data = json.loads(data)
+        key = req_data.get("key")
+
         # 查找是否存在
-        param_db = Param()
-        param = param_db.find_one({"key": key})
+        param = await mongo_helper.fetch_one(Param.collection_name, {"key": key})
         if param is not None:
             res['code'] = 50000
             res['message'] = '该唯一ID已存在'
         else:
-            param_db.key = key
-            param_db.value = value
-            param_db.remarks = remarks
-            param_db.status = status
-            param_db.insert_one(param_db.get_add_json())
+            await mongo_helper.insert_one(Param.collection_name, await Param.get_json(req_data))
         self.write(res)
 
 
 class DeleteHandler(BaseHandler):
-    '''
+    """
         删除
         post -> /param/delete/
-        payload:
-            {
-                "id": "编号"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = ParamForm.from_json(data)
-        _id = form.id.data
-        # 删除数据
-        param_db = Param()
-        param_db.delete_one({"_id": _id})
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+        
+        if _id is not None:
+            # 删除数据
+            await mongo_helper.delete_one(Param.collection_name, {"_id": _id})
         self.write(res)
 
 
 class UpdateHandler(BaseHandler):
-    '''
+    """
         修改
         post -> /param/update/
-        payload:
-            {
-                "id": "编号",
-                "value": "参数值",
-                "remarks": "备注",
-                "status": "状态"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = ParamForm.from_json(data)
-        _id = form.id.data
-        value = form.value.data
-        remarks = form.remarks.data
-        status = form.status.data
-        # 修改数据
-        param_db = Param()
-        param_db.update_one({"_id": _id},
-                            {"$set": {"value": value, "remarks": remarks, "status": status}})
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+        value = req_data.get("value")
+        remarks = req_data.get("remarks")
+        status = req_data.get("status")
+        
+        if _id is not None:
+            # 修改数据
+            await mongo_helper.update_one(Param.collection_name, {"_id": _id},
+                                          {"$set": {"value": value, "remarks": remarks, "status": status}})
         self.write(res)
 
 
 class ListHandler(BaseHandler):
-    '''
+    """
         列表
         post -> /param/list/
-        payload:
-           {
-               "currentPage": 1,
-               "pageSize": 10,
-               "searchKey": "关键字",
-               "status": "状态"
-           }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
-        data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = ParamForm.from_json(data)
-        current_page = form.currentPage.data
-        page_size = form.pageSize.data
-        search_key = form.searchKey.data
-        status = form.status.data
+        res = res_func({})
+        data = self.request.body.decode("utf-8")
+        req_data = json.loads(data)
+        current_page = req_data.get("currentPage", 1)
+        page_size = req_data.get("pageSize", 10)
+        search_key = req_data.get("searchKey")
+        status = req_data.get("status")
 
-        param_db = Param()
         # 查询条件
         query_criteria = {"_id": {"$ne": "sequence_id"}}
         if search_key is not None:
@@ -132,21 +96,19 @@ class ListHandler(BaseHandler):
                                      {"remarks": re.compile(search_key)}]
         if status is not None:
             query_criteria["status"] = status
-        # 查询分页
-        query = param_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
-
+        # 查询分页数据
+        page_data = await mongo_helper.fetch_page_info(Param.collection_name, query_criteria, [("_id", -1)], page_size,
+                                                       current_page)
         # 查询总数
-        total = param_db.query_count(query)
-        pages = utils.get_pages(total, page_size)
+        total = await mongo_helper.fetch_count_info(Param.collection_name, query_criteria)
 
         results = []
-        for item in query:
+        for item in page_data.get("list", []):
             item["id"] = item["_id"]
             results.append(item)
 
         data = {
             "total": total,
-            "pages": pages,
             "size": page_size,
             "current": current_page,
             "results": results
@@ -157,18 +119,18 @@ class ListHandler(BaseHandler):
 
 
 class GetListHandler(BaseHandler):
-    '''
+    """
         所有列表
         get -> /param/getList/
-    '''
+    """
 
     @log_async
     async def get(self):
-        res = resFunc({})
-        param_db = Param()
-        query = param_db.find_all({"status": 0})
+        res = res_func({})
+        query = await mongo_helper.fetch_all(Param.collection_name, {"status": 0}, [("_id", -1)])
         results = []
         for item in query:
             results.append((item["key"], item["value"]))
+        # 转成字典格式
         res['data'] = dict(results)
         self.write(res)

@@ -1,12 +1,11 @@
-from bases.models import MongoModel
-from bases.settings import settings
+from bases.utils import mongo_helper
 
 
-# 菜单
-class Menu(MongoModel):
+class Menu(object):
+    """菜单"""
 
-    def __init__(self):
-        super(Menu, self).__init__(settings['mongo']['name'], "Menu")
+    # 文档名
+    collection_name = "Menu"
 
     """数据库字段说明"""
     # 父ID
@@ -27,13 +26,15 @@ class Menu(MongoModel):
     status = 0
 
     # 格式化json
-    def get_add_json(self):
-        return {"_id": self.get_next_id(),
-                "pid": self.pid,
-                "name": self.name,
-                "icon": self.icon,
-                "url": self.url,
-                "roles": self.roles,
-                "level": self.level,
-                "status": self.status,
-                "sort": self.sort}
+    @staticmethod
+    async def get_json(req_data):
+        _id = await mongo_helper.get_next_id(Menu.collection_name)
+        return {"_id": _id,
+                "pid": req_data.get("pid", 0),
+                "name": req_data.get("name"),
+                "icon": req_data.get("icon"),
+                "url": req_data.get("url"),
+                "roles": req_data.get("roles", []),
+                "level": req_data.get("level", 0),
+                "status": req_data.get("status", 0),
+                "sort": req_data.get("sort", 0)}

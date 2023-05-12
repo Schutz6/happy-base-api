@@ -45,7 +45,7 @@ def package(version):
 
     # 清除源py文件
     for src_file in dest.rglob("*.py"):
-        if src_file.name == "settings.py":
+        if src_file.name == "config.py":
             # 排除设置文件
             pass
         else:

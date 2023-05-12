@@ -1,223 +1,175 @@
 import json
 
-from apps.dicts.forms import DictTypeForm, DictValueForm
 from apps.dicts.models import DictType, DictValue
 from apps.dicts.service import DictService
 from bases.handler import BaseHandler
-from bases.decorators import log_async, authenticated_admin_async
-from bases.res import resFunc
-from bases.settings import settings
+from bases.decorators import log_async, authenticated_async
+from bases.res import res_func
+from bases.config import settings
+from bases.utils import mongo_helper
 
 
 class ListDictTypeHandler(BaseHandler):
-    '''
+    """
         获取字典类型列表
         get -> /dict/typeList/
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def get(self):
-        res = resFunc([])
-        dictType_db = DictType()
+        res = res_func([])
         # 查询所有
-        query = dictType_db.find_all({"_id": {"$ne": "sequence_id"}})
-        # 排序
-        dictTypes = dictType_db.query_sort(query, [("_id", -1)])
+        dict_types = await mongo_helper.fetch_all(DictType.collection_name, {"_id": {"$ne": "sequence_id"}},
+                                                  [("_id", -1)])
         results = []
-        for dictType in dictTypes:
-            dictType["id"] = dictType["_id"]
+        for dict_type in dict_types:
+            dict_type["id"] = dict_type["_id"]
             # 查询子集
-            dictType["children"] = DictService.get_dict_list(dictType["_id"])
-
-            results.append(dictType)
-
+            dict_type["children"] = await DictService.get_dict_list(dict_type["_id"])
+            results.append(dict_type)
         res['data'] = results
-
         self.write(res)
 
 
 class AddDictTypeHandler(BaseHandler):
-    '''
+    """
         新增字典类型
         post -> /dict/typeAdd/
-        payload:
-            {
-                "id": "编号",
-                "name": "角色",
-                "describe": "描述"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = DictTypeForm.from_json(data)
-        _id = form.id.data
-        name = form.name.data
-        describe = form.describe.data
-        dictType = DictType()
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+        name = req_data.get("name")
+        describe = req_data.get("describe")
+
         if _id is not None:
             # 编辑
-            dictType.update_one({"_id": _id}, {"$set": {"name": name, "describe": describe}})
+            await mongo_helper.update_one(DictType.collection_name, {"_id": _id},
+                                          {"$set": {"name": name, "describe": describe}})
         else:
             # 新增
-            dictType.name = name
-            dictType.describe = describe
-            dictType.insert_one(dictType.get_add_json())
+            await mongo_helper.insert_one(DictType.collection_name, await DictType.get_json(req_data))
         res['message'] = '保存成功'
-
         self.write(res)
 
 
 class DeleteDictTypeHandler(BaseHandler):
-    '''
+    """
         删除字典类型
         post -> /dict/typeDelete/
-        payload:
-            {
-                "id":"编号"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = DictTypeForm.from_json(data)
-        # 删除类型
-        dictType = DictType()
-        dictType.id = form.id.data
-        dictType.delete_one({"_id": dictType.id})
+        req_data = json.loads(data)
+        _id = req_data.get("id")
 
-        # 删除值
-        dictValue = DictValue()
-        dictValue.delete_many({"dict_tid": dictType.id})
+        if _id is not None:
+            # 删除类型
+            await mongo_helper.delete_one(DictType.collection_name, {"_id": _id})
 
-        # 删除缓存
-        DictService.delete_cache(dictType.id)
+            # 删除值
+            await mongo_helper.delete_many(DictValue.collection_name, {"dict_tid": _id})
+
+            # 删除缓存
+            DictService.delete_cache(_id)
 
         res['message'] = '删除成功'
         self.write(res)
 
 
 class ListDictValueHandler(BaseHandler):
-    '''
+    """
         获取字典值列表
         post -> /dict/valueList/
-        payload:
-            {
-                "dict_tid": "字典类型编号"
-            }
-    '''
+    """
 
     @log_async
     async def post(self):
-        res = resFunc([])
+        res = res_func([])
         data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = DictValueForm.from_json(data)
+        req_data = json.loads(data)
+        dict_tid = req_data.get("dict_tid")
 
-        res['data'] = DictService.get_dict_list(form.dict_tid.data)
-
+        if dict_tid is not None:
+            res['data'] = await DictService.get_dict_list(dict_tid)
         self.write(res)
 
 
 class AddDictValueHandler(BaseHandler):
-    '''
+    """
         新增字典值
         post -> /dict/valueAdd/
-        payload:
-            {
-                "id": "编号",
-                "dict_tid": "字典类型编号",
-                "dict_name": "字典名称",
-                "dict_value": "字典值",
-                "sort": "自定义排序"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = DictValueForm.from_json(data)
-        _id = form.id.data
-        dict_name = form.dict_name.data
-        dict_value = form.dict_value.data
-        sort = form.sort.data
-        dict_tid = form.dict_tid.data
-        dictValue = DictValue()
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+        dict_name = req_data.get("dict_name")
+        dict_value = req_data.get("dict_value")
+        sort = req_data.sort.get("sort", 0)
+        dict_tid = req_data.dict_tid.get("dict_tid", 0)
+
         if _id is not None:
             # 编辑
-            dictValue.update_one({"_id": _id},
-                                 {"$set": {"dict_name": dict_name, "dict_value": dict_value, "sort": sort}})
+            await mongo_helper.update_one(DictValue.collection_name, {"_id": _id},
+                                          {"$set": {"dict_name": dict_name, "dict_value": dict_value, "sort": sort}})
         else:
-            dictValue.dict_tid = dict_tid
-            dictValue.dict_name = dict_name
-            dictValue.dict_value = dict_value
-            dictValue.sort = sort
-            dictValue.insert_one(dictValue.get_add_json())
+            # 新增
+            await mongo_helper.insert_one(DictValue.collection_name, DictValue.get_json(req_data))
             res['message'] = '添加成功'
         # 删除缓存
         DictService.delete_cache(dict_tid)
-
         self.write(res)
 
 
 class DeleteDictValueHandler(BaseHandler):
-    '''
+    """
         删除字典值
         post -> /dict/valueDelete/
-        payload:
-            {
-                "id":"编号",
-                "dict_tid": "字典类型编号"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = DictValueForm.from_json(data)
-        dictValue = DictValue()
-        dictValue.id = form.id.data
-        dictValue.delete_one({"_id": dictValue.id})
-        res['message'] = '删除成功'
-        # 删除缓存
-        DictService.delete_cache(form.dict_tid.data)
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+        dict_tid = req_data.get("req_data")
 
+        if _id is not None:
+            await mongo_helper.delete_one(DictValue.collection_name, {"_id": _id})
+            # 删除缓存
+            DictService.delete_cache(dict_tid)
         self.write(res)
 
 
 class GetDictListHandler(BaseHandler):
-    '''
+    """
         获取字典列表
         post -> /dict/getList/
-        payload:
-            {
-                "name":"字典名称"
-            }
-    '''
+    """
 
     @log_async
     async def post(self):
-        res = resFunc([])
+        res = res_func([])
         data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = DictTypeForm.from_json(data)
-        name = form.name.data
+        req_data = json.loads(data)
+        name = req_data.get("name")
 
-        dict_type_db = DictType()
-        dict_type = dict_type_db.find_one({"name": name})
+        dict_type = await mongo_helper.fetch_one(DictType.collection_name, {"name": name})
         if dict_type is not None:
             results = []
-            query = DictService.get_dict_list(dict_type["_id"])
+            query = await DictService.get_dict_list(dict_type["_id"])
             if name == "Avatar":
                 # 头像处理
                 for item in query:

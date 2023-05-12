@@ -1,31 +1,30 @@
 import json
 
 from apps.dicts.models import DictValue
-from bases.service import BaseService
+from bases.keys import Keys
+from bases.utils import redis_helper, mongo_helper
 
 
-# 字典服务类
-class DictService(BaseService):
+class DictService(object):
+    """字典服务类"""
 
     # 根据用户编号获取离线消息
     @staticmethod
-    def get_dict_list(dict_tid):
+    async def get_dict_list(dict_tid):
         results = []
         # 获取缓存
-        dictValues = DictService.redis.get(DictService.dictKey + str(dict_tid))
-        if dictValues is None:
-            dictValue_db = DictValue()
-            query = dictValue_db.find_all({"dict_tid": dict_tid})
-            dictValues = dictValue_db.query_sort(query, [("sort", -1), ("_id", -1)])
-            for dictValue in dictValues:
-                dictValue["id"] = dictValue["_id"]
-                results.append(dictValue)
-            DictService.redis.set(DictService.dictKey + str(dict_tid), json.dumps(results))
+        dict_values = redis_helper.redis.get(Keys.dictKey + str(dict_tid))
+        if dict_values is None:
+            dict_values = await mongo_helper.fetch_all(DictValue.collection_name, {"dict_tid": dict_tid}, [("sort", -1), ("_id", -1)])
+            for dict_value in dict_values:
+                dict_value["id"] = dict_value["_id"]
+                results.append(dict_value)
+            redis_helper.redis.set(Keys.dictKey + str(dict_tid), json.dumps(results))
         else:
-            results = json.loads(dictValues)
+            results = json.loads(dict_values)
         return results
 
     # 删除缓存
     @staticmethod
     def delete_cache(dict_tid):
-        DictService.redis.delete(DictService.dictKey + str(dict_tid))
+        redis_helper.redis.delete(Keys.dictKey + str(dict_tid))

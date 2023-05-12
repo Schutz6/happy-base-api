@@ -1,49 +1,30 @@
 import json
 import re
 
-from apps.users.forms import UserForm
 from apps.users.models import User
 from apps.users.service import UserService
-from bases import utils
-from bases.decorators import authenticated_admin_async
+from bases.decorators import authenticated_async
 from bases.handler import BaseHandler
-from bases.res import resFunc
-from bases.settings import settings
-from bases.utils import get_md5, get_random_head
+from bases.res import res_func
+from bases.config import settings
+from bases.utils import get_md5, mongo_helper
 
 
 class AddHandler(BaseHandler):
-    '''
+    """
         添加
         post -> /user/add/
-        payload:
-            {
-                "name": "昵称",
-                "username": "用户名",
-                "gender": "性别",
-                "password": "密码",
-                "roles": "角色列表",
-                "status": "状态"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = UserForm.from_json(data)
-        name = form.name.data
-        username = form.username.data
-        gender = form.gender.data
-        password = form.password.data
-        roles = form.roles.data
-        status = form.status.data
-
-        user_db = User()
+        req_data = json.loads(data)
+        username = req_data.get("username")
 
         # 查找账号是否存在
-        user = user_db.find_one({"username": username})
+        user = await mongo_helper.fetch_one(User.collection_name, {"username": username})
         if user is not None:
             res['code'] = 50000
             res['message'] = '该账号已存在'
@@ -51,144 +32,106 @@ class AddHandler(BaseHandler):
             return
 
         # 新增
-        user_db.name = name
-        user_db.username = username
-        user_db.gender = gender
-        user_db.password = get_md5(password)
-        user_db.has_password = 1
-        user_db.status = status
-        user_db.avatar = get_random_head()
-        user_db.roles = roles
-        user_db.insert_one(user_db.get_add_json())
-
+        await mongo_helper.insert_one(User.collection_name, User.get_json(req_data))
         self.write(res)
 
 
-class Deletehandler(BaseHandler):
-    '''
+class DeleteHandler(BaseHandler):
+    """
         删除
         post -> /user/delete/
-        payload:
-            {
-                "id": "用户编号"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = UserForm.from_json(data)
-        _id = form.id.data
-        # 删除数据
-        user_db = User()
-        user_db.delete_one({"_id": _id})
-        # 删除缓存
-        UserService.delete_cache(_id)
-        self.write(res)
+        req_data = json.loads(data)
+        _id = req_data.get("id")
 
-
-class BatchDeleteHandler(BaseHandler):
-    '''
-        批量删除
-        post -> /user/batchDelete/
-        payload:
-           {
-                "ids": "多选ID"
-           }
-    '''
-
-    @authenticated_admin_async
-    async def post(self):
-        res = resFunc({})
-        data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = UserForm.from_json(data)
-        ids = form.ids.data
-        ids = [int(_id) for _id in ids]
-        # 批量删除
-        user_db = User()
-        user_db.delete_many({"_id": {"$in": ids}})
-        for _id in ids:
+        if _id is not None:
+            # 删除数据
+            await mongo_helper.delete_one(User.collection_name, {"_id": _id})
             # 删除缓存
             UserService.delete_cache(_id)
         self.write(res)
 
 
+class BatchDeleteHandler(BaseHandler):
+    """
+        批量删除
+        post -> /user/batchDelete/
+    """
+
+    @authenticated_async(['admin', 'super'])
+    async def post(self):
+        res = res_func({})
+        data = self.request.body.decode('utf-8')
+        req_data = json.loads(data)
+        ids = req_data.get("ids")
+        if ids is not None:
+            ids = [int(_id) for _id in ids]
+            # 批量删除
+            await mongo_helper.delete_many(User.collection_name, {"_id": {"$in": ids}})
+            for _id in ids:
+                # 删除缓存
+                UserService.delete_cache(_id)
+        self.write(res)
+
+
 class UpdateHandler(BaseHandler):
-    '''
+    """
         修改
         post -> /user/update/
-        payload:
-            {
-                "id": "用户编号",
-                "name": "昵称",
-                "gender": "性别",
-                "status": "状态 1正常 2注销",
-                "roles": "角色列表",
-                "password": "密码",
-                "avatar": "头像",
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc({})
+        res = res_func({})
         data = self.request.body.decode("utf-8")
-        data = json.loads(data)
-        form = UserForm.from_json(data)
-        _id = form.id.data
-        name = form.name.data
-        gender = form.gender.data
-        status = form.status.data
-        roles = form.roles.data
-        password = form.password.data
-        avatar = form.avatar.data
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+        name = req_data.get("name")
+        gender = req_data.get("gender")
+        password = req_data.get("password")
+        roles = req_data.get("roles", [])
+        status = req_data.get("status", 0)
+        avatar = req_data.get("avatar")
 
-        user_db = User()
-
-        # 修改数据
-        user_db.update_one({"_id": _id},
-                           {"$set": {"name": name, "gender": gender, "status": status,
-                                     "roles": roles}})
-        # 修改密码
-        if password is not None:
-            user_db.update_one({"_id": _id}, {"$set": {"password": get_md5(password)}})
-        # 修改头像
-        if avatar is not None:
-            avatar = avatar.replace(settings['SITE_URL'], "")
-            user_db.update_one({"_id": _id}, {"$set": {"avatar": avatar}})
-        # 删除缓存
-        UserService.delete_cache(_id)
+        if _id is not None:
+            # 修改数据
+            await mongo_helper.update_one(User.collection_name, {"_id": _id},
+                                          {"$set": {"name": name, "gender": gender, "status": status,
+                                                    "roles": roles}})
+            # 修改密码
+            if password is not None:
+                await mongo_helper.update_one(User.collection_name, {"_id": _id},
+                                              {"$set": {"password": get_md5(password)}})
+            # 修改头像
+            if avatar is not None:
+                avatar = avatar.replace(settings['SITE_URL'], "")
+                await mongo_helper.update_one(User.collection_name, {"_id": _id}, {"$set": {"avatar": avatar}})
+            # 删除缓存
+            UserService.delete_cache(_id)
         self.write(res)
 
 
 class ListHandler(BaseHandler):
-    '''
+    """
         列表
         post -> /user/list/
-        payload:
-            {
-               "currentPage": 1,
-               "pageSize": 10,
-               "searchKey": "关键字",
-               "roles": "角色",
-               "status": "状态"
-            }
-    '''
+    """
 
-    @authenticated_admin_async
+    @authenticated_async(['admin', 'super'])
     async def post(self):
-        res = resFunc([])
+        res = res_func([])
         data = self.request.body.decode('utf-8')
-        data = json.loads(data)
-        form = UserForm.from_json(data)
-        current_page = form.currentPage.data
-        page_size = form.pageSize.data
-        search_key = form.searchKey.data
-        roles = form.roles.data
-        status = form.status.data
+        req_data = json.loads(data)
+        current_page = req_data.get("currentPage", 1)
+        page_size = req_data.get("pageSize", 10)
+        search_key = req_data.get("searchKey")
+        status = req_data.get("status")
+        roles = req_data.get("roles", [])
 
         current_user = self.current_user
 
@@ -199,24 +142,24 @@ class ListHandler(BaseHandler):
             roles = ["user"]
             if 'admin' in current_user["roles"]:
                 roles.append("admin")
-            if 'superadmin' in current_user["roles"]:
+            if 'super' in current_user["roles"]:
                 roles.append("admin")
-                roles.append("superadmin")
+                roles.append("super")
         query_criteria["roles"] = {"$in": roles}
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"username": re.compile(search_key)}]
         if status is not None:
             query_criteria["status"] = status
-        user_db = User()
-        # 查询分页
-        query = user_db.find_page(page_size, current_page, [("_id", -1)], query_criteria)
 
+        # 查询分页数据
+        page_data = await mongo_helper.fetch_page_info(User.collection_name, query_criteria, [("_id", -1)],
+                                                       page_size,
+                                                       current_page)
         # 查询总数
-        total = user_db.query_count(query)
-        pages = utils.get_pages(total, page_size)
+        total = await mongo_helper.fetch_count_info(User.collection_name, query_criteria)
 
         results = []
-        for item in query:
+        for item in page_data.get("list", []):
             item['password'] = ""
             item["id"] = item["_id"]
             item["avatar"] = settings['SITE_URL'] + item["avatar"]
@@ -224,7 +167,6 @@ class ListHandler(BaseHandler):
 
         data = {
             "total": total,
-            "pages": pages,
             "size": page_size,
             "current": current_page,
             "results": results

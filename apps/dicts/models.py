@@ -1,12 +1,11 @@
-from bases.models import MongoModel
-from bases.settings import settings
+from bases.utils import mongo_helper
 
 
-# 字典类型表
-class DictType(MongoModel):
+class DictType(object):
+    """字典类型"""
 
-    def __init__(self):
-        super(DictType, self).__init__(settings['mongo']['name'], "DictType")
+    # 文档名
+    collection_name = "DictType"
 
     """数据库字段说明"""
     # 类型名称
@@ -15,17 +14,19 @@ class DictType(MongoModel):
     describe = None
 
     # 格式化json
-    def get_add_json(self):
-        return {"_id": self.get_next_id(),
-                "name": self.name,
-                "describe": self.describe}
+    @staticmethod
+    async def get_json(req_data):
+        _id = await mongo_helper.get_next_id(DictType.collection_name)
+        return {"_id": _id,
+                "name": req_data.get("name"),
+                "describe": req_data.get("describe")}
 
 
-# 字典值列表
-class DictValue(MongoModel):
+class DictValue(object):
+    """字典值"""
 
-    def __init__(self):
-        super(DictValue, self).__init__(settings['mongo']['name'], "DictValue")
+    # 文档名
+    collection_name = "DictValue"
 
     """数据库字段说明"""
     # 字典类型编号
@@ -38,10 +39,12 @@ class DictValue(MongoModel):
     sort = 0
 
     # 格式化json
-    def get_add_json(self):
-        return {"_id": self.get_next_id(),
-                "dict_tid": self.dict_tid,
-                "dict_name": self.dict_name,
-                "dict_value": self.dict_value,
-                "sort": self.sort}
+    @staticmethod
+    async def get_json(req_data):
+        _id = await mongo_helper.get_next_id(DictValue.collection_name)
+        return {"_id": _id,
+                "dict_tid": req_data.get("dict_tid", 0),
+                "dict_name": req_data.get("dict_name"),
+                "dict_value": req_data.get("dict_value"),
+                "sort": req_data.get("sort", 0)}
 

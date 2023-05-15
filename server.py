@@ -24,8 +24,8 @@ async def init_scheduler():
     """ 初始化定时任务 """
     scheduler = TornadoScheduler()
     scheduler.start()
-    # 查询数据
-    query = await mongo_helper.fetch_all(Task.collection_name, {"status": 1})
+    # 初始化配置的定时任务
+    query = await mongo_helper.fetch_all(Task.collection_name, {"status": 1}, [("_id", -1)])
     for task in query:
         run_task(scheduler, task)
     logging.error('定时任务已初始化')
@@ -47,7 +47,7 @@ async def main():
     """启动应用"""
     app = make_app()
     app.listen(options.port, xheaders=True)
-    app.scheduler = init_scheduler()
+    app.scheduler = await init_scheduler()
     logging.error('基础API服务已启动，端口=' + str(options.port))
     await asyncio.Event().wait()
 

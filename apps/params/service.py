@@ -15,6 +15,8 @@ class ParamService(object):
             if param is not None:
                 # 存储
                 redis_helper.redis.set(Keys.paramsKey + key, json.dumps(param))
+        else:
+            param = json.loads(param)
         return param
 
     @staticmethod

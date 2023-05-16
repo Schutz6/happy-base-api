@@ -3,7 +3,8 @@ import time
 
 from apps.logs.models import Log
 from apps.menus.service import MenuService
-from bases.utils import mongo_helper, now_utc
+from bases.keys import Keys
+from bases.utils import mongo_helper, now_utc, redis_helper
 
 
 # 插入日志记录
@@ -15,7 +16,7 @@ async def init_log():
     data_list = []
     # 开始时间
     start_time = round(time.time() * 1000, 2)
-    for i in range(1000000):
+    for i in range(100000):
         data_list.append(
             {"username": "匿名", "method": "GET", "uri": "#", "params": "#", "ip": "127.0.0.1", "times": 10,
              "add_time": now_utc()})
@@ -57,6 +58,9 @@ async def db_demo():
 if __name__ == '__main__':
     # asyncio.run(init_log())
     # asyncio.run(db_demo())
-    a = ['user', 'admin']
-    print('-'.join(a))
-    MenuService.remove_menus()
+    # a = ['user', 'admin']
+    # print('-'.join(a))
+    # MenuService.remove_menus()
+    ip = "127.0.0.1"
+    redis_helper.redis.set(Keys.ipLimitKey + ip, 1, ex=1000)
+    redis_helper.redis.incr(Keys.ipLimitKey + ip)

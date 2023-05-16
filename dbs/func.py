@@ -30,7 +30,7 @@ async def init_user():
                                    "avatar": get_random_head(),
                                    "roles": ["super"]})
     await mongo_helper.insert_one(User.collection_name,
-                                  {"_id": await mongo_helper.get_next_id(User.collection_name), "name": "普通管理员",
+                                  {"_id": await mongo_helper.get_next_id(User.collection_name), "name": "管理员",
                                    "username": "admin", "email": "admin@admin.com", "gender": "no",
                                    "password": get_md5("123456"), "has_password": 1, "status": 1,
                                    "avatar": get_random_head(),
@@ -41,13 +41,13 @@ async def init_role():
     """初始化角色"""
     await mongo_helper.insert_one(Role.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Role.collection_name), "name": "super",
-                                   "describe": "超级管理员", "remarks": "拥有所有权限（不要删）", "sort": 90})
+                                   "describe": "超管", "remarks": "拥有所有权限（不要删）", "sort": 90})
     await mongo_helper.insert_one(Role.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Role.collection_name), "name": "admin",
-                                   "describe": "普通管理员", "remarks": "拥有部分权限（不要删）", "sort": 80})
+                                   "describe": "普管", "remarks": "拥有部分权限（不要删）", "sort": 80})
     await mongo_helper.insert_one(Role.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Role.collection_name), "name": "user",
-                                   "describe": "普通用户", "remarks": "没后台权限（不要删）", "sort": 70})
+                                   "describe": "用户", "remarks": "没后台权限（不要删）", "sort": 70})
 
 
 async def init_menu():

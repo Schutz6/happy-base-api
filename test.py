@@ -2,7 +2,8 @@ import asyncio
 import time
 
 from apps.logs.models import Log
-from bases.utils import mongo_helper
+from apps.menus.service import MenuService
+from bases.utils import mongo_helper, now_utc
 
 
 # 插入日志记录
@@ -15,7 +16,9 @@ async def init_log():
     # 开始时间
     start_time = round(time.time() * 1000, 2)
     for i in range(1000000):
-        data_list.append({"username": "匿名", "method": "GET", "uri": "#", "params": "#", "ip": "127.0.0.1", "times": 10})
+        data_list.append(
+            {"username": "匿名", "method": "GET", "uri": "#", "params": "#", "ip": "127.0.0.1", "times": 10,
+             "add_time": now_utc()})
 
     # 结束时间
     finish_time1 = round(time.time() * 1000, 2)
@@ -52,5 +55,8 @@ async def db_demo():
 
 
 if __name__ == '__main__':
-    asyncio.run(init_log())
+    # asyncio.run(init_log())
     # asyncio.run(db_demo())
+    a = ['user', 'admin']
+    print('-'.join(a))
+    MenuService.remove_menus()

@@ -2,6 +2,7 @@ import json
 import re
 
 from apps.params.models import Param
+from apps.params.service import ParamService
 from bases.decorators import authenticated_async, log_async
 from bases.handler import BaseHandler
 from bases.res import res_func
@@ -27,7 +28,10 @@ class AddHandler(BaseHandler):
             res['code'] = 50000
             res['message'] = '该唯一ID已存在'
         else:
+            # 库
             await mongo_helper.insert_one(Param.collection_name, await Param.get_json(req_data))
+            # 删除缓存
+            ParamService.remove_params(None)
         self.write(res)
 
 
@@ -45,8 +49,13 @@ class DeleteHandler(BaseHandler):
         _id = req_data.get("id")
         
         if _id is not None:
-            # 删除数据
-            await mongo_helper.delete_one(Param.collection_name, {"_id": _id})
+            # 查询
+            param = await mongo_helper.fetch_one(Param.collection_name, {"_id": _id})
+            if param is not None:
+                # 删除数据
+                await mongo_helper.delete_one(Param.collection_name, {"_id": _id})
+                # 删除缓存
+                ParamService.remove_params(param["key"])
         self.write(res)
 
 
@@ -67,9 +76,14 @@ class UpdateHandler(BaseHandler):
         status = req_data.get("status")
         
         if _id is not None:
-            # 修改数据
-            await mongo_helper.update_one(Param.collection_name, {"_id": _id},
-                                          {"$set": {"value": value, "remarks": remarks, "status": status}})
+            # 查询
+            param = await mongo_helper.fetch_one(Param.collection_name, {"_id": _id})
+            if param is not None:
+                # 修改数据
+                await mongo_helper.update_one(Param.collection_name, {"_id": _id},
+                                              {"$set": {"value": value, "remarks": remarks, "status": status}})
+                # 删除缓存
+                ParamService.remove_params(param["key"])
         self.write(res)
 
 
@@ -127,10 +141,7 @@ class GetListHandler(BaseHandler):
     @log_async
     async def get(self):
         res = res_func({})
-        query = await mongo_helper.fetch_all(Param.collection_name, {"status": 0}, [("_id", -1)])
-        results = []
-        for item in query:
-            results.append((item["key"], item["value"]))
+        results = await ParamService.get_params()
         # 转成字典格式
         res['data'] = dict(results)
         self.write(res)

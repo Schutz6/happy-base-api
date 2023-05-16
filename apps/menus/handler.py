@@ -1,6 +1,7 @@
 import json
 
 from apps.menus.models import Menu
+from apps.menus.service import MenuService
 from bases.decorators import authenticated_async
 from bases.handler import BaseHandler
 from bases.res import res_func
@@ -19,7 +20,10 @@ class AddHandler(BaseHandler):
         data = self.request.body.decode("utf-8")
         req_data = json.loads(data)
 
+        # 入库
         await mongo_helper.insert_one(Menu.collection_name, await Menu.get_json(req_data))
+        # 删除缓存
+        MenuService.remove_menus()
         self.write(res)
 
 
@@ -39,6 +43,8 @@ class DeleteHandler(BaseHandler):
         if _id is not None:
             # 删除数据
             await mongo_helper.delete_one(Menu.collection_name, {"_id": _id})
+            # 删除缓存
+            MenuService.remove_menus()
         self.write(res)
 
 
@@ -67,6 +73,8 @@ class UpdateHandler(BaseHandler):
                                           {"$set": {"name": name, "icon": icon, "url": url, "roles": roles,
                                                     "sort": sort,
                                                     "status": status}})
+            # 删除缓存
+            MenuService.remove_menus()
         self.write(res)
 
 
@@ -105,21 +113,6 @@ class GetListHandler(BaseHandler):
     @authenticated_async(None)
     async def get(self):
         res = res_func([])
-
         current_user = self.current_user
-
-        query_one = await mongo_helper.fetch_all(Menu.collection_name,
-                                                 {"pid": 0, "status": 1, "roles": {"$in": current_user["roles"]}},
-                                                 [("sort", -1), ("_id", -1)])
-        results = []
-        for one in query_one:
-            # 查询二级菜单
-            query_two = await mongo_helper.fetch_all(Menu.collection_name, {"pid": one["_id"], "status": 1,
-                                                                            "roles": {"$in": current_user["roles"]}},
-                                                     [("sort", -1), ("_id", -1)])
-            children = []
-            for two in query_two:
-                children.append({"text": two["name"], "value": two["url"], "icon": two.get("icon")})
-            results.append({"text": one["name"], "value": one["url"], "icon": one.get("icon"), "children": children})
-        res['data'] = results
+        res['data'] = await MenuService.get_menus(current_user["roles"])
         self.write(res)

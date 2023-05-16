@@ -6,7 +6,7 @@ from apps.logs.models import Log
 from apps.users.service import UserService
 from bases.res import res_func
 from bases.config import settings
-from bases.utils import mongo_helper, show_error_log
+from bases.utils import mongo_helper, show_error_log, now_utc
 
 
 # 管理员用户认证，日志记录
@@ -148,4 +148,4 @@ async def handle_log(request, username, times):
     # 记录日志
     await mongo_helper.insert_one(Log.collection_name,
                                   {"username": username, "method": request.method, "uri": request.path,
-                                   "params": params, "ip": request.remote_ip, "times": times})
+                                   "params": params, "ip": request.remote_ip, "times": times, "add_time": now_utc()})

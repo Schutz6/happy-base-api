@@ -6,8 +6,8 @@ from bases.keys import Keys
 from bases.utils import get_random_num, redis_helper, mongo_helper
 
 
-# 用户服务类
 class UserService(object):
+    """用户服务类"""
 
     # 存储登录令牌
     @staticmethod

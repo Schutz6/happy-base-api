@@ -1,6 +1,7 @@
 import json
 import re
 
+from bson import ObjectId
 from apps.blacklist.models import Blacklist
 from apps.blacklist.service import BlacklistService
 from bases.decorators import authenticated_async
@@ -24,7 +25,7 @@ class DeleteHandler(BaseHandler):
 
         if _id is not None:
             # 查询
-            blacklist = await mongo_helper.fetch_one(Blacklist.collection_name, {"_id": _id})
+            blacklist = await mongo_helper.fetch_one(Blacklist.collection_name, {"_id": ObjectId(_id)})
             if blacklist is not None:
                 # 删除数据
                 await BlacklistService.remove_ip_blacklist(blacklist["ip"])
@@ -47,7 +48,7 @@ class BatchDeleteHandler(BaseHandler):
         if ids is not None:
             for _id in ids:
                 # 查询
-                blacklist = await mongo_helper.fetch_one(Blacklist.collection_name, {"_id": _id})
+                blacklist = await mongo_helper.fetch_one(Blacklist.collection_name, {"_id": ObjectId(_id)})
                 if blacklist is not None:
                     # 删除数据
                     await BlacklistService.remove_ip_blacklist(blacklist["ip"])

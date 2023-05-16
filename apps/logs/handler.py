@@ -1,6 +1,7 @@
 import json
 import re
 
+from bson import ObjectId
 from apps.logs.models import Log
 from bases.decorators import authenticated_async
 from bases.handler import BaseHandler
@@ -37,7 +38,7 @@ class BatchDeleteHandler(BaseHandler):
 
         if ids is not None:
             # 批量删除
-            await mongo_helper.delete_many(Log.collection_name, {"_id": {"$in": [_id for _id in ids]}})
+            await mongo_helper.delete_many(Log.collection_name, {"_id": {"$in": [ObjectId(_id) for _id in ids]}})
         self.write(res)
 
 

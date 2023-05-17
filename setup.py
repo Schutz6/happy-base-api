@@ -4,11 +4,8 @@ import shutil
 import compileall
 
 
-def package(version):
-    """
-    编译根目录下的包括子目录里的所有py文件成pyc文件到新的文件夹下
-    :return:
-    """
+def build_package(version):
+    """构建新版本"""
 
     root_path = os.path.join(os.path.dirname(__file__))
     root = Path(root_path)
@@ -19,13 +16,15 @@ def package(version):
     for src_file in root.rglob("__pycache__"):
         os.rmdir(src_file)
 
-    # 目标文件夹名称
-    dest = Path(root.parent / f"{root.name}-v{version}")
+    # 编译目录
+    build_dist = Path(root.parent / f"{root.name}-v{version}")
 
-    if os.path.exists(dest):
-        shutil.rmtree(dest)
+    # 删除编译目录
+    if os.path.exists(build_dist):
+        shutil.rmtree(build_dist)
 
-    shutil.copytree(root, dest)
+    # 复制代码到编译目录
+    shutil.copytree(root, build_dist)
 
     # 将项目下的py都编译成pyc文件
     compileall.compile_dir(root, force=True)
@@ -35,23 +34,29 @@ def package(version):
         # pyc文件对应模块文件夹名称
         relative_path = src_file.relative_to(root)
         # 在目标文件夹下创建同名模块文件夹
-        dest_folder = dest / str(relative_path.parent.parent)
-        os.makedirs(dest_folder, exist_ok=True)
+        dist_folder = build_dist / str(relative_path.parent.parent)
+        os.makedirs(dist_folder, exist_ok=True)
         # 创建同名文件
-        dest_file = dest_folder / (src_file.stem.rsplit(".", 1)[0] + src_file.suffix)
+        dist_file = dist_folder / (src_file.stem.rsplit(".", 1)[0] + src_file.suffix)
         print(f"install {relative_path}")
         # 将pyc文件复制到同名文件
-        shutil.copyfile(src_file, dest_file)
+        shutil.copyfile(src_file, dist_file)
 
-    # 清除源py文件
-    for src_file in dest.rglob("*.py"):
-        if src_file.name == "config.py":
-            # 排除设置文件
-            pass
+    # 删除不要到文件
+    for src_file in build_dist.rglob("*"):
+        if src_file.is_file():
+            # 文件
+            if src_file.name.endswith(".pyc"):
+                if src_file.name in ['config.pyc', 'test.pyc']:
+                    os.remove(src_file)
+            else:
+                if src_file.name != "config.py":
+                    os.remove(src_file)
         else:
-            # 删除其他的源文件
-            os.remove(src_file)
+            # 目录
+            if src_file.name in ['venv', '.git', '.idea']:
+                shutil.rmtree(src_file)
 
 
 if __name__ == '__main__':
-    package("1.0")
+    build_package("1.0")

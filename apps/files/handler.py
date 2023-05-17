@@ -5,7 +5,7 @@ import time
 
 from apps.files.models import Files
 from bases.decorators import authenticated_async
-from bases.config import settings
+from config import settings
 from bases.handler import BaseHandler
 from bases.res import res_func
 from bases.utils import show_error_log, get_random, mongo_helper

@@ -7,7 +7,7 @@ from apps.users.service import UserService
 from bases.decorators import authenticated_async, log_async
 from bases.handler import BaseHandler
 from bases.res import res_func
-from bases.config import settings
+from config import settings
 from bases.utils import get_md5, now_utc, mongo_helper
 
 

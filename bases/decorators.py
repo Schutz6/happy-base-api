@@ -7,7 +7,7 @@ from apps.logs.models import Log
 from apps.params.service import ParamService
 from apps.users.service import UserService
 from bases.res import res_func
-from bases.config import settings
+from config import settings
 from bases.utils import mongo_helper, show_error_log, now_utc
 
 

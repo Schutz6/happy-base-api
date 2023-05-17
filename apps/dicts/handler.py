@@ -5,7 +5,7 @@ from apps.dicts.service import DictService
 from bases.handler import BaseHandler
 from bases.decorators import log_async, authenticated_async
 from bases.res import res_func
-from bases.config import settings
+from config import settings
 from bases.utils import mongo_helper
 
 

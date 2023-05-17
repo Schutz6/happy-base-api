@@ -5,7 +5,7 @@ import tornado.web
 from apscheduler.schedulers.tornado import TornadoScheduler
 from tornado.options import define, options
 from apps.tasks.func import run_task
-from bases.config import settings
+from config import settings
 from apps.tasks.models import Task
 from bases.utils import mongo_helper
 from dbs.func import init_db_data

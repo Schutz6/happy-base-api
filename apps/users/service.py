@@ -1,7 +1,7 @@
 import json
 
 from apps.users.models import User
-from bases.config import settings
+from config import settings
 from bases.keys import Keys
 from bases.utils import get_random_num, redis_helper, mongo_helper
 

@@ -5,7 +5,7 @@ import redis
 import motor.motor_asyncio
 
 from pymongo import ReturnDocument
-from bases.config import settings
+from config import settings
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
 

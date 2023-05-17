@@ -8,7 +8,7 @@ from apps.params.service import ParamService
 from apps.users.service import UserService
 from bases.res import res_func
 from config import settings
-from bases.utils import mongo_helper, show_error_log, now_utc
+from bases.utils import mongo_helper, now_utc
 
 
 # 管理员用户认证，日志记录
@@ -110,8 +110,7 @@ def authenticated_async(roles):
                         res['code'] = 10010
                         res['message'] = "令牌已失效"
                         self.write(res)
-                except jwt.exceptions.PyJWTError as e:
-                    show_error_log(e)
+                except jwt.exceptions.PyJWTError:
                     res['code'] = 10010
                     res['message'] = "令牌已失效"
                     self.write(res)
@@ -158,7 +157,6 @@ async def handle_ip_limit(ip):
         api_limit = int(param["value"])
     # 获取接口访问次数
     api_limit_num = BlacklistService.get_api_limit()
-    show_error_log(api_limit_num)
     if api_limit_num >= api_limit:
         return False
 

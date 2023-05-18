@@ -7,7 +7,7 @@ from bases.utils import mongo_helper, get_md5, get_random_head
 
 async def init_db_data():
     """初始化数据库"""
-    user = await mongo_helper.fetch_one(User.collection_name, {"username": "super"})
+    user = await mongo_helper.fetch_one(User.collection_name, {"username": {"$in": ["super", "admin"]}})
     if user is None:
         # 初始化用户
         await init_user()
@@ -21,7 +21,7 @@ async def init_db_data():
 
 async def init_user():
     """初始化用户编号"""
-    mongo_helper.insert_one(User.collection_name, {"_id": "sequence_id", "seq": 100000})
+    await mongo_helper.insert_one(User.collection_name, {"_id": "sequence_id", "seq": 100000})
     """初始化用户"""
     await mongo_helper.insert_one(User.collection_name,
                                   {"_id": await mongo_helper.get_next_id(User.collection_name), "name": "超级管理员",
@@ -54,58 +54,64 @@ async def init_menu():
     """初始化菜单"""
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": 0,
-                                   "name": "首页概况",
+                                   "name": "首页概况", "icon": "/icons/icon-overview.png",
                                    "url": "/pages/index/index", "roles": ["super", 'admin'], "level": 1, "sort": 900,
                                    "status": 1})
     pid = await mongo_helper.insert_one(Menu.collection_name,
                                         {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": 0,
-                                         "name": "系统管理",
+                                         "name": "系统管理", "icon": "/icons/icon-system.png",
                                          "url": "#", "roles": ["super", 'admin'], "level": 1, "sort": 100, "status": 1})
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
-                                   "name": "用户管理",
+                                   "name": "用户管理", "icon": "/icons/icon-user.png",
                                    "url": "/pages/system/user/user", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 190,
                                    "status": 1})
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
-                                   "name": "角色管理",
+                                   "name": "角色管理", "icon": "/icons/icon-role.png",
                                    "url": "/pages/system/role/role", "roles": ["super"], "level": 2, "sort": 180,
                                    "status": 1})
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
-                                   "name": "菜单管理",
+                                   "name": "菜单管理", "icon": "/icons/icon-menu.png",
                                    "url": "/pages/system/menus/menus", "roles": ["super"], "level": 2, "sort": 170,
                                    "status": 1})
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
-                                   "name": "字典管理",
+                                   "name": "字典管理", "icon": "/icons/icon-dict.png",
                                    "url": "/pages/system/dict/dict", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 160,
                                    "status": 1})
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
-                                   "name": "参数管理",
+                                   "name": "参数管理", "icon": "/icons/icon-param.png",
                                    "url": "/pages/system/param/param", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 150,
                                    "status": 1})
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
-                                   "name": "任务管理",
+                                   "name": "任务管理", "icon": "/icons/icon-task.png",
                                    "url": "/pages/system/task/task", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 140,
                                    "status": 1})
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
-                                   "name": "文件管理",
+                                   "name": "文件管理", "icon": "/icons/icon-file.png",
                                    "url": "/pages/system/files/files", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 130,
                                    "status": 1})
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
-                                   "name": "系统日志",
+                                   "name": "系统日志", "icon": "/icons/icon-log.png",
                                    "url": "/pages/system/logs/logs", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 120,
+                                   "status": 1})
+    await mongo_helper.insert_one(Menu.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
+                                   "name": "IP黑名单", "icon": "/icons/icon-blacklist.png",
+                                   "url": "/pages/system/blacklist/blacklist", "roles": ["super"], "level": 2,
+                                   "sort": 110,
                                    "status": 1})
 
 

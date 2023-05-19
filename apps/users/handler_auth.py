@@ -143,7 +143,7 @@ class LogoutHandler(BaseHandler):
         get -> /logout/
     """
 
-    @authenticated_async
+    @authenticated_async(None)
     async def get(self):
         res = res_func({})
         channel = self.request.headers.get('Channel', 'default')
@@ -165,7 +165,7 @@ class ChangePwdHandler(BaseHandler):
             }
     """
 
-    @authenticated_async
+    @authenticated_async(None)
     async def post(self):
         res = res_func({})
         user = self.current_user
@@ -204,7 +204,7 @@ class RefreshLoginHandler(BaseHandler):
         get -> /refreshLogin/
     """
 
-    @authenticated_async
+    @authenticated_async(None)
     async def get(self):
         channel = self.request.headers.get('Channel', 'default')
         res = res_func({})

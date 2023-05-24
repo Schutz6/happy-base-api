@@ -35,60 +35,87 @@ def authenticated_core(func):
             # 获取模块信息
             module = await CoreService.get_module(mid)
             if module is not None:
+                roles = []
                 # 判断接口是否具有权限
-
-                if authorization is not None:
-                    authorization = authorization.split(' ')
-                    if len(authorization) != 2 and authorization[0] != 'JWT':
-                        res['code'] = 10010
-                        res['message'] = "令牌已失效"
-                        self.write(res)
-                    else:
-                        try:
-                            authorization = authorization[1]
-
-                            jwt_expire = settings['app_jwt_expire']
-                            if channel == "web_admin":
-                                # 如果是后台管理
-                                jwt_expire = settings['admin_jwt_expire']
-                            data = jwt.decode(
-                                jwt=authorization,
-                                key=settings['secret_key'],
-                                leeway=jwt_expire,
-                                algorithms=['HS256'],
-                                options={"verify_exp": True}
-                            )
-                            user_id = data.get('id')
-                            # 判断令牌是否存在
-                            token = UserService.get_login_token(user_id, channel)
-                            if token is None or token == authorization:
-                                # 获取用户信息
-                                user = await UserService.get_user_by_id(user_id)
-                                user["module"] = module
-                                self._current_user = user
-                                # 判断当前接口是否具有权限
-
-                                # 开始时间
-                                start_time = round(time.time() * 1000, 2)
-                                await func(self)
-                                # 结束时间
-                                finish_time = round(time.time() * 1000, 2)
-                                # 访问时间
-                                times = round(finish_time - start_time, 2)
-                                # 处理日志
-                                await handle_log(self.request, user["username"], times)
-                            else:
-                                res['code'] = 10010
-                                res['message'] = "令牌已失效"
-                                self.write(res)
-                        except jwt.exceptions.PyJWTError:
+                api = self.request.uri
+                for item in module["api_json"]:
+                    if api.find(item["id"]) > -1:
+                        roles = item["roles"]
+                        break
+                if len(roles) > 0:
+                    if authorization is not None:
+                        authorization = authorization.split(' ')
+                        if len(authorization) != 2 and authorization[0] != 'JWT':
                             res['code'] = 10010
                             res['message'] = "令牌已失效"
                             self.write(res)
+                        else:
+                            try:
+                                authorization = authorization[1]
+
+                                jwt_expire = settings['app_jwt_expire']
+                                if channel == "web_admin":
+                                    # 如果是后台管理
+                                    jwt_expire = settings['admin_jwt_expire']
+                                data = jwt.decode(
+                                    jwt=authorization,
+                                    key=settings['secret_key'],
+                                    leeway=jwt_expire,
+                                    algorithms=['HS256'],
+                                    options={"verify_exp": True}
+                                )
+                                user_id = data.get('id')
+                                # 判断令牌是否存在
+                                token = UserService.get_login_token(user_id, channel)
+                                if token is None or token == authorization:
+                                    # 获取用户信息
+                                    user = await UserService.get_user_by_id(user_id)
+                                    user["module"] = module
+                                    self._current_user = user
+                                    # 判断是否有权限
+                                    flag = False
+                                    for role in user["roles"]:
+                                        if role in roles:
+                                            flag = True
+                                            break
+                                    if flag:
+                                        # 开始时间
+                                        start_time = round(time.time() * 1000, 2)
+                                        await func(self)
+                                        # 结束时间
+                                        finish_time = round(time.time() * 1000, 2)
+                                        # 访问时间
+                                        times = round(finish_time - start_time, 2)
+                                        # 处理日志
+                                        await handle_log(self.request, user["username"], times)
+                                    else:
+                                        res['code'] = 10012
+                                        res['message'] = "权限不足"
+                                        self.write(res)
+                                else:
+                                    res['code'] = 10010
+                                    res['message'] = "令牌已失效"
+                                    self.write(res)
+                            except jwt.exceptions.PyJWTError:
+                                res['code'] = 10010
+                                res['message'] = "令牌已失效"
+                                self.write(res)
+                    else:
+                        res['code'] = 10010
+                        res['message'] = "令牌已失效"
+                        self.write(res)
                 else:
-                    res['code'] = 10010
-                    res['message'] = "令牌已失效"
-                    self.write(res)
+                    # 初始化模块
+                    self._current_user = {"module": module}
+                    # 开始时间
+                    start_time = round(time.time() * 1000, 2)
+                    await func(self)
+                    # 结束时间
+                    finish_time = round(time.time() * 1000, 2)
+                    # 访问时间
+                    times = round(finish_time - start_time, 2)
+                    # 处理日志
+                    await handle_log(self.request, "", times)
             else:
                 res['code'] = 50000
                 res['message'] = "错误调用"

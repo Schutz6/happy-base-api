@@ -7,6 +7,8 @@ from apps.logs import urls as log_urls
 from apps.params import urls as param_urls
 from apps.menus import urls as menu_urls
 from apps.blacklist import urls as blacklist_urls
+from apps.codes import urls as code_urls
+from cores import urls as core_urls
 
 # 路由列表
 urlpatterns = []
@@ -20,3 +22,5 @@ urlpatterns += log_urls.urlpatterns
 urlpatterns += param_urls.urlpatterns
 urlpatterns += menu_urls.urlpatterns
 urlpatterns += blacklist_urls.urlpatterns
+urlpatterns += code_urls.urlpatterns
+urlpatterns += core_urls.urlpatterns

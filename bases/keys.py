@@ -20,6 +20,8 @@ class Keys(object):
     ipLimitKey = appName + "ipLimit:"
     # API限流
     apiLimitKey = appName + "apiLimit"
+    # 代码
+    codeKey = appName + "code:"
 
 
 """ 单例对象 """

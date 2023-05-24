@@ -41,7 +41,14 @@ def authenticated_core(func):
                 for item in module["api_json"]:
                     if api.find(item["id"]) > -1:
                         roles = item["roles"]
-                        break
+                        # 判断接口是否启用
+                        if item["status"]:
+                            break
+                        else:
+                            res['code'] = 50000
+                            res['message'] = "接口没激活"
+                            self.write(res)
+                            return None
                 if len(roles) > 0:
                     if authorization is not None:
                         authorization = authorization.split(' ')

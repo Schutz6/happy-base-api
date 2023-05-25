@@ -4,11 +4,12 @@ import tornado.web
 
 from apscheduler.schedulers.tornado import TornadoScheduler
 from tornado.options import define, options
+
+from apps.backups.func import init_db_data
 from apps.tasks.func import run_task
 from config import settings
 from apps.tasks.models import Task
 from bases.utils import mongo_helper
-from dbs.func import init_db_data
 from routes.urls import urlpatterns
 
 define("port", default=9001, help="运行端口", type=int)

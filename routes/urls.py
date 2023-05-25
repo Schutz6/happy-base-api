@@ -9,6 +9,7 @@ from apps.menus import urls as menu_urls
 from apps.blacklist import urls as blacklist_urls
 from apps.codes import urls as code_urls
 from cores import urls as core_urls
+from apps.backups import urls as backup_urls
 
 # 路由列表
 urlpatterns = []
@@ -24,3 +25,4 @@ urlpatterns += menu_urls.urlpatterns
 urlpatterns += blacklist_urls.urlpatterns
 urlpatterns += code_urls.urlpatterns
 urlpatterns += core_urls.urlpatterns
+urlpatterns += backup_urls.urlpatterns

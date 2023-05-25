@@ -6,7 +6,7 @@ from apps.tasks.models import Task
 from bases.decorators import authenticated_async
 from bases.handler import BaseHandler
 from bases.res import res_func
-from bases.utils import mongo_helper
+from bases.utils import mongo_helper, show_error_log
 
 
 class AddHandler(BaseHandler):
@@ -130,9 +130,13 @@ class StartTaskHandler(BaseHandler):
             task = await mongo_helper.fetch_one(Task.collection_name, {"_id": _id})
             if task is not None:
                 if task['status'] != 1:
-                    run_task(self.application.scheduler, task)
-                    # 修改数据状态
-                    await mongo_helper.update_one(Task.collection_name, {"_id": _id}, {"$set": {"status": 1}})
+                    try:
+                        # 启动任务
+                        run_task(self.application.scheduler, task)
+                        # 修改数据状态
+                        await mongo_helper.update_one(Task.collection_name, {"_id": _id}, {"$set": {"status": 1}})
+                    except Exception as e:
+                        show_error_log(e)
         self.write(res)
 
 
@@ -153,8 +157,11 @@ class EndTaskHandler(BaseHandler):
             task = await mongo_helper.fetch_one(Task.collection_name, {"_id": _id})
             if task is not None:
                 if task['status'] == 1:
-                    # 结束任务
-                    self.application.scheduler.remove_job(str(_id))
                     # 修改数据状态
                     await mongo_helper.update_one(Task.collection_name, {"_id": _id}, {"$set": {"status": 2}})
+                    try:
+                        # 结束任务
+                        self.application.scheduler.remove_job(str(_id))
+                    except Exception as e:
+                        show_error_log(e)
         self.write(res)

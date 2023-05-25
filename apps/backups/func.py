@@ -113,6 +113,18 @@ async def init_menu():
                                    "url": "/pages/system/blacklist/blacklist", "roles": ["super"], "level": 2,
                                    "sort": 110,
                                    "status": 1})
+    await mongo_helper.insert_one(Menu.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
+                                   "name": "模块管理", "icon": "/icons/icon-code.png",
+                                   "url": "/pages/system/code/code", "roles": ["super"], "level": 2,
+                                   "sort": 100,
+                                   "status": 1})
+    await mongo_helper.insert_one(Menu.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
+                                   "name": "备份管理", "icon": "/icons/icon-db.png",
+                                   "url": "/pages/system/backup/backup", "roles": ["super"], "level": 2,
+                                   "sort": 90,
+                                   "status": 1})
 
 
 async def init_param():

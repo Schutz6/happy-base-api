@@ -8,6 +8,7 @@ settings = {
     "admin_jwt_expire": 24 * 3600,
     "SAVE_URL": "/usr/local/var/www/static",
     "SITE_URL": "http://localhost:8080/static",
+    "BACKUP_URL": "/usr/local/var/backups",
     'redis': {
         "host": "127.0.0.1",
         "port": 6379,

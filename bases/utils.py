@@ -1,6 +1,8 @@
 import hashlib
 import logging
 import random
+import time
+
 import redis
 import motor.motor_asyncio
 
@@ -357,7 +359,7 @@ def now_last_minute(minute):
     return local_to_utc((old_time + add_time).timestamp() * 1000)
 
 
-# 获取增加天数时间
+# 获取增加/减少天数时间
 def get_add_time(_utctime, days):
     # 原时间(utc转本地时间)
     old_time = datetime.fromtimestamp(utc_to_local(_utctime) / 1000)
@@ -374,7 +376,7 @@ def time_cmp(first_time, second_time):
 
 # 获取唯一的账单编号
 def get_order_no(module):
-    return module
+    return module + "-" + str(time.strftime('%Y%m%d%H%M%S', time.localtime(time.time()))) + get_random(4)
 
 
 # 获取随机数(数字+字母)

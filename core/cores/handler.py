@@ -7,7 +7,6 @@ from base.res import res_func
 from base.utils import mongo_helper, now_utc
 from config import settings
 from core.cores.func import get_obj_info
-from core.cores.service import CoreService
 
 
 class AddHandler(BaseHandler):
@@ -56,6 +55,10 @@ class AddHandler(BaseHandler):
                         res['message'] = '已存在'
                         unique = False
                         break
+            else:
+                # 使用默认值
+                if item.get("default") is not None:
+                    add_json[item["name"]] = item["default"]
         if unique:
             # 不用校验，直接入库
             _id = await mongo_helper.get_next_id(module["mid"])

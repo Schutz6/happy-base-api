@@ -291,16 +291,8 @@ class DeleteHandler(BaseHandler):
         _id = req_data.get("id")
 
         if _id is not None:
-            # 删除数据
-            file = await mongo_helper.fetch_one(Files.collection_name, {"_id": _id})
-            if file is not None:
-                # 删除记录
-                await mongo_helper.delete_one(Files.collection_name, {"_id": _id})
-                try:
-                    # 删除本地文件
-                    os.remove(file["store_path"])
-                except Exception as e:
-                    show_error_log(e)
+            # 删除记录
+            await mongo_helper.delete_one(Files.collection_name, {"_id": _id})
         self.write(res)
 
 
@@ -318,15 +310,6 @@ class BatchDeleteHandler(BaseHandler):
         ids = req_data.get("ids")
 
         if ids is not None:
-            # 批量删除
-            for _id in ids:
-                file = await mongo_helper.fetch_one(Files.collection_name, {"_id": int(_id)})
-                if file is not None:
-                    try:
-                        # 删除本地文件
-                        os.remove(file["store_path"])
-                    except Exception as e:
-                        show_error_log(e)
             # 批量删除记录
             await mongo_helper.delete_many(Files.collection_name, {"_id": {"$in": [int(_id) for _id in ids]}})
         self.write(res)

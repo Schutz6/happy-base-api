@@ -1,10 +1,10 @@
 import asyncio
 import time
 
-from apps.logs.models import Log
-from apps.menus.service import MenuService
-from bases.keys import Keys
-from bases.utils import mongo_helper, now_utc, redis_helper
+from core.logs.models import Log
+from core.menus.service import MenuService
+from base.keys import Keys
+from base.utils import mongo_helper, now_utc, redis_helper
 
 
 # 插入日志记录

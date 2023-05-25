@@ -274,7 +274,7 @@ async def handle_ip_limit(ip):
         return False
     else:
         # 单IP限制次数
-        ip_limit = 10
+        ip_limit = 20
         param = await ParamService.get_param("ipLimit")
         if param is not None:
             ip_limit = int(param["value"])

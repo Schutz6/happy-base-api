@@ -6,6 +6,7 @@ from base.handler import BaseHandler
 from base.res import res_func
 from base.utils import mongo_helper, now_utc
 from config import settings
+from core.cores.func import get_obj_info
 from core.cores.service import CoreService
 
 
@@ -230,22 +231,13 @@ class ListHandler(BaseHandler):
                     item[img] = item[img].replace("#Image#", settings['SITE_URL'])
             # 查询对象详情
             for obj in objects:
-                # 查询模块是否存在
-                module2 = await CoreService.get_module(obj["mid"])
-                if module2 is not None:
-                    info = await mongo_helper.fetch_one(obj["mid"], {"_id": int(item[obj["field"]])})
-                    if info is not None:
-                        replace2_img = []
-                        # 模块检查
-                        for item2 in module2["table_json"]:
-                            if item2["type"] == 6 or item2["type"] == 8:
-                                # 是否需要替换图片
-                                replace2_img.append(item2["name"])
-                        # 替换图片地址
-                        for img in replace2_img:
-                            if info.get(img) is not None:
-                                info[img] = info[img].replace("#Image#", settings['SITE_URL'])
-                        item[obj["mid"]] = info
+                info = await get_obj_info(obj["mid"], item[obj["field"]])
+                if info is not None:
+                    # 匹配字段
+                    for table in module["table_json"]:
+                        if table["name"].find(obj["mid"]) > -1:
+                            # 匹配上字段，给该字段赋值
+                            item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
             results.append(item)
         data = {
             "total": total,
@@ -307,22 +299,13 @@ class GetListHandler(BaseHandler):
                     item[img] = item[img].replace("#Image#", settings['SITE_URL'])
             # 查询对象详情
             for obj in objects:
-                # 查询模块是否存在
-                module2 = await CoreService.get_module(obj["mid"])
-                if module2 is not None:
-                    info = await mongo_helper.fetch_one(obj["mid"], {"_id": int(item[obj["field"]])})
-                    if info is not None:
-                        replace2_img = []
-                        # 模块检查
-                        for item2 in module2["table_json"]:
-                            if item2["type"] == 6 or item2["type"] == 8:
-                                # 是否需要替换图片
-                                replace2_img.append(item2["name"])
-                        # 替换图片地址
-                        for img in replace2_img:
-                            if info.get(img) is not None:
-                                info[img] = info[img].replace("#Image#", settings['SITE_URL'])
-                        item[obj["mid"]] = info
+                info = await get_obj_info(obj["mid"], item[obj["field"]])
+                if info is not None:
+                    # 匹配字段
+                    for table in module["table_json"]:
+                        if table["name"].find(obj["mid"]) > -1:
+                            # 匹配上字段，给该字段赋值
+                            item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
             results.append(item)
         res['data'] = results
         self.write(res)
@@ -369,21 +352,12 @@ class GetInfoHandler(BaseHandler):
                     query[img] = query[img].replace("#Image#", settings['SITE_URL'])
             # 查询对象详情
             for obj in objects:
-                # 查询模块是否存在
-                module2 = await CoreService.get_module(obj["mid"])
-                if module2 is not None:
-                    info = await mongo_helper.fetch_one(obj["mid"], {"_id": int(query[obj["field"]])})
-                    if info is not None:
-                        replace2_img = []
-                        # 模块检查
-                        for item2 in module2["table_json"]:
-                            if item2["type"] == 6 or item2["type"] == 8:
-                                # 是否需要替换图片
-                                replace2_img.append(item2["name"])
-                        # 替换图片地址
-                        for img in replace2_img:
-                            if info.get(img) is not None:
-                                info[img] = info[img].replace("#Image#", settings['SITE_URL'])
-                        query[obj["mid"]] = info
+                info = await get_obj_info(obj["mid"], query[obj["field"]])
+                if info is not None:
+                    # 匹配字段
+                    for table in module["table_json"]:
+                        if table["name"].find(obj["mid"]) > -1:
+                            # 匹配上字段，给该字段赋值
+                            query[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
             res['data'] = query
         self.write(res)

@@ -8,8 +8,8 @@ from base.utils import mongo_helper, get_md5, get_random_head
 
 async def init_db_data():
     """初始化数据库"""
-    user = await mongo_helper.fetch_one(User.collection_name, {"username": {"$in": ["super", "admin"]}})
-    if user is None:
+    num = await mongo_helper.fetch_count_info(User.collection_name, {})
+    if num == 0:
         # 初始化用户
         await init_user()
         # 初始化角色

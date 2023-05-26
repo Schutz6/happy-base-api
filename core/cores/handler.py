@@ -184,6 +184,8 @@ class ListHandler(BaseHandler):
         current_page = req_data.get("currentPage", 1)
         page_size = req_data.get("pageSize", 10)
         search_key = req_data.get("searchKey")
+        sort_field = req_data.get("sortField", "_id")
+        sort_order = req_data.get("sortOrder", "descending")
         uid = req_data.get("uid")
 
         # 当前用户信息
@@ -225,10 +227,15 @@ class ListHandler(BaseHandler):
                     value = req_data.get(item["name"])
                     if value is not None:
                         query_criteria[item["name"]] = value
+        # 排序条件
+        if sort_field == "_id":
+            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1)]
+        else:
+            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1), ("_id", -1)]
 
         # 查询分页数据
         page_data = await mongo_helper.fetch_page_info(module["mid"], query_criteria,
-                                                       [("sort", -1), ("_id", -1)], page_size,
+                                                       sort_data, page_size,
                                                        current_page)
         # 查询总数
         total = await mongo_helper.fetch_count_info(module["mid"], query_criteria)

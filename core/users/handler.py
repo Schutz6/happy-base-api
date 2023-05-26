@@ -132,6 +132,8 @@ class ListHandler(BaseHandler):
         current_page = req_data.get("currentPage", 1)
         page_size = req_data.get("pageSize", 10)
         search_key = req_data.get("searchKey")
+        sort_field = req_data.get("sortField", "_id")
+        sort_order = req_data.get("sortOrder", "descending")
         status = req_data.get("status")
         roles = req_data.get("roles", [])
 
@@ -152,10 +154,14 @@ class ListHandler(BaseHandler):
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"username": re.compile(search_key)}]
         if status is not None:
             query_criteria["status"] = status
+        # 排序条件
+        if sort_field == "_id":
+            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1)]
+        else:
+            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1), ("_id", -1)]
 
         # 查询分页数据
-        page_data = await mongo_helper.fetch_page_info(User.collection_name, query_criteria, [("_id", -1)],
-                                                       page_size,
+        page_data = await mongo_helper.fetch_page_info(User.collection_name, query_criteria, sort_data, page_size,
                                                        current_page)
         # 查询总数
         total = await mongo_helper.fetch_count_info(User.collection_name, query_criteria)

@@ -5,6 +5,7 @@ from core.logs.models import Log
 from core.menus.service import MenuService
 from base.keys import Keys
 from base.utils import mongo_helper, now_utc, redis_helper
+from core.users.models import User
 
 
 # 插入日志记录
@@ -48,8 +49,10 @@ async def db_demo():
     # print(v)
     # v = await mongo_helper.fetch_all('test', {"_id": {"$in": [1, 2]}})
     # print(v)
-    v = await mongo_helper.fetch_page_info('test', {}, [("_id", -1)], page_size=2, page_no=2)
-    print(v)
+    # v = await mongo_helper.fetch_page_info('test', {}, [("_id", -1)], page_size=2, page_no=2)
+    # print(v)
+    num = await mongo_helper.fetch_count_info('Test', {})
+    print(num)
     # v = await mongo_helper.fetch_count_info('test', {})
     # print(v)
     # await mongo_helper.drop_collection('test')
@@ -57,10 +60,10 @@ async def db_demo():
 
 if __name__ == '__main__':
     # asyncio.run(init_log())
-    # asyncio.run(db_demo())
+    asyncio.run(db_demo())
     # a = ['user', 'admin']
     # print('-'.join(a))
     # MenuService.remove_menus()
-    ip = "127.0.0.1"
-    redis_helper.redis.set(Keys.ipLimitKey + ip, 1, ex=1000)
-    redis_helper.redis.incr(Keys.ipLimitKey + ip)
+    # ip = "127.0.0.1"
+    # redis_helper.redis.set(Keys.ipLimitKey + ip, 1, ex=1000)
+    # redis_helper.redis.incr(Keys.ipLimitKey + ip)

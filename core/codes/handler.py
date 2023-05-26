@@ -71,13 +71,15 @@ class UpdateHandler(BaseHandler):
         _id = req_data.get("id")
         mid = req_data.get("mid")
         name = req_data.get("name")
+        cache = req_data.get("cache")
         api_json = req_data.get("api_json", [])
         table_json = req_data.get("table_json", [])
 
         if _id is not None:
             # 修改数据
             await mongo_helper.update_one(Code.collection_name, {"_id": _id},
-                                          {"$set": {"name": name, "api_json": api_json, "table_json": table_json}})
+                                          {"$set": {"name": name, "cache": cache, "api_json": api_json,
+                                                    "table_json": table_json}})
             # 删除缓存
             CoreService.remove_mid(mid)
         self.write(res)
@@ -113,6 +115,7 @@ class ListHandler(BaseHandler):
         results = []
         for item in page_data.get("list", []):
             item["id"] = item["_id"]
+            item.pop("_id")
             results.append(item)
 
         data = {

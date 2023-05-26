@@ -22,6 +22,8 @@ class Keys(object):
     apiLimitKey = appName + "apiLimit"
     # 代码
     codeKey = appName + "code:"
+    # 对象
+    objectKey = appName + "object:"
 
 
 """ 单例对象 """

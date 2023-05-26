@@ -25,3 +25,21 @@ class CoreService(object):
         else:
             module = json.loads(module)
         return module
+
+    @staticmethod
+    def remove_obj(mid, _id):
+        """删除对象缓存"""
+        redis_helper.redis.delete(Keys.objectKey + mid + ":" + str(_id))
+
+    @staticmethod
+    async def get_obj(mid, _id):
+        """获取模块"""
+        obj = redis_helper.redis.get(Keys.objectKey + mid + ":" + str(_id))
+        if obj is None:
+            obj = await mongo_helper.fetch_one(mid, {"_id": int(_id)})
+            if obj is not None:
+                # 存储
+                redis_helper.redis.set(Keys.objectKey + mid + ":" + str(_id), json.dumps(obj))
+        else:
+            obj = json.loads(obj)
+        return obj

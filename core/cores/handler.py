@@ -7,6 +7,7 @@ from base.res import res_func
 from base.utils import mongo_helper, now_utc
 from config import settings
 from core.cores.func import get_obj_info
+from core.cores.service import CoreService
 
 
 class AddHandler(BaseHandler):
@@ -87,7 +88,9 @@ class DeleteHandler(BaseHandler):
         module = current_user["module"]
         # 删除数据
         await mongo_helper.delete_one(module["mid"], {"_id": _id})
-
+        if module["cache"] == 1:
+            # 删除缓存
+            await CoreService.remove_obj(module["mid"], _id)
         self.write(res)
 
 
@@ -112,6 +115,9 @@ class BatchDeleteHandler(BaseHandler):
         for _id in ids:
             # 删除数据
             await mongo_helper.delete_one(module["mid"], {"_id": int(_id)})
+            if module["cache"] == 1:
+                # 删除缓存
+                await CoreService.remove_obj(module["mid"], _id)
 
         self.write(res)
 
@@ -158,6 +164,9 @@ class UpdateHandler(BaseHandler):
                     update_json[item['name']] = img.replace(settings['SITE_URL'], "#Image#")
         # 修改数据
         await mongo_helper.update_one(module["mid"], {"_id": _id}, {"$set": update_json})
+        if module["cache"] == 1:
+            # 删除缓存
+            await CoreService.remove_obj(module["mid"], _id)
         self.write(res)
 
 
@@ -290,7 +299,6 @@ class GetListHandler(BaseHandler):
         # 查询自己的数据
         if uid is not None:
             query_criteria["uid"] = int(uid)
-
         query = await mongo_helper.fetch_all(module["mid"], query_criteria, [("sort", -1), ("_id", -1)])
         results = []
         for item in query:
@@ -345,7 +353,10 @@ class GetInfoHandler(BaseHandler):
                 # 对象替换成详情
                 if item.get("key") is not None:
                     objects.append({"field": item["name"], "mid": item.get("key")})
-        query = await mongo_helper.fetch_one(module["mid"], {"_id": int(_id)})
+        if module["cache"] == 1:
+            query = await CoreService.get_obj(module["mid"], _id)
+        else:
+            query = await mongo_helper.fetch_one(module["mid"], {"_id": int(_id)})
         if query is not None:
             query["id"] = query["_id"]
             query.pop("_id")

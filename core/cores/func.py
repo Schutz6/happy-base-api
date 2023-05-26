@@ -13,7 +13,10 @@ async def get_obj_info(mid, _id):
     info = None
     module = await CoreService.get_module(mid)
     if module is not None:
-        info = await mongo_helper.fetch_one(mid, {"_id": int(_id)})
+        if module["cache"] == 0:
+            info = await mongo_helper.fetch_one(mid, {"_id": int(_id)})
+        else:
+            info = await CoreService.get_obj(mid, _id)
         if info is not None:
             replace_img = []
             # 模块检查

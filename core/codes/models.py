@@ -12,6 +12,8 @@ class Code(object):
     mid = None
     # 模块名称
     name = None
+    # 使用缓存
+    cache = None
     # 接口集合
     api_json = []
     # 表结构
@@ -29,5 +31,6 @@ class Code(object):
         return {"_id": _id,
                 "mid": req_data.get("mid"),
                 "name": req_data.get("name"),
+                "cache": req_data.get("cache"),
                 "api_json": req_data.get("api_json", []),
                 "table_json": req_data.get("table_json", [])}

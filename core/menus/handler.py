@@ -1,5 +1,6 @@
 import json
 
+from core.menus.func import recursion_menu_delete
 from core.menus.models import Menu
 from core.menus.service import MenuService
 from base.decorators import authenticated_async
@@ -41,8 +42,8 @@ class DeleteHandler(BaseHandler):
         _id = req_data.get("id")
 
         if _id is not None:
-            # 删除数据
-            await mongo_helper.delete_one(Menu.collection_name, {"_id": _id})
+            # 递归删除数据
+            await recursion_menu_delete(int(_id))
             # 删除缓存
             MenuService.remove_menus()
         self.write(res)
@@ -69,7 +70,7 @@ class UpdateHandler(BaseHandler):
 
         if _id is not None:
             # 修改数据
-            await mongo_helper.update_one(Menu.collection_name, {"_id": _id},
+            await mongo_helper.update_one(Menu.collection_name, {"_id": int(_id)},
                                           {"$set": {"name": name, "icon": icon, "url": url, "roles": roles,
                                                     "sort": sort,
                                                     "status": status}})

@@ -134,7 +134,10 @@ async def init_param():
     """初始化参数"""
     await mongo_helper.insert_one(Param.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "siteName",
-                                   "value": "低代码基础平台", "status": 0, "remarks": "网站名称"})
+                                   "value": "低代码基础平台", "status": 0, "remarks": "管理后台名称"})
+    await mongo_helper.insert_one(Param.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "appName",
+                                   "value": "低代码APP", "status": 0, "remarks": "APP名称"})
     await mongo_helper.insert_one(Param.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "ipLimit",
                                    "value": "20", "status": 1, "remarks": "每秒单IP访问限流次数，超过次数加入IP黑名单"})

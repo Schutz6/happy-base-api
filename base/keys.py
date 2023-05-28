@@ -24,6 +24,8 @@ class Keys(object):
     codeKey = appName + "code:"
     # 对象
     objectKey = appName + "object:"
+    # 分类
+    categoryKey = appName + "category:"
 
 
 """ 单例对象 """

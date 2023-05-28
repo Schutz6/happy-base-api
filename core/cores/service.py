@@ -43,3 +43,32 @@ class CoreService(object):
         else:
             obj = json.loads(obj)
         return obj
+
+    @staticmethod
+    def remove_category(mid):
+        """删除分类缓存"""
+        redis_helper.redis.delete(Keys.categoryKey + mid)
+
+    @staticmethod
+    async def get_category(mid):
+        """获取分类列表"""
+        results = []
+        # 查询一级分类
+        query_one = await mongo_helper.fetch_all(mid, {"pid": 0}, [("sort", -1), ("_id", -1)])
+        for one in query_one:
+            one["id"] = one["_id"]
+            one.pop("_id")
+            results.append(one)
+            # 查询二级分类
+            query_two = await mongo_helper.fetch_all(mid, {"pid": one["id"]},  [("sort", -1), ("_id", -1)])
+            for two in query_two:
+                two["id"] = two["_id"]
+                two.pop("_id")
+                results.append(two)
+                # 查询三级分类
+                query_three = await mongo_helper.fetch_all(mid, {"pid": two["id"]}, [("sort", -1), ("_id", -1)])
+                for three in query_three:
+                    three["id"] = three["_id"]
+                    three.pop("_id")
+                    results.append(three)
+        return results

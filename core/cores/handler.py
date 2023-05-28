@@ -3,10 +3,10 @@ import re
 
 from base.decorators import authenticated_core
 from base.handler import BaseHandler
-from base.res import res_func
+from base.res import res_func, res_fail_func
 from base.utils import mongo_helper, now_utc
 from config import settings
-from core.cores.func import get_obj_info
+from core.cores.func import get_obj_info, recursion_category_delete
 from core.cores.service import CoreService
 
 
@@ -69,6 +69,35 @@ class AddHandler(BaseHandler):
         self.write(res)
 
 
+class RecursionDeleteHandler(BaseHandler):
+    """
+        递归删除
+        post -> /core/recursionDelete/
+    """
+
+    @authenticated_core
+    async def post(self):
+        res = res_func({})
+        data = self.request.body.decode("utf-8")
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+
+        # 当前用户信息
+        current_user = self.current_user
+        # 获取模块信息
+        module = current_user["module"]
+
+        if _id is not None:
+            _id = int(_id)
+            # 递归删除数据
+            await recursion_category_delete(module["mid"], _id)
+            # 删除缓存
+            CoreService.remove_category(module["mid"])
+        else:
+            res = res_fail_func(None)
+        self.write(res)
+
+
 class DeleteHandler(BaseHandler):
     """
         删除
@@ -86,11 +115,16 @@ class DeleteHandler(BaseHandler):
         current_user = self.current_user
         # 获取模块信息
         module = current_user["module"]
-        # 删除数据
-        await mongo_helper.delete_one(module["mid"], {"_id": _id})
-        if module["cache"] == 1:
-            # 删除缓存
-            await CoreService.remove_obj(module["mid"], _id)
+
+        if _id is not None:
+            _id = int(_id)
+            # 删除数据
+            await mongo_helper.delete_one(module["mid"], {"_id": _id})
+            if module["cache"] == 1:
+                # 删除缓存
+                await CoreService.remove_obj(module["mid"], _id)
+        else:
+            res = res_fail_func(None)
         self.write(res)
 
 
@@ -113,8 +147,9 @@ class BatchDeleteHandler(BaseHandler):
         module = current_user["module"]
 
         for _id in ids:
+            _id = int(_id)
             # 删除数据
-            await mongo_helper.delete_one(module["mid"], {"_id": int(_id)})
+            await mongo_helper.delete_one(module["mid"], {"_id": _id})
             if module["cache"] == 1:
                 # 删除缓存
                 await CoreService.remove_obj(module["mid"], _id)
@@ -140,33 +175,37 @@ class UpdateHandler(BaseHandler):
         # 获取模块信息
         module = current_user["module"]
 
-        update_json = {}
-        # 判断哪些字典需要修改
-        for item in module["table_json"]:
-            value = req_data.get(item["name"])
-            if value is not None:
-                # 唯一字段/Object字段不能修改
-                if item["unique"] or item["type"] == 9:
-                    # 处理下一个字段
-                    continue
-                # 处理其他字段
-                update_json[item["name"]] = value
+        if _id is not None:
+            _id = int(_id)
+            update_json = {}
+            # 判断哪些字典需要修改
+            for item in module["table_json"]:
+                value = req_data.get(item["name"])
+                if value is not None:
+                    # 唯一字段/Object字段不能修改
+                    if item["unique"] or item["type"] == 9:
+                        # 处理下一个字段
+                        continue
+                    # 处理其他字段
+                    update_json[item["name"]] = value
 
-                if item["type"] == 2:
-                    # Int类型转换
-                    update_json[item['name']] = int(update_json[item['name']])
-                elif item["type"] == 3:
-                    # Float类型转换
-                    update_json[item['name']] = float(update_json[item['name']])
-                elif item["type"] == 6 or item["type"] == 8:
-                    # 图片/富文本 中图片地址转换
-                    img = update_json[item['name']]
-                    update_json[item['name']] = img.replace(settings['SITE_URL'], "#Image#")
-        # 修改数据
-        await mongo_helper.update_one(module["mid"], {"_id": _id}, {"$set": update_json})
-        if module["cache"] == 1:
-            # 删除缓存
-            await CoreService.remove_obj(module["mid"], _id)
+                    if item["type"] == 2:
+                        # Int类型转换
+                        update_json[item['name']] = int(update_json[item['name']])
+                    elif item["type"] == 3:
+                        # Float类型转换
+                        update_json[item['name']] = float(update_json[item['name']])
+                    elif item["type"] == 6 or item["type"] == 8:
+                        # 图片/富文本 中图片地址转换
+                        img = update_json[item['name']]
+                        update_json[item['name']] = img.replace(settings['SITE_URL'], "#Image#")
+            # 修改数据
+            await mongo_helper.update_one(module["mid"], {"_id": _id}, {"$set": update_json})
+            if module["cache"] == 1:
+                # 删除缓存
+                await CoreService.remove_obj(module["mid"], _id)
+        else:
+            res = res_fail_func(None)
         self.write(res)
 
 
@@ -266,7 +305,6 @@ class ListHandler(BaseHandler):
         }
 
         res['data'] = data
-
         self.write(res)
 
 
@@ -329,6 +367,43 @@ class GetListHandler(BaseHandler):
         self.write(res)
 
 
+class GetCategoryHandler(BaseHandler):
+    """
+        获取分类列表
+        post -> /core/getCategory/
+    """
+
+    @authenticated_core
+    async def post(self):
+        res = res_func([])
+
+        current_user = self.current_user
+        # 获取模块信息
+        module = current_user["module"]
+
+        # 需要替换图片地址
+        replace_img = []
+
+        # 模块字段检查
+        for item in module["table_json"]:
+            if item["type"] == 6:
+                # 是否需要替换图片
+                replace_img.append(item["name"])
+        # 获取分类列表
+        query = await CoreService.get_category(module["mid"])
+        results = []
+        for item in query:
+            # 替换图片地址
+            for img in replace_img:
+                if item.get(img) is not None:
+                    item[img] = item[img].replace("#Image#", settings['SITE_URL'])
+            # 查询分类下使用数量
+
+            results.append(item)
+        res['data'] = results
+        self.write(res)
+
+
 class GetInfoHandler(BaseHandler):
     """
         获取详情
@@ -351,34 +426,36 @@ class GetInfoHandler(BaseHandler):
         # 需要替换对象ID
         objects = []
 
-        # 模块字段检查
-        for item in module["table_json"]:
-            if item["type"] == 6 or item["type"] == 8:
-                # 是否需要替换图片
-                replace_img.append(item["name"])
-            elif item["type"] == 9:
-                # 对象替换成详情
-                if item.get("key") is not None:
-                    objects.append({"field": item["name"], "mid": item.get("key")})
-        if module["cache"] == 1:
-            query = await CoreService.get_obj(module["mid"], _id)
-        else:
-            query = await mongo_helper.fetch_one(module["mid"], {"_id": int(_id)})
-        if query is not None:
-            query["id"] = query["_id"]
-            query.pop("_id")
-            # 替换图片地址
-            for img in replace_img:
-                if query.get(img) is not None:
-                    query[img] = query[img].replace("#Image#", settings['SITE_URL'])
-            # 查询对象详情
-            for obj in objects:
-                info = await get_obj_info(obj["mid"], query[obj["field"]])
-                if info is not None:
-                    # 匹配字段
-                    for table in module["table_json"]:
-                        if table["name"].find(obj["mid"]) > -1:
-                            # 匹配上字段，给该字段赋值
-                            query[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
-            res['data'] = query
+        if _id is not None:
+            _id = int(_id)
+            # 模块字段检查
+            for item in module["table_json"]:
+                if item["type"] == 6 or item["type"] == 8:
+                    # 是否需要替换图片
+                    replace_img.append(item["name"])
+                elif item["type"] == 9:
+                    # 对象替换成详情
+                    if item.get("key") is not None:
+                        objects.append({"field": item["name"], "mid": item.get("key")})
+            if module["cache"] == 1:
+                query = await CoreService.get_obj(module["mid"], _id)
+            else:
+                query = await mongo_helper.fetch_one(module["mid"], {"_id": _id})
+            if query is not None:
+                query["id"] = query["_id"]
+                query.pop("_id")
+                # 替换图片地址
+                for img in replace_img:
+                    if query.get(img) is not None:
+                        query[img] = query[img].replace("#Image#", settings['SITE_URL'])
+                # 查询对象详情
+                for obj in objects:
+                    info = await get_obj_info(obj["mid"], query[obj["field"]])
+                    if info is not None:
+                        # 匹配字段
+                        for table in module["table_json"]:
+                            if table["name"].find(obj["mid"]) > -1:
+                                # 匹配上字段，给该字段赋值
+                                query[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
+                res['data'] = query
         self.write(res)

@@ -29,3 +29,15 @@ async def get_obj_info(mid, _id):
                 if info.get(img) is not None:
                     info[img] = info[img].replace("#Image#", settings['SITE_URL'])
     return info
+
+
+async def recursion_category_delete(mid, _id):
+    """递归删除分类数据"""
+    # 判断是否有下级数据
+    query = await mongo_helper.fetch_all(mid, {"pid": _id}, [('_id', -1)])
+    for item in query:
+        # 递归删除
+        await recursion_category_delete(mid, item["_id"])
+    # 删除上级数据
+    await mongo_helper.delete_one(mid, {"_id": _id})
+

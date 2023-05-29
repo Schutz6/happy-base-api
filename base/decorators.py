@@ -295,9 +295,9 @@ async def handle_ip_limit(ip):
 # 处理日志
 async def handle_log(request, username, times):
     # 接口参数
-    params = ""
-    # 过滤文件上传接口，规则：/file/upload/ 开头
-    if request.uri.find("/file/upload/") == -1:
+    params = "上传的文件内容"
+    # 过滤文件上传接口，规则：/file/upload/和/core/importData/ 开头
+    if request.uri.find("/file/upload/") == -1 and request.uri.find("/core/importData/") == -1:
         if request.method.upper() == "POST":
             params = str(request.body, encoding="utf-8")
         elif request.method.upper() == "GET":

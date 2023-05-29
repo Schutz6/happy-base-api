@@ -1,10 +1,15 @@
 import json
+import os
 import re
+import time
+
+from openpyxl.reader.excel import load_workbook
 
 from base.decorators import authenticated_core
 from base.handler import BaseHandler
 from base.res import res_func, res_fail_func
-from base.utils import mongo_helper, now_utc
+from base.utils import mongo_helper, now_utc, get_random
+from base.xlsx import save_to_excel
 from config import settings
 from core.cores.func import get_obj_info, recursion_category_delete
 from core.cores.service import CoreService
@@ -40,17 +45,17 @@ class AddHandler(BaseHandler):
 
                 if item["type"] == 2 or item["type"] == 9:
                     # Int/Object类型转换
-                    add_json[item['name']] = int(add_json[item['name']])
+                    add_json[item['name']] = int(add_json.get(item['name']))
                 elif item["type"] == 3:
                     # Float类型转换
-                    add_json[item['name']] = float(add_json[item['name']])
+                    add_json[item['name']] = float(add_json.get(item['name']))
                 elif item["type"] == 6 or item["type"] == 8:
                     # 图片/富文本 中图片地址转换
-                    img = add_json[item['name']]
+                    img = add_json.get(item['name'])
                     add_json[item['name']] = img.replace(settings['SITE_URL'], "#Image#")
                 # 判断是否有唯一字段校验
                 if item["unique"]:
-                    query = await mongo_helper.fetch_one(module["mid"], {item['name']: add_json[item['name']]})
+                    query = await mongo_helper.fetch_one(module["mid"], {item['name']: add_json.get(item['name'])})
                     if query is not None:
                         res['code'] = 10004
                         res['message'] = '已存在'
@@ -499,4 +504,177 @@ class GetInfoHandler(BaseHandler):
                                 # 匹配上字段，给该字段赋值
                                 query[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
                 res['data'] = query
+        self.write(res)
+
+
+class ImportDataHandler(BaseHandler):
+    """
+        导入数据
+        post -> /core/importData/
+    """
+
+    @authenticated_core
+    async def post(self):
+        res = res_func(None)
+
+        # 当前用户信息
+        current_user = self.current_user
+        # 获取模块信息
+        module = current_user["module"]
+
+        # 需要导入的字段
+        fields = []
+
+        # 字典查询条件
+        for item in module["table_json"]:
+            if item["type"] in [1, 2, 3, 5, 6, 7, 8]:
+                fields.append(item["name"])
+
+        time_path = time.strftime("%Y%m%d", time.localtime())
+        upload_path = os.path.join(os.path.dirname(__file__), settings['SAVE_URL'] + '/files', time_path)
+        # 判断文件夹是否存在
+        if os.path.isdir(upload_path) is False:
+            os.makedirs(upload_path)
+
+        file_metas = self.request.files.get('file', None)
+        if not file_metas:
+            res['code'] = 50000
+            res['message'] = '上传文件为空'
+        else:
+            for meta in file_metas:
+                suffix = meta['filename'].split(".")[1].lower()
+                filename = get_random(6) + "." + suffix
+                file_path = os.path.join(upload_path, filename)
+                with open(file_path, 'wb') as up:
+                    up.write(meta['body'])
+                wb = load_workbook(file_path)
+                # 获得sheet对象
+                ws = wb.active
+                # 读取数据
+                index = 2
+
+                while index <= ws.max_row:
+                    column_index = 1
+                    add_json = {}
+                    for key in fields:
+                        value = ws.cell(row=index, column=column_index).value
+                        add_json[key] = value
+                        column_index += 1
+                    # 加入数据库
+                    _id = await mongo_helper.get_next_id(module["mid"])
+                    add_json["_id"] = _id
+                    add_json["add_time"] = now_utc()
+                    await mongo_helper.insert_one(module["mid"], add_json)
+                    index = index + 1
+                res['message'] = '导入成功'
+        self.write(res)
+
+
+class ExportDataHandler(BaseHandler):
+    """
+        导出数据
+        post -> /core/exportData/
+    """
+
+    @authenticated_core
+    async def post(self):
+        res = res_func(None)
+        data = self.request.body.decode('utf-8')
+        req_data = json.loads(data)
+        search_key = req_data.get("searchKey")
+        sort_field = req_data.get("sortField", "_id")
+        sort_order = req_data.get("sortOrder", "descending")
+        uid = req_data.get("uid")
+
+        # 当前用户信息
+        current_user = self.current_user
+        # 获取模块信息
+        module = current_user["module"]
+
+        # 需要替换图片地址
+        replace_img = []
+        # 需要替换对象ID
+        objects = []
+
+        # 字符串查询条件
+        query_criteria = {"_id": {"$ne": "sequence_id"}}
+        if search_key is not None:
+            query_list = []
+            for item in module["table_json"]:
+                # 是否是查询条件
+                if item["query"]:
+                    if item["type"] == 1 or item["type"] == 7:
+                        query_list.append({item["name"]: re.compile(search_key)})
+            if len(query_list) > 0:
+                query_criteria["$or"] = query_list
+        # 查询自己的数据
+        if uid is not None:
+            query_criteria["uid"] = int(uid)
+
+        # 头部数据
+        head_row = []
+        # 需要导出的字段
+        fields = []
+
+        # 字典查询条件
+        for item in module["table_json"]:
+            if item["type"] in [1, 2, 3, 5, 6, 7, 8]:
+                # 记录导出头部
+                head_row.append(item["remarks"])
+                fields.append(item["name"])
+
+            if item["type"] == 6 or item["type"] == 8:
+                # 需要替换图片地址
+                replace_img.append(item["name"])
+            elif item["type"] == 9:
+                # 对象替换成详情
+                if item.get("key") is not None:
+                    objects.append({"field": item["name"], "mid": item.get("key")})
+            # 是否是查询条件
+            if item["query"]:
+                if item["type"] == 5:
+                    # 查询字典
+                    value = req_data.get(item["name"])
+                    if value is not None:
+                        query_criteria[item["name"]] = value
+                elif item["type"] == 10:
+                    # 查询分类
+                    value = req_data.get(item["name"])
+                    if value is not None and len(value) > 0:
+                        query_criteria[item["name"]] = value
+
+        # 排序条件
+        if sort_field == "_id":
+            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1)]
+        else:
+            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1), ("_id", -1)]
+
+        # 查询数据
+        query = await mongo_helper.fetch_all(module["mid"], query_criteria,  sort_data)
+
+        results = []
+        for item in query:
+            item.pop("_id")
+            item.pop("add_time")
+            # 替换图片地址
+            for img in replace_img:
+                if item.get(img) is not None:
+                    item[img] = item[img].replace("#Image#", settings['SITE_URL'])
+            # 查询对象详情
+            for obj in objects:
+                info = await get_obj_info(obj["mid"], item[obj["field"]])
+                if info is not None:
+                    # 匹配字段
+                    for table in module["table_json"]:
+                        if table["name"].find(obj["mid"]) > -1:
+                            # 匹配上字段，给该字段赋值
+                            item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
+            obj = []
+            for key in fields:
+                obj.append(item[key])
+            results.append(obj)
+
+        # 保存文件位置
+        save_excel_name = str(now_utc()) + ".xlsx"
+        res["data"] = save_to_excel(results, head_row, save_excel_name)
         self.write(res)

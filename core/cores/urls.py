@@ -1,7 +1,8 @@
 from tornado.web import url
 
 from core.cores.handler import AddHandler, DeleteHandler, BatchDeleteHandler, UpdateHandler, ListHandler, \
-    GetListHandler, GetInfoHandler, RecursionDeleteHandler, GetCategoryHandler, BatchUpdateHandler
+    GetListHandler, GetInfoHandler, RecursionDeleteHandler, GetCategoryHandler, BatchUpdateHandler, ExportDataHandler, \
+    ImportDataHandler
 
 urlpatterns = [
     url('/core/add/', AddHandler),
@@ -13,5 +14,7 @@ urlpatterns = [
     url('/core/list/', ListHandler),
     url('/core/getList/', GetListHandler),
     url('/core/getCategory/', GetCategoryHandler),
-    url('/core/getInfo/', GetInfoHandler)
+    url('/core/getInfo/', GetInfoHandler),
+    url('/core/importData/', ImportDataHandler),
+    url('/core/exportData/', ExportDataHandler)
 ]

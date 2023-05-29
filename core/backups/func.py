@@ -24,7 +24,7 @@ async def init_db_data():
 
 async def init_user():
     """初始化用户编号"""
-    await mongo_helper.insert_one(User.collection_name, {"_id": "sequence_id", "seq": 100000})
+    await mongo_helper.insert_one(User.collection_name, {"_id": "sequence_id", "seq": 100000-1})
     """初始化用户"""
     await mongo_helper.insert_one(User.collection_name,
                                   {"_id": await mongo_helper.get_next_id(User.collection_name), "name": "超级管理员",

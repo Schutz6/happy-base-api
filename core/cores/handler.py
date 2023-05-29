@@ -209,6 +209,40 @@ class UpdateHandler(BaseHandler):
         self.write(res)
 
 
+class BatchUpdateHandler(BaseHandler):
+    """
+        批量修改
+        post -> /core/batchUpdate/
+    """
+
+    @authenticated_core
+    async def post(self):
+        res = res_func({})
+        data = self.request.body.decode("utf-8")
+        req_data = json.loads(data)
+        ids = req_data.get("ids")
+
+        # 当前用户信息
+        current_user = self.current_user
+        # 获取模块信息
+        module = current_user["module"]
+
+        for _id in ids:
+            _id = int(_id)
+            update_json = {}
+            # 判断哪些字典需要修改
+            for item in module["table_json"]:
+                value = req_data.get(item["name"])
+                if value is not None:
+                    update_json[item["name"]] = value
+            # 修改数据
+            await mongo_helper.update_one(module["mid"], {"_id": _id}, {"$set": update_json})
+            if module["cache"] == 1:
+                # 删除缓存
+                await CoreService.remove_obj(module["mid"], _id)
+        self.write(res)
+
+
 class ListHandler(BaseHandler):
     """
         列表
@@ -263,9 +297,16 @@ class ListHandler(BaseHandler):
             # 是否是查询条件
             if item["query"]:
                 if item["type"] == 5:
+                    # 查询字典
                     value = req_data.get(item["name"])
                     if value is not None:
                         query_criteria[item["name"]] = value
+                elif item["type"] == 10:
+                    # 查询分类
+                    value = req_data.get(item["name"])
+                    if value is not None and len(value) > 0:
+                        query_criteria[item["name"]] = value
+
         # 排序条件
         if sort_field == "_id":
             sort_data = [(sort_field, -1 if sort_order == 'descending' else 1)]

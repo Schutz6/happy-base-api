@@ -155,6 +155,11 @@ def authenticated_async(roles):
                 res['message'] = "令牌已失效"
                 self.write(res)
                 return None
+            if len(authorization) < 2:
+                res['code'] = 10010
+                res['message'] = "令牌已失效"
+                self.write(res)
+                return None
 
             authorization = authorization[1]
 

@@ -339,13 +339,14 @@ class ListHandler(BaseHandler):
                     item[img] = item[img].replace("#Image#", settings['SITE_URL'])
             # 查询对象详情
             for obj in objects:
-                info = await get_obj_info(obj["mid"], item[obj["field"]])
-                if info is not None:
-                    # 匹配字段
-                    for table in module["table_json"]:
-                        if table["name"].find(obj["mid"]) > -1:
-                            # 匹配上字段，给该字段赋值
-                            item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
+                if item.get(obj["field"]) is not None:
+                    info = await get_obj_info(obj["mid"], item[obj["field"]])
+                    if info is not None:
+                        # 匹配字段
+                        for table in module["table_json"]:
+                            if table["name"].find(obj["mid"]) > -1:
+                                # 匹配上字段，给该字段赋值
+                                item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
             results.append(item)
         data = {
             "total": total,
@@ -405,13 +406,14 @@ class GetListHandler(BaseHandler):
                     item[img] = item[img].replace("#Image#", settings['SITE_URL'])
             # 查询对象详情
             for obj in objects:
-                info = await get_obj_info(obj["mid"], item[obj["field"]])
-                if info is not None:
-                    # 匹配字段
-                    for table in module["table_json"]:
-                        if table["name"].find(obj["mid"]) > -1:
-                            # 匹配上字段，给该字段赋值
-                            item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
+                if item.get(obj["field"]) is not None:
+                    info = await get_obj_info(obj["mid"], item[obj["field"]])
+                    if info is not None:
+                        # 匹配字段
+                        for table in module["table_json"]:
+                            if table["name"].find(obj["mid"]) > -1:
+                                # 匹配上字段，给该字段赋值
+                                item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
             results.append(item)
         res['data'] = results
         self.write(res)
@@ -500,13 +502,14 @@ class GetInfoHandler(BaseHandler):
                         query[img] = query[img].replace("#Image#", settings['SITE_URL'])
                 # 查询对象详情
                 for obj in objects:
-                    info = await get_obj_info(obj["mid"], query[obj["field"]])
-                    if info is not None:
-                        # 匹配字段
-                        for table in module["table_json"]:
-                            if table["name"].find(obj["mid"]) > -1:
-                                # 匹配上字段，给该字段赋值
-                                query[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
+                    if query.get(obj["field"]) is not None:
+                        info = await get_obj_info(obj["mid"], query[obj["field"]])
+                        if info is not None:
+                            # 匹配字段
+                            for table in module["table_json"]:
+                                if table["name"].find(obj["mid"]) > -1:
+                                    # 匹配上字段，给该字段赋值
+                                    query[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
                 res['data'] = query
         self.write(res)
 
@@ -666,13 +669,14 @@ class ExportDataHandler(BaseHandler):
                     item[img] = item[img].replace("#Image#", settings['SITE_URL'])
             # 查询对象详情
             for obj in objects:
-                info = await get_obj_info(obj["mid"], item[obj["field"]])
-                if info is not None:
-                    # 匹配字段
-                    for table in module["table_json"]:
-                        if table["name"].find(obj["mid"]) > -1:
-                            # 匹配上字段，给该字段赋值
-                            item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
+                if item.get(obj["field"]) is not None:
+                    info = await get_obj_info(obj["mid"], item[obj["field"]])
+                    if info is not None:
+                        # 匹配字段
+                        for table in module["table_json"]:
+                            if table["name"].find(obj["mid"]) > -1:
+                                # 匹配上字段，给该字段赋值
+                                item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
             obj = []
             for key in fields:
                 obj.append(item[key])

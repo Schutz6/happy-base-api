@@ -287,9 +287,6 @@ class ListHandler(BaseHandler):
                         query_list.append({item["name"]: re.compile(search_key)})
             if len(query_list) > 0:
                 query_criteria["$or"] = query_list
-        # 查询自己的数据
-        if uid is not None:
-            query_criteria["uid"] = int(uid)
         # 字典查询条件
         for item in module["table_json"]:
             if item["type"] == 6 or item["type"] == 8:
@@ -306,12 +303,19 @@ class ListHandler(BaseHandler):
                     value = req_data.get(item["name"])
                     if value is not None:
                         query_criteria[item["name"]] = value
+                elif item["type"] == 9:
+                    # 查询对象
+                    value = req_data.get(item["name"])
+                    if value is not None:
+                        query_criteria[item["name"]] = value
                 elif item["type"] == 10:
                     # 查询分类
                     value = req_data.get(item["name"])
                     if value is not None and len(value) > 0:
                         query_criteria[item["name"]] = value
-
+        # 查询自己的数据
+        if uid is not None:
+            query_criteria["uid"] = int(uid)
         # 排序条件
         if sort_field == "_id":
             sort_data = [(sort_field, -1 if sort_order == 'descending' else 1)]
@@ -386,7 +390,7 @@ class GetListHandler(BaseHandler):
                 if item.get("key") is not None:
                     objects.append({"field": item["name"], "mid": item.get("key")})
         # 查询条件
-        query_criteria = {"_id": {"$ne": "sequence_id"}}
+        query_criteria = {"_id": {"$ne": "sequence_id"}, "status": "1"}
         # 查询自己的数据
         if uid is not None:
             query_criteria["uid"] = int(uid)

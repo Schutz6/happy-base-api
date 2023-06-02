@@ -9,7 +9,7 @@ class CoreService(object):
     """核心服务类"""
 
     @staticmethod
-    def remove_mid(mid):
+    async def remove_mid(mid):
         """删除模块"""
         redis_helper.redis.delete(Keys.codeKey + mid)
 
@@ -27,7 +27,7 @@ class CoreService(object):
         return module
 
     @staticmethod
-    def remove_obj(mid, _id):
+    async def remove_obj(mid, _id):
         """删除对象缓存"""
         redis_helper.redis.delete(Keys.objectKey + mid + ":" + str(_id))
         redis_helper.redis.delete(Keys.categoryKey + mid)
@@ -46,7 +46,7 @@ class CoreService(object):
         return obj
 
     @staticmethod
-    def remove_category(mid):
+    async def remove_category(mid):
         """删除分类缓存"""
         redis_helper.redis.delete(Keys.categoryKey + mid)
 

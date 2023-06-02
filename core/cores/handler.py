@@ -71,6 +71,9 @@ class AddHandler(BaseHandler):
             add_json["_id"] = _id
             add_json["add_time"] = now_utc()
             await mongo_helper.insert_one(module["mid"], add_json)
+            if module["cache"] == 1:
+                # 删除缓存
+                await CoreService.remove_category(module["mid"])
         self.write(res)
 
 
@@ -97,7 +100,7 @@ class RecursionDeleteHandler(BaseHandler):
             # 递归删除数据
             await recursion_category_delete(module["mid"], _id)
             # 删除缓存
-            CoreService.remove_category(module["mid"])
+            await CoreService.remove_category(module["mid"])
         else:
             res = res_fail_func(None)
         self.write(res)

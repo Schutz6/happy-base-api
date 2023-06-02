@@ -53,7 +53,7 @@ class DeleteHandler(BaseHandler):
                 # 删除数据
                 await mongo_helper.delete_one(Code.collection_name, {"_id": _id})
                 # 删除缓存
-                CoreService.remove_mid(code["mid"])
+                await CoreService.remove_mid(code["mid"])
         self.write(res)
 
 
@@ -81,7 +81,7 @@ class UpdateHandler(BaseHandler):
                                           {"$set": {"name": name, "cache": cache, "api_json": api_json,
                                                     "table_json": table_json}})
             # 删除缓存
-            CoreService.remove_mid(mid)
+            await CoreService.remove_mid(mid)
         self.write(res)
 
 

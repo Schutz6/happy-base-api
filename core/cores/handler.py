@@ -187,8 +187,8 @@ class UpdateHandler(BaseHandler):
             for item in module["table_json"]:
                 value = req_data.get(item["name"])
                 if value is not None:
-                    # 唯一字段/Object字段不能修改
-                    if item["unique"] or item["type"] == 9:
+                    # 唯一字段/Object字段不能修改/带.字典不能修改
+                    if item["unique"] or item["type"] == 9 or item["name"].find(".") > -1:
                         # 处理下一个字段
                         continue
                     # 处理其他字段
@@ -240,11 +240,12 @@ class BatchUpdateHandler(BaseHandler):
                 value = req_data.get(item["name"])
                 if value is not None:
                     update_json[item["name"]] = value
-            # 修改数据
-            await mongo_helper.update_one(module["mid"], {"_id": _id}, {"$set": update_json})
-            if module["cache"] == 1:
-                # 删除缓存
-                await CoreService.remove_obj(module["mid"], _id)
+            if len(update_json) > 0:
+                # 修改数据
+                await mongo_helper.update_one(module["mid"], {"_id": _id}, {"$set": update_json})
+                if module["cache"] == 1:
+                    # 删除缓存
+                    await CoreService.remove_obj(module["mid"], _id)
         self.write(res)
 
 
@@ -428,6 +429,9 @@ class GetCategoryHandler(BaseHandler):
     @authenticated_core
     async def post(self):
         res = res_func([])
+        data = self.request.body.decode('utf-8')
+        req_data = json.loads(data)
+        statistics = req_data.get("statistics")
 
         current_user = self.current_user
         # 获取模块信息
@@ -441,6 +445,13 @@ class GetCategoryHandler(BaseHandler):
             if item["type"] == 6:
                 # 是否需要替换图片
                 replace_img.append(item["name"])
+        # 查询分类关联的数据
+        statistics_mid = None
+        if statistics is not None:
+            code = await mongo_helper.fetch_one('Code',
+                                                {"table_json": {"$elemMatch": {"type": 10, "key": module["mid"]}}})
+            if code is not None:
+                statistics_mid = code["mid"]
         # 获取分类列表
         query = await CoreService.get_category(module["mid"])
         results = []
@@ -450,7 +461,9 @@ class GetCategoryHandler(BaseHandler):
                 if item.get(img) is not None:
                     item[img] = item[img].replace("#Image#", settings['SITE_URL'])
             # 查询分类下使用数量
-
+            if statistics is not None and statistics_mid is not None:
+                item["Statistics.num"] = await mongo_helper.fetch_count_info(statistics_mid, {
+                    "categorys": {"$elemMatch": {"value": item["id"]}}})
             results.append(item)
         res['data'] = results
         self.write(res)
@@ -657,7 +670,7 @@ class ExportDataHandler(BaseHandler):
             sort_data = [(sort_field, -1 if sort_order == 'descending' else 1), ("_id", -1)]
 
         # 查询数据
-        query = await mongo_helper.fetch_all(module["mid"], query_criteria,  sort_data)
+        query = await mongo_helper.fetch_all(module["mid"], query_criteria, sort_data)
 
         results = []
         for item in query:

@@ -375,6 +375,7 @@ class GetListHandler(BaseHandler):
         data = self.request.body.decode('utf-8')
         req_data = json.loads(data)
         uid = req_data.get("uid")
+        status = req_data.get("status")
 
         current_user = self.current_user
         # 获取模块信息
@@ -395,10 +396,13 @@ class GetListHandler(BaseHandler):
                 if item.get("key") is not None:
                     objects.append({"field": item["name"], "mid": item.get("key")})
         # 查询条件
-        query_criteria = {"_id": {"$ne": "sequence_id"}, "status": "1"}
+        query_criteria = {"_id": {"$ne": "sequence_id"}}
         # 查询自己的数据
         if uid is not None:
             query_criteria["uid"] = int(uid)
+        # 查询状态数据
+        if status is not None:
+            query_criteria["status"] = str(status)
         query = await mongo_helper.fetch_all(module["mid"], query_criteria, [("sort", -1), ("_id", -1)])
         results = []
         for item in query:

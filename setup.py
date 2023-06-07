@@ -50,7 +50,7 @@ def build_package(version):
                 if src_file.name in ['setup.pyc', 'config.pyc', 'test.pyc']:
                     os.remove(src_file)
             else:
-                if src_file.name != "config.py":
+                if src_file.name not in ['config.py', 'requirements.txt']:
                     os.remove(src_file)
         else:
             # 目录

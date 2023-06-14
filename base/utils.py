@@ -44,6 +44,14 @@ class MongoHelper(object):
         self.connect_client = motor.motor_asyncio.AsyncIOMotorClient(url)
         self.db = self.connect_client[settings["mongo"]['database']]
 
+    async def get_client(self):
+        """获取客户端"""
+        return self.connect_client
+
+    async def get_db(self):
+        """获取数据库"""
+        return self.db
+
     async def get_connections(self) -> list:
         """
         获取数据库中的集合信息
@@ -90,6 +98,22 @@ class MongoHelper(object):
         col_id = col_insert.inserted_id
         return col_id
 
+    async def insert_one_session(self, collection_name: str, value: dict, session):
+        """
+        向集合中插入一条(文档)数据
+        :param collection_name: str 集合的名称
+        :param value: 被插入的数据信息
+        :param session 事务控制
+        :return: 返回插入返回的 id 信息
+
+        example:
+            v = await mongo_helper.insert_one('test', {"name": "hello", "price": 33}, session)
+            print(v)
+        """
+        col_insert = await self.db[collection_name].insert_one(value, session=session)
+        col_id = col_insert.inserted_id
+        return col_id
+
     async def insert_many(self, collection_name: str, value: list):
         """
         插入多条数据信息
@@ -106,6 +130,26 @@ class MongoHelper(object):
             print(v)
         """
         col_insert = await self.db[collection_name].insert_many(value)
+        col_ids = col_insert.inserted_ids
+        return col_ids
+
+    async def insert_many_session(self, collection_name: str, value: list, session):
+        """
+        插入多条数据信息
+        :param collection_name: 集合的名称
+        :param value: 列表嵌套字典的信息
+        :param session 事务控制
+        :return: 返回插入的 ids 对象集合的列表信息
+
+        example:
+            data = [
+                {"name": "前端", 'price': 66},
+                {"name": "前端", 'price': 66}
+            ]
+            v = mongo_helper.insert_many('test', data)
+            print(v)
+        """
+        col_insert = await self.db[collection_name].insert_many(value, session=session)
         col_ids = col_insert.inserted_ids
         return col_ids
 
@@ -213,10 +257,27 @@ class MongoHelper(object):
 
         example:
             filters = {"name": "java入门"}
-            v = mongo_helper.update_many("test", filters, {"$set": {"name": "我爱学习"}})
+            v = mongo_helper.update_one("test", filters, {"$set": {"name": "我爱学习"}})
             print(v, type(v))
         """
         result = await self.db[collection_name].update_one(filters, data)
+        return result.modified_count
+
+    async def update_one_session(self, collection_name: str, filters: dict, data: dict, session) -> int:
+        """
+        更新一条文档的信息
+        :param collection_name: 集合的名称
+        :param filters: dict; 筛选条件
+        :param data: 修改的信息
+        :param session: 事务控制
+        :return: int; 返回被修改的文档数
+
+        example:
+            filters = {"name": "java入门"}
+            v = mongo_helper.update_one_session("test", filters, {"$set": {"name": "我爱学习"}})
+            print(v, type(v))
+        """
+        result = await self.db[collection_name].update_one(filters, data, session=session)
         return result.modified_count
 
     async def update_or_add_one(self, collection_name: str, filters: dict, data: dict) -> int:
@@ -229,10 +290,27 @@ class MongoHelper(object):
 
         example:
             filters = {"name": "java入门"}
-            v = mongo_helper.update_many("test", filters, {"$set": {"name": "我爱学习"}})
+            v = mongo_helper.update_or_add_one("test", filters, {"$set": {"name": "我爱学习"}})
             print(v, type(v))
         """
         result = await self.db[collection_name].find_one_and_update(filters, data)
+        return result.modified_count
+
+    async def update_or_add_one_session(self, collection_name: str, filters: dict, data: dict, session) -> int:
+        """
+        更新或新增一条文档的信息
+        :param collection_name: 集合的名称
+        :param filters: dict; 筛选条件
+        :param data: 修改的信息
+        :param session: 事务控制
+        :return: int; 返回被修改的文档数
+
+        example:
+            filters = {"name": "java入门"}
+            v = mongo_helper.update_or_add_one_session("test", filters, {"$set": {"name": "我爱学习"}}, session)
+            print(v, type(v))
+        """
+        result = await self.db[collection_name].find_one_and_update(filters, data, session=session)
         return result.modified_count
 
     async def update_many(self, collection_name: str, filters: dict, data: dict) -> int:
@@ -251,6 +329,23 @@ class MongoHelper(object):
         result = await self.db[collection_name].update_many(filters, data)
         return result.modified_count
 
+    async def update_many_session(self, collection_name: str, filters: dict, data: dict, session) -> int:
+        """
+        批量修改数据
+        :param collection_name: 集合的名称
+        :param filters: 筛选条件
+        :param data: 修改信息
+        :param session: 事务控制
+        :return: int; 修改的数量
+
+        example:
+            filters = {"name": "我爱学习"}
+            v = mongo_helper.update_many_session("test", filters, {"$set": {"name": "批量修改回来"}}, session)
+            print(v, type(v))
+        """
+        result = await self.db[collection_name].update_many(filters, data, session=session)
+        return result.modified_count
+
     async def delete_one(self, collection_name: str, filters: dict) -> int:
         """
         删除单条的数据信息
@@ -264,6 +359,22 @@ class MongoHelper(object):
             print(v, type(v))
         """
         result = await self.db[collection_name].delete_one(filters)
+        return result.deleted_count
+
+    async def delete_one_session(self, collection_name: str, filters: dict, session) -> int:
+        """
+        删除单条的数据信息
+        :param collection_name:
+        :param filters:
+        :param session: 事务控制
+        :return: int; 删除数据的条数
+
+        example:
+            filters = {"name": "批量修改回来"}
+            v = mongo_helper.delete_one_session("test", filters, session)
+            print(v, type(v))
+        """
+        result = await self.db[collection_name].delete_one(filters, session=session)
         return result.deleted_count
 
     async def delete_many(self, collection_name: str, filters: dict) -> int:
@@ -282,6 +393,23 @@ class MongoHelper(object):
         result = await self.db[collection_name].delete_many(filters)
         return result.deleted_count
 
+    async def delete_many_session(self, collection_name: str, filters: dict, session) -> int:
+        """
+        删除多条的数据信息
+        :param collection_name: 集合的名称
+        :param filters: dict 过滤条件
+        :param session: 事务控制
+        :return: int 返回删除的条数
+
+        example:
+            filters = {"name": "批量修改回来"}
+            v = mongo_helper.delete_many_session("test", filters, session)
+            print(v, type(v))
+
+        """
+        result = await self.db[collection_name].delete_many(filters, session=session)
+        return result.deleted_count
+
     async def drop_collection(self, collection_name: str):
         """
         删除集合(删除表)
@@ -292,6 +420,18 @@ class MongoHelper(object):
             mongo_helper.drop_collection("test_data")
         """
         await self.db[collection_name].drop()
+
+    async def drop_collection_session(self, collection_name: str, session):
+        """
+        删除集合(删除表)
+        :param collection_name: 集合的名称
+        :param session: 事务控制
+        :return: None
+
+        example:
+            mongo_helper.drop_collection_session("test_data", session)
+        """
+        await self.db[collection_name].drop(session=session)
 
 
 """ 单例对象 """

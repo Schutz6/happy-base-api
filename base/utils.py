@@ -44,14 +44,6 @@ class MongoHelper(object):
         self.connect_client = motor.motor_asyncio.AsyncIOMotorClient(url)
         self.db = self.connect_client[settings["mongo"]['database']]
 
-    async def get_client(self):
-        """获取客户端"""
-        return self.connect_client
-
-    async def get_db(self):
-        """获取数据库"""
-        return self.db
-
     async def get_connections(self) -> list:
         """
         获取数据库中的集合信息

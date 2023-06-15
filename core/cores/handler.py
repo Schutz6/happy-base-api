@@ -302,7 +302,12 @@ class ListHandler(BaseHandler):
                     objects.append({"field": item["name"], "mid": item.get("key")})
             # 是否是查询条件
             if item["query"]:
-                if item["type"] == 5:
+                if item["type"] == 4:
+                    # 查询字典
+                    value = req_data.get(item["name"])
+                    if value is not None:
+                        query_criteria[item["name"]] = {"$in": [value]}
+                elif item["type"] == 5:
                     # 查询字典
                     value = req_data.get(item["name"])
                     if value is not None:
@@ -659,7 +664,12 @@ class ExportDataHandler(BaseHandler):
                     objects.append({"field": item["name"], "mid": item.get("key")})
             # 是否是查询条件
             if item["query"]:
-                if item["type"] == 5:
+                if item["type"] == 4:
+                    # 查询字典
+                    value = req_data.get(item["name"])
+                    if value is not None:
+                        query_criteria[item["name"]] = {"$in": [value]}
+                elif item["type"] == 5:
                     # 查询字典
                     value = req_data.get(item["name"])
                     if value is not None:

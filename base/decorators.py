@@ -74,7 +74,7 @@ def authenticated_core(func):
                                 user_id = data.get('id')
                                 # 判断令牌是否存在
                                 token = UserService.get_login_token(user_id, channel)
-                                if token is None or token == authorization:
+                                if token is not None and token == authorization:
                                     # 获取用户信息
                                     user = await UserService.get_user_by_id(user_id)
                                     user["module"] = module
@@ -187,7 +187,7 @@ def authenticated_async(roles):
                 user_id = data.get("id")
                 # 判断令牌是否存在
                 token = UserService.get_login_token(user_id, channel)
-                if token is None or token == authorization:
+                if token is not None and token == authorization:
                     # 获取用户信息
                     user = await UserService.get_user_by_id(user_id)
                     self._current_user = user

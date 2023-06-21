@@ -62,6 +62,7 @@ class UserService(object):
                 # 清空密码
                 user["id"] = user["_id"]
                 user['password'] = ''
+                user['pay_password'] = ''
                 redis_helper.redis.set(Keys.userKey + str(_id), json.dumps(user))
         else:
             user = json.loads(user)

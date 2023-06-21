@@ -23,8 +23,12 @@ class User(object):
 
     # 扩展字段
 
+    # 上级用户
+    pid = 0
     # 邮箱
     email = None
+    # 区号
+    area = None
     # 手机号
     mobile = None
     # 性别 男male 女female 未知no
@@ -41,6 +45,23 @@ class User(object):
     last_time = None
     # 最后访问IP
     last_ip = None
+
+    # 积分
+    integral = 0
+    # 余额
+    balance = 0
+
+    # 支付密码
+    pay_password = None
+    # 是否设置支付密码 0未设置 1已设置
+    has_pay_password = 0
+
+    # 认证状态 0未认证 1已认证 2审核中 3认证失败
+    certified = 0
+    # 姓名
+    full_name = None
+    # 身份证号
+    id_number = None
 
     # 格式化json
     @staticmethod

@@ -135,6 +135,8 @@ class ListHandler(BaseHandler):
         sort_field = req_data.get("sortField", "_id")
         sort_order = req_data.get("sortOrder", "descending")
         status = req_data.get("status")
+        uid = req_data.get("uid")
+        pid = req_data.get("pid")
         roles = req_data.get("roles", [])
 
         current_user = self.current_user
@@ -153,7 +155,11 @@ class ListHandler(BaseHandler):
         if search_key is not None:
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"username": re.compile(search_key)}]
         if status is not None:
-            query_criteria["status"] = status
+            query_criteria["status"] = int(status)
+        if uid is not None:
+            query_criteria["_id"] = int(uid)
+        if pid is not None:
+            query_criteria["pid"] = int(pid)
         # 排序条件
         if sort_field == "_id":
             sort_data = [(sort_field, -1 if sort_order == 'descending' else 1)]

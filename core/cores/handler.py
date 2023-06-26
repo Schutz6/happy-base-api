@@ -38,6 +38,9 @@ class AddHandler(BaseHandler):
         add_json = {}
         # 判断哪些字段需要添加
         for item in module["table_json"]:
+            # 判断是否存在UID，是否可编辑
+            if item["name"] == "uid" and item["edit"] is False:
+                add_json["uid"] = current_user["_id"]
             value = req_data.get(item["name"])
             if value is not None:
                 # 加入字段
@@ -63,7 +66,7 @@ class AddHandler(BaseHandler):
                         break
             else:
                 # 使用默认值
-                if item.get("default") is not None:
+                if item.get("default") is not None and item["edit"] is True:
                     add_json[item["name"]] = item["default"]
         if unique:
             # 不用校验，直接入库

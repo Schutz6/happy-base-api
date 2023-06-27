@@ -160,6 +160,7 @@ class ChangePwdHandler(BaseHandler):
         post -> /changePwd/
         payload:
             {
+                "type": "类型 1登录密码 2支付密码",
                 "oldPassword": "旧密码"
                 "newPassword": "新密码"
             }
@@ -168,27 +169,42 @@ class ChangePwdHandler(BaseHandler):
     @authenticated_async(None)
     async def post(self):
         res = res_func({})
-        user = self.current_user
+        current_user = self.current_user
         data = self.request.body.decode("utf-8")
         req_data = json.loads(data)
+        _type = req_data.get("type")
         old_password = req_data.get("oldPassword")
         new_password = req_data.get("newPassword")
         if old_password is not None and new_password is not None:
-            user = await mongo_helper.fetch_one(User.collection_name, {"_id": user["_id"]})
+            user = await mongo_helper.fetch_one(User.collection_name, {"_id": current_user["_id"]})
             if user is not None:
-                # 判断是否第一次修改密码
-                if user["has_password"] == 1:
-                    if user["password"] != get_md5(old_password):
-                        res['code'] = 10006
-                        res['message'] = '密码错误'
+                if _type == 1:
+                    # 判断是否第一次修改密码
+                    if user["has_password"] == 1:
+                        if user["password"] != get_md5(old_password):
+                            res['code'] = 10006
+                            res['message'] = '密码错误'
+                        else:
+                            await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]},
+                                                          {"$set": {"password": get_md5(new_password)}})
                     else:
                         await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]},
-                                                      {"$set": {"password": get_md5(new_password)}})
-                else:
-                    await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]},
-                                                  {"$set": {"password": get_md5(new_password), "has_password": 1}})
-                    # 刷新缓存
-                    UserService.delete_cache(user["_id"])
+                                                      {"$set": {"password": get_md5(new_password), "has_password": 1}})
+                elif _type == 2:
+                    # 判断是否第一次修改密码
+                    if user["has_pay_password"] == 1:
+                        if user["pay_password"] != get_md5(old_password):
+                            res['code'] = 10006
+                            res['message'] = '密码错误'
+                        else:
+                            await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]},
+                                                          {"$set": {"pay_password": get_md5(new_password)}})
+                    else:
+                        await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]},
+                                                      {"$set": {"pay_password": get_md5(new_password),
+                                                                "has_pay_password": 1}})
+                # 刷新缓存
+                UserService.delete_cache(user["_id"])
             else:
                 res['code'] = 10005
                 res['message'] = '用户不存在'

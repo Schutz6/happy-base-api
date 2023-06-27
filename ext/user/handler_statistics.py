@@ -9,7 +9,7 @@ from base.utils import now_utc, format_time, to_timestamp, get_add_time, mongo_h
 class StatisticsUserHandler(BaseHandler):
     """
         统计用户数据
-        get -> /statistics/user/
+        get -> /user/statistics/
     """
 
     @authenticated_async(['admin', 'super'])

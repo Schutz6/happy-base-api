@@ -24,7 +24,7 @@ async def init_db_data():
 
 async def init_user():
     """初始化用户编号"""
-    await mongo_helper.insert_one(User.collection_name, {"_id": "sequence_id", "seq": 100000-1})
+    await mongo_helper.insert_one(User.collection_name, {"_id": "sequence_id", "seq": 100000 - 1})
     """初始化用户"""
     await mongo_helper.insert_one(User.collection_name,
                                   {"_id": await mongo_helper.get_next_id(User.collection_name), "name": "超级管理员",
@@ -128,6 +128,44 @@ async def init_menu():
                                    "url": "/pages/system/backup/backup", "roles": ["super"], "level": 2,
                                    "sort": 90,
                                    "status": 1})
+    pid = await mongo_helper.insert_one(Menu.collection_name,
+                                        {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": 0,
+                                         "name": "会员管理", "icon": "/icons/icon-list.png",
+                                         "url": "#", "roles": ["super", 'admin'], "level": 1, "sort": 300, "status": 1})
+    await mongo_helper.insert_one(Menu.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
+                                   "name": "会员列表", "icon": "/icons/icon-member.png",
+                                   "url": "/pages/ext/member/member", "roles": ["super", 'admin'], "level": 2,
+                                   "sort": 390,
+                                   "status": 1})
+    await mongo_helper.insert_one(Menu.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
+                                   "name": "会员认证", "icon": "/icons/icon-realname.png",
+                                   "url": "/pages/ext/member/realname", "roles": ["super", 'admin'], "level": 2,
+                                   "sort": 380,
+                                   "status": 1})
+    await mongo_helper.insert_one(Menu.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
+                                   "name": "提现卡管理", "icon": "/icons/icon-item.png",
+                                   "url": "/pages/core/list?mid=Bankcard", "roles": ["super", 'admin'], "level": 2,
+                                   "sort": 370,
+                                   "status": 1})
+    pid = await mongo_helper.insert_one(Menu.collection_name,
+                                        {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": 0,
+                                         "name": "财务管理", "icon": "/icons/icon-list.png",
+                                         "url": "#", "roles": ["super", 'admin'], "level": 1, "sort": 200, "status": 1})
+    await mongo_helper.insert_one(Menu.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
+                                   "name": "充值记录", "icon": "/icons/icon-item.png",
+                                   "url": "/pages/core/list?mid=Recharge", "roles": ["super", 'admin'], "level": 2,
+                                   "sort": 290,
+                                   "status": 1})
+    await mongo_helper.insert_one(Menu.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
+                                   "name": "提现记录", "icon": "/icons/icon-item.png",
+                                   "url": "/pages/core/list?mid=Withdraw", "roles": ["super", 'admin'], "level": 2,
+                                   "sort": 280,
+                                   "status": 1})
 
 
 async def init_param():
@@ -143,7 +181,10 @@ async def init_param():
                                    "value": "100", "status": 1, "remarks": "每秒单IP访问限流次数，超过次数加入IP黑名单"})
     await mongo_helper.insert_one(Param.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "apiLimit",
-                                   "value": "1000", "status": 1, "remarks": "接口限流，每秒1000次"})
+                                   "value": "20000", "status": 1, "remarks": "接口限流，每秒20000次"})
+    await mongo_helper.insert_one(Param.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "kefuUrl",
+                                   "value": "#", "status": 0, "remarks": "客服地址"})
 
 
 async def init_task():

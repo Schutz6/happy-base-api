@@ -10,6 +10,7 @@ from core.blacklist import urls as blacklist_urls
 from core.codes import urls as code_urls
 from core.cores import urls as core_urls
 from core.backups import urls as backup_urls
+from ext.user import urls as ext_user_urls
 
 # 路由列表
 urlpatterns = []
@@ -26,3 +27,4 @@ urlpatterns += blacklist_urls.urlpatterns
 urlpatterns += code_urls.urlpatterns
 urlpatterns += core_urls.urlpatterns
 urlpatterns += backup_urls.urlpatterns
+urlpatterns += ext_user_urls.urlpatterns

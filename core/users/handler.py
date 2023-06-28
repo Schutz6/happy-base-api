@@ -135,6 +135,7 @@ class ListHandler(BaseHandler):
         sort_field = req_data.get("sortField", "_id")
         sort_order = req_data.get("sortOrder", "descending")
         status = req_data.get("status")
+        certified = req_data.get("certified")
         uid = req_data.get("uid")
         pid = req_data.get("pid")
         roles = req_data.get("roles", [])
@@ -156,6 +157,8 @@ class ListHandler(BaseHandler):
             query_criteria["$or"] = [{"name": re.compile(search_key)}, {"username": re.compile(search_key)}]
         if status is not None:
             query_criteria["status"] = int(status)
+        if certified is not None:
+            query_criteria["certified"] = int(certified)
         if uid is not None:
             query_criteria["_id"] = int(uid)
         if pid is not None:

@@ -39,3 +39,53 @@ class BindInviteCodeHandler(BaseHandler):
                     UserService.delete_cache(current_user["_id"])
                     res = res_func({})
         self.write(res)
+
+
+class RealnameHandler(BaseHandler):
+    """
+        实名认证
+        post -> /user/realname/
+        {
+            "full_name": "姓名",
+            "id_number": "身份证号"
+        }
+    """
+
+    @authenticated_async(None)
+    async def post(self):
+        res = res_func({})
+        data = self.request.body.decode('utf-8')
+        req_data = json.loads(data)
+        full_name = req_data.get("full_name")
+        id_number = req_data.get("id_number")
+
+        current_user = self.current_user
+        await mongo_helper.update_one(User.collection_name, {"_id": current_user["_id"]},
+                                      {"$set": {"full_name": full_name, "id_number": id_number, "certified": 2}})
+        # 删除缓存
+        UserService.delete_cache(current_user["_id"])
+        self.write(res)
+
+
+class CertifiedHandler(BaseHandler):
+    """
+        审核用户
+        post -> /user/certified/
+        {
+            "id": "用户编号",
+            "certified": "审核状态"
+        }
+    """
+
+    @authenticated_async(['admin', 'super'])
+    async def post(self):
+        res = res_func({})
+        data = self.request.body.decode('utf-8')
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+        certified = req_data.get("certified")
+
+        await mongo_helper.update_one(User.collection_name, {"_id": _id}, {"$set": {"certified": certified}})
+        # 删除缓存
+        UserService.delete_cache(_id)
+        self.write(res)

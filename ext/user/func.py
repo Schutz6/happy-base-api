@@ -8,6 +8,25 @@ from core.users.service import UserService
 lock = locks.Lock()
 
 
+async def lock_user_withdraw(uid, money):
+    # 在线用户提现，需要审核（并发加锁）
+    async with lock:
+        user = await mongo_helper.fetch_one(User.collection_name, {"_id": uid})
+        if user is not None:
+            # 提现
+            if user.get("balance", 0) >= money:
+                balance = user.get("balance", 0) - money
+                await mongo_helper.update_one(User.collection_name, {"_id": uid},
+                                              {"$set": {"balance": round(balance, 2)}})
+                # 删除缓存
+                UserService.delete_cache(uid)
+            else:
+                return res_fail_func(None, code=11001, message="余额不足")
+            return res_func(None)
+        else:
+            return res_fail_func(None, code=10005, message="用户不存在")
+
+
 async def lock_update_user_balance(uid, money, is_total):
     # 修改用户余额，判断是否需要增加累计（并发加锁）
     async with lock:
@@ -24,7 +43,10 @@ async def lock_update_user_balance(uid, money, is_total):
                 else:
                     await mongo_helper.update_one(User.collection_name, {"_id": uid},
                                                   {"$set": {"balance": round(balance, 2)}})
+                # 删除缓存
+                UserService.delete_cache(uid)
             else:
+                # 提现
                 if user.get("balance", 0) >= abs(money):
                     balance = user.get("balance", 0) - abs(money)
                     if is_total:
@@ -35,17 +57,17 @@ async def lock_update_user_balance(uid, money, is_total):
                     else:
                         await mongo_helper.update_one(User.collection_name, {"_id": uid},
                                                       {"$set": {"balance": round(balance, 2)}})
+                    # 删除缓存
+                    UserService.delete_cache(uid)
                 else:
                     return res_fail_func(None, code=11001, message="余额不足")
-            # 删除缓存
-            UserService.delete_cache(uid)
             return res_func(None)
         else:
             return res_fail_func(None, code=10005, message="用户不存在")
 
 
 async def lock_user_recharge_or_withdraw(_type, uid, money):
-    # 用户充值或提现（并发加锁）
+    # 后台用户充值或提现（并发加锁）
     async with lock:
         user = await mongo_helper.fetch_one(User.collection_name, {"_id": uid})
         if user is not None:
@@ -63,6 +85,8 @@ async def lock_user_recharge_or_withdraw(_type, uid, money):
                                               {"_id": recharge_id, "uid": uid, "type": _type, "currency": "CNY",
                                                "money": money, "real_money": money, "status": "1",
                                                "add_time": now_utc()})
+                # 删除缓存
+                UserService.delete_cache(uid)
             elif money < 0:
                 # 提现
                 if user.get("balance", 0) >= abs(money):
@@ -77,10 +101,10 @@ async def lock_user_recharge_or_withdraw(_type, uid, money):
                                                   {"_id": withdraw_id, "uid": uid, "type": _type, "currency": "CNY",
                                                    "money": abs(money), "real_money": abs(money), "status": "1",
                                                    "add_time": now_utc()})
+                    # 删除缓存
+                    UserService.delete_cache(uid)
                 else:
                     return res_fail_func(None, code=11001, message="余额不足")
-            # 删除缓存
-            UserService.delete_cache(uid)
             return res_func(None)
         else:
             return res_fail_func(None, code=10005, message="用户不存在")

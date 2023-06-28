@@ -6,6 +6,7 @@ from base.res import res_func, res_fail_func
 from base.utils import mongo_helper
 from core.users.models import User
 from core.users.service import UserService
+from ext.user.func import lock_user_recharge_or_withdraw
 
 
 class BindInviteCodeHandler(BaseHandler):
@@ -88,4 +89,29 @@ class CertifiedHandler(BaseHandler):
         await mongo_helper.update_one(User.collection_name, {"_id": _id}, {"$set": {"certified": certified}})
         # 删除缓存
         UserService.delete_cache(_id)
+        self.write(res)
+
+
+class UserBalanceHandler(BaseHandler):
+    """
+        后台充值/提现
+        post -> /user/balance/
+        {
+            "id": "用户编号",
+            "money": "金额"
+        }
+    """
+
+    @authenticated_async(['admin', 'super'])
+    async def post(self):
+        res = res_fail_func(None)
+        data = self.request.body.decode('utf-8')
+        req_data = json.loads(data)
+        _id = req_data.get("id")
+        money = req_data.get("money")
+        if _id is not None and money is not None:
+            _id = int(_id)
+            money = float(money)
+            # 处理充值提现
+            res = await lock_user_recharge_or_withdraw("3", _id, money)
         self.write(res)

@@ -18,10 +18,10 @@ async def demo_transaction():
 async def demo_concurrency():
     # 并发加锁代码
     async with lock:
-        user = await mongo_helper.fetch_one("User", {"_id": 100002})
+        user = await mongo_helper.fetch_one("User", {"_id": 100001})
         balance = user.get("balance", 0)
         balance += 1
-        await mongo_helper.update_one("User", {"_id": 100002}, {"$set": {"balance": balance}})
+        await mongo_helper.update_one("User", {"_id": 100001}, {"$set": {"balance": balance}})
 
 
 async def demo():

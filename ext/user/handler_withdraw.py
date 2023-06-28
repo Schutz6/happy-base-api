@@ -57,7 +57,7 @@ class UserWithdrawHandler(BaseHandler):
                 withdraw_id = await mongo_helper.get_next_id("Withdraw")
                 currency = "CNY"
                 if _type == "2":
-                    currency = "USDT"
+                    currency = "TRC20"
                 await mongo_helper.insert_one("Withdraw",
                                               {"_id": withdraw_id, "uid": current_user["_id"], "type": _type,
                                                "name": name, "currency": currency,

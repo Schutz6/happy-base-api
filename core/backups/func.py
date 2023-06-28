@@ -157,13 +157,13 @@ async def init_menu():
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
                                    "name": "充值记录", "icon": "/icons/icon-item.png",
-                                   "url": "/pages/core/list?mid=Recharge", "roles": ["super", 'admin'], "level": 2,
+                                   "url": "/pages/ext/recharge/recharge", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 290,
                                    "status": 1})
     await mongo_helper.insert_one(Menu.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Menu.collection_name), "pid": pid,
                                    "name": "提现记录", "icon": "/icons/icon-item.png",
-                                   "url": "/pages/core/list?mid=Withdraw", "roles": ["super", 'admin'], "level": 2,
+                                   "url": "/pages/ext/withdraw/withdraw", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 280,
                                    "status": 1})
 

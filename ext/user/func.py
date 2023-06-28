@@ -8,6 +8,42 @@ from core.users.service import UserService
 lock = locks.Lock()
 
 
+async def lock_update_user_balance(uid, money, is_total):
+    # 修改用户余额，判断是否需要增加累计（并发加锁）
+    async with lock:
+        user = await mongo_helper.fetch_one(User.collection_name, {"_id": uid})
+        if user is not None:
+            if money > 0:
+                # 充值
+                balance = user.get("balance", 0) + money
+                if is_total:
+                    # 累计充值
+                    total_recharge = user.get("total_recharge", 0) + money
+                    await mongo_helper.update_one(User.collection_name, {"_id": uid}, {
+                        "$set": {"balance": round(balance, 2), "total_recharge": round(total_recharge, 2)}})
+                else:
+                    await mongo_helper.update_one(User.collection_name, {"_id": uid},
+                                                  {"$set": {"balance": round(balance, 2)}})
+            else:
+                if user.get("balance", 0) >= abs(money):
+                    balance = user.get("balance", 0) - abs(money)
+                    if is_total:
+                        # 累计提现
+                        total_withdraw = user.get("total_withdraw", 0) + abs(money)
+                        await mongo_helper.update_one(User.collection_name, {"_id": uid}, {
+                            "$set": {"balance": round(balance, 2), "total_withdraw": round(total_withdraw, 2)}})
+                    else:
+                        await mongo_helper.update_one(User.collection_name, {"_id": uid},
+                                                      {"$set": {"balance": round(balance, 2)}})
+                else:
+                    return res_fail_func(None, code=11001, message="余额不足")
+            # 删除缓存
+            UserService.delete_cache(uid)
+            return res_func(None)
+        else:
+            return res_fail_func(None, code=10005, message="用户不存在")
+
+
 async def lock_user_recharge_or_withdraw(_type, uid, money):
     # 用户充值或提现（并发加锁）
     async with lock:

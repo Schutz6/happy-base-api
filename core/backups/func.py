@@ -183,6 +183,9 @@ async def init_param():
                                   {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "apiLimit",
                                    "value": "20000", "status": 1, "remarks": "接口限流，每秒20000次"})
     await mongo_helper.insert_one(Param.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "ipWhiteList",
+                                   "value": "127.0.0.1", "status": 1, "remarks": "IP白名单"})
+    await mongo_helper.insert_one(Param.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "kefuUrl",
                                    "value": "#", "status": 0, "remarks": "客服地址"})
     await mongo_helper.insert_one(Param.collection_name,

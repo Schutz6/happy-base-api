@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from core.blacklist.models import Blacklist
 from base.keys import Keys
 from base.utils import redis_helper, mongo_helper, now_utc
@@ -34,27 +36,31 @@ class BlacklistService(object):
     # 获取IP访问次数
     @staticmethod
     def get_ip_limit(ip):
-        num = redis_helper.redis.get(Keys.ipLimitKey+ip)
+        s = datetime.now().strftime("%S")
+        key = Keys.ipLimitKey + s + ":" + ip
+        num = redis_helper.redis.get(key)
         if num is None:
             # 初始化
             num = 1
-            redis_helper.redis.set(Keys.ipLimitKey+ip, num, ex=1)
+            redis_helper.redis.set(key, num, ex=1)
         else:
             # 增加一次
             num = int(num) + 1
-            redis_helper.redis.incr(Keys.ipLimitKey+ip)
+            redis_helper.redis.incr(key)
         return num
 
     # 获取总接口访问次数
     @staticmethod
     def get_api_limit():
-        num = redis_helper.redis.get(Keys.apiLimitKey)
+        s = datetime.now().strftime("%S")
+        key = Keys.apiLimitKey + ":" + s
+        num = redis_helper.redis.get(key)
         if num is None:
             # 初始化
             num = 1
-            redis_helper.redis.set(Keys.apiLimitKey, num, ex=1)
+            redis_helper.redis.set(key, num, ex=1)
         else:
             # 增加一次
             num = int(num) + 1
-            redis_helper.redis.incr(Keys.apiLimitKey)
+            redis_helper.redis.incr(key)
         return num

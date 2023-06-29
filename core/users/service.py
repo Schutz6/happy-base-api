@@ -33,9 +33,9 @@ class UserService(object):
     def add_login_error_count(_id):
         login_error_count = redis_helper.redis.get(Keys.loginErrorKey + str(_id))
         if login_error_count is not None:
-            redis_helper.redis.set(Keys.loginErrorKey + str(_id), int(login_error_count) + 1, ex=1800)
+            redis_helper.redis.set(Keys.loginErrorKey + str(_id), int(login_error_count) + 1, ex=300)
         else:
-            redis_helper.redis.set(Keys.loginErrorKey + str(_id), 1, ex=1800)
+            redis_helper.redis.set(Keys.loginErrorKey + str(_id), 1, ex=300)
 
     # 获取登录密码错误次数
     @staticmethod

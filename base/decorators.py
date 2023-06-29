@@ -263,6 +263,13 @@ def log_async(func):
 
 # 处理IP限流
 async def handle_ip_limit(ip):
+    # 判断IP是否在白名单
+    param = await ParamService.get_param("ipWhiteList")
+    if param is not None:
+        ip_white_list = param["value"].split("\n")
+        if ip in ip_white_list:
+            return True
+
     # 接口限流次数
     api_limit = 200
     param = await ParamService.get_param("apiLimit")

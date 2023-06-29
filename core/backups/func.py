@@ -185,6 +185,24 @@ async def init_param():
     await mongo_helper.insert_one(Param.collection_name,
                                   {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "kefuUrl",
                                    "value": "#", "status": 0, "remarks": "客服地址"})
+    await mongo_helper.insert_one(Param.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "inviteUrl",
+                                   "value": "#", "status": 0, "remarks": "邀请地址"})
+    await mongo_helper.insert_one(Param.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "withdrawalFee",
+                                   "value": "0.05", "status": 0, "remarks": "提现手续费率"})
+    await mongo_helper.insert_one(Param.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "usdtRate",
+                                   "value": "7.00", "status": 0, "remarks": "USDT汇率"})
+    await mongo_helper.insert_one(Param.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "trc20Address",
+                                   "value": "#1", "status": 0, "remarks": "USDT-TRC20充值地址"})
+    await mongo_helper.insert_one(Param.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "erc20Address",
+                                   "value": "#2", "status": 0, "remarks": "USDT-ERC20充值地址"})
+    await mongo_helper.insert_one(Param.collection_name,
+                                  {"_id": await mongo_helper.get_next_id(Param.collection_name), "key": "omniAddress",
+                                   "value": "#3", "status": 0, "remarks": "USDT-OMNI充值地址"})
 
 
 async def init_task():

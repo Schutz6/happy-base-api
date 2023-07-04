@@ -1,13 +1,87 @@
 import json
+from datetime import datetime
+
+import jwt
 
 from base.aliyun import send_aliyun_mobile, send_aliyun_g_mobile
 from base.decorators import log_async, authenticated_async
 from base.gmail import send_gmail
 from base.handler import BaseHandler
 from base.res import res_func
-from base.utils import get_random_num, mongo_helper, get_md5
+from base.utils import get_random_num, mongo_helper, get_md5, get_random_head, now_utc
+from config import settings
 from core.params.service import ParamService
+from core.users.models import User
 from core.users.service import UserService
+
+
+class RegisterHandler(BaseHandler):
+    """
+    用户注册
+    post -> /user/register/
+    payload:
+        {
+            "username": "用户名",
+            "password": "密码",
+            "invite_code": "邀请码"
+        }
+    """
+
+    @log_async
+    async def post(self):
+        channel = self.request.headers.get('Channel', 'default')
+        res = res_func({})
+        res['data'] = {"token": ""}
+        data = self.request.body.decode("utf-8")
+        req_data = json.loads(data)
+        username = req_data.get("username")
+        password = req_data.get("password")
+        invite_code = req_data.get("invite_code")
+        # 查找账号是否存在
+        user = await mongo_helper.fetch_one("User", {"username": username})
+        if user is not None:
+            # 账号已存在
+            res['code'] = 10004
+            res['message'] = '账号已存在'
+        else:
+            # 判断一个IP地址24小时内 只能注册2个账号
+            remote_ip = self.request.remote_ip
+            num = UserService.get_register_ip_num(remote_ip)
+            if num >= 2:
+                res['code'] = 10031
+                res['message'] = '注册已达上限'
+                self.write(res)
+                return
+            user_data = {}
+            # 查询是否有推广码
+            if invite_code is not None:
+                invite_user = await UserService.get_user_by_id(int(invite_code))
+                if invite_user is not None:
+                    user_data["pid"] = invite_user["_id"]
+            # 直接注册
+            user_data["name"] = username
+            user_data["username"] = username
+            user_data["gender"] = "no"
+            user_data["password"] = get_md5(password)
+            user_data["has_password"] = 1
+            user_data["status"] = 1
+            user_data["avatar"] = get_random_head()
+            user_data["roles"] = ["user"]
+            user_data["add_time"] = now_utc()
+            _id = await mongo_helper.insert_one("User", await User.get_json(user_data))
+            # 记录IP地址注册次数
+            UserService.save_register_ip_num(remote_ip, num + 1)
+
+            payload = {
+                'id': _id,
+                'username': username,
+                'exp': datetime.utcnow()
+            }
+            token = jwt.encode(payload=payload, key=settings["secret_key"], algorithm='HS256')
+            res['data'] = {"token": token}
+            # 存储用户令牌
+            UserService.save_login_token(_id, channel, token)
+        self.write(res)
 
 
 class SendEmailHandler(BaseHandler):
@@ -220,7 +294,7 @@ class ReplacePasswordHandler(BaseHandler):
     """
 
     @log_async
-    async def post(self, *args, **kwargs):
+    async def post(self):
         res = res_func({})
         data = self.request.body.decode('utf-8')
         req_data = json.loads(data)

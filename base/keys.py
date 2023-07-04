@@ -26,6 +26,10 @@ class Keys(object):
     objectKey = appName + "object:"
     # 分类
     categoryKey = appName + "category:"
+    # 短信验证码key
+    smsCodeKey = appName + "smsCode:"
+    # 注册IP次数Key
+    registerIpNumKey = appName + "registerIpNum:"
 
 
 """ 单例对象 """

@@ -82,3 +82,32 @@ class UserService(object):
         if user is not None:
             username = await UserService.get_account_number()
         return username
+
+    # 存储短信验证码(5分钟)
+    @staticmethod
+    def save_sms_code(mobile, code):
+        redis_helper.redis.set(Keys.smsCodeKey + mobile, code, ex=300)
+
+    # 获取短信验证码
+    @staticmethod
+    def get_sms_code(mobile):
+        return redis_helper.redis.get(Keys.smsCodeKey + mobile)
+
+    # 删除短信验证码
+    @staticmethod
+    def delete_sms_code_cache(mobile):
+        redis_helper.redis.delete(Keys.smsCodeKey + mobile)
+
+    # 记录IP注册次数
+    @staticmethod
+    def save_register_ip_num(ip, num):
+        redis_helper.redis.set(Keys.registerIpNumKey + ip, num, ex=86400)
+
+    # 获取注册IP次数
+    @staticmethod
+    def get_register_ip_num(ip):
+        num = redis_helper.redis.get(Keys.registerIpNumKey + ip)
+        if num is not None:
+            return int(num)
+        else:
+            return 0

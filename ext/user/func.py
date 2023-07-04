@@ -2,6 +2,7 @@ from tornado import locks
 
 from base.res import res_fail_func, res_func
 from base.utils import mongo_helper, now_utc
+from core.params.service import ParamService
 from core.users.models import User
 from core.users.service import UserService
 
@@ -108,3 +109,80 @@ async def lock_user_recharge_or_withdraw(_type, uid, money):
             return res_func(None)
         else:
             return res_fail_func(None, code=10005, message="用户不存在")
+
+
+async def lock_agent_income(uid, money):
+    # 计算代理收益（并发加锁）
+    async with lock:
+        user = await mongo_helper.fetch_one(User.collection_name, {"_id": uid})
+        if user is not None:
+            # 判断是否有一级代理
+            if user.get("pid") is not None:
+                # 获取一级代理
+                one = await UserService.get_user_by_id(user.get("pid"))
+                if one is not None:
+                    level1 = await ParamService.get_param("level1")
+                    if level1 is not None:
+                        rate = float(level1["value"])
+                        # 计算代理收益
+                        income = round(money * rate, 2)
+                        balance = one.get("balance", 0) + income
+                        # 修改余额宝数据
+                        await mongo_helper.update_one("User", {"_id": one["_id"]},
+                                                      {"$set": {"balance": round(balance, 2)}})
+                        # 删除缓存
+                        UserService.delete_cache(one["_id"])
+                        # 记录收益
+                        _id = await mongo_helper.get_next_id("IncomeAgent")
+                        await mongo_helper.insert_one("IncomeAgent",
+                                                      {"_id": _id, "uid": one["_id"], "level": "1", "money": income,
+                                                       "remarks": "uid:" + str(uid) + " 充值" + str(
+                                                           money) + "返佣", "add_time": now_utc()})
+                        # 判断是否有二级代理
+                        if one.get("pid") is not None:
+                            # 获取二级代理
+                            two = await UserService.get_user_by_id(one.get("pid"))
+                            if two is not None:
+                                level2 = await ParamService.get_param("level2")
+                                if level2 is not None:
+                                    rate = float(level2["value"])
+                                    # 计算代理收益
+                                    income = round(money * rate, 2)
+                                    balance = two.get("balance", 0) + income
+                                    # 修改余额宝数据
+                                    await mongo_helper.update_one("User", {"_id": two["_id"]},
+                                                                  {"$set": {"balance": round(balance, 2)}})
+                                    # 删除缓存
+                                    UserService.delete_cache(two["_id"])
+                                    # 记录收益
+                                    _id = await mongo_helper.get_next_id("IncomeAgent")
+                                    await mongo_helper.insert_one("IncomeAgent",
+                                                                  {"_id": _id, "uid": two["_id"], "level": "2",
+                                                                   "money": income,
+                                                                   "remarks": "uid:" + str(uid) + " 充值" + str(
+                                                                       money) + "返佣", "add_time": now_utc()})
+                                    # 判断是否有三级代理
+                                    if two.get("pid") is not None:
+                                        # 获取三级代理
+                                        three = await UserService.get_user_by_id(two.get("pid"))
+                                        if three is not None:
+                                            level3 = await ParamService.get_param("level3")
+                                            if level3 is not None:
+                                                rate = float(level3["value"])
+                                                # 计算代理收益
+                                                income = round(money * rate, 2)
+                                                balance = three.get("balance", 0) + income
+                                                # 修改余额宝数据
+                                                await mongo_helper.update_one("User", {"_id": three["_id"]},
+                                                                              {"$set": {"balance": round(balance, 2)}})
+                                                # 删除缓存
+                                                UserService.delete_cache(three["_id"])
+                                                # 记录收益
+                                                _id = await mongo_helper.get_next_id("IncomeAgent")
+                                                await mongo_helper.insert_one("IncomeAgent",
+                                                                              {"_id": _id, "uid": three["_id"],
+                                                                               "level": "3",
+                                                                               "money": income,
+                                                                               "remarks": "uid:" + str(
+                                                                                   uid) + " 充值" + str(money) + "返佣",
+                                                                               "add_time": now_utc()})

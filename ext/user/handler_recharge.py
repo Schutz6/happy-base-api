@@ -4,7 +4,7 @@ from base.decorators import authenticated_async
 from base.handler import BaseHandler
 from base.res import res_fail_func, res_func
 from base.utils import mongo_helper
-from ext.user.func import lock_update_user_balance
+from ext.user.func import lock_update_user_balance, lock_agent_income
 
 
 class UserCertifiedRechargeHandler(BaseHandler):
@@ -37,6 +37,8 @@ class UserCertifiedRechargeHandler(BaseHandler):
                                               {"$set": {"status": status, "real_money": money}})
                 # 审核成功才修改用户余额
                 res = await lock_update_user_balance(recharge["uid"], money, True)
+                # 计算代理收益
+                await lock_agent_income(recharge["uid"], recharge["money"])
             else:
                 await mongo_helper.update_one("Recharge", {"_id": recharge["_id"]}, {"$set": {"status": status}})
                 res = res_func(None)

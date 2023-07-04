@@ -6,7 +6,7 @@ from base.res import res_func, res_fail_func
 from base.utils import mongo_helper
 from core.users.models import User
 from core.users.service import UserService
-from ext.user.func import lock_user_recharge_or_withdraw
+from ext.user.func import lock_user_recharge_or_withdraw, lock_agent_income
 
 
 class BindInviteCodeHandler(BaseHandler):
@@ -114,4 +114,7 @@ class UserBalanceHandler(BaseHandler):
             money = float(money)
             # 处理充值提现
             res = await lock_user_recharge_or_withdraw("3", _id, money)
+            if money > 0:
+                # 充值后，计算代理收益
+                await lock_agent_income(_id, money)
         self.write(res)

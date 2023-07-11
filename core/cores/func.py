@@ -1,6 +1,7 @@
 from base.utils import mongo_helper
 from config import settings
 from core.cores.service import CoreService
+from core.users.service import UserService
 
 
 async def get_obj_info(mid, _id):
@@ -28,6 +29,10 @@ async def get_obj_info(mid, _id):
             for img in replace_img:
                 if info.get(img) is not None:
                     info[img] = info[img].replace("#Image#", settings['SITE_URL'])
+    else:
+        # 判断是否内置的对象
+        if mid == 'User':
+            info = await UserService.get_user_by_id(int(_id))
     return info
 
 

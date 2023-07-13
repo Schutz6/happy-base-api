@@ -306,7 +306,10 @@ class ListHandler(BaseHandler):
             if item.get("single_query"):
                 value = req_data.get(item["name"])
                 if value is not None:
-                    if item["type"] == 4:
+                    if item["type"] == 2:
+                        # Int类型
+                        query_criteria[item["name"]] = int(value)
+                    elif item["type"] == 4:
                         # 查询字典集合
                         query_criteria[item["name"]] = {"$in": [value]}
                     elif item["type"] == 10:
@@ -396,7 +399,10 @@ class GetListHandler(BaseHandler):
             if item.get("single_query"):
                 value = req_data.get(item["name"])
                 if value is not None:
-                    if item["type"] == 4:
+                    if item["type"] == 2:
+                        # Int类型
+                        query_criteria[item["name"]] = int(value)
+                    elif item["type"] == 4:
                         # 查询字典集合
                         query_criteria[item["name"]] = {"$in": [value]}
                     elif item["type"] == 10:
@@ -661,7 +667,10 @@ class ExportDataHandler(BaseHandler):
             if item.get("single_query"):
                 value = req_data.get(item["name"])
                 if value is not None:
-                    if item["type"] == 4:
+                    if item["type"] == 2:
+                        # Int类型
+                        query_criteria[item["name"]] = int(value)
+                    elif item["type"] == 4:
                         # 查询字典集合
                         query_criteria[item["name"]] = {"$in": [value]}
                     elif item["type"] == 10:

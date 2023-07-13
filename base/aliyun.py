@@ -30,8 +30,7 @@ async def send_aliyun_mobile(mobile, code):
             request.add_query_param('SignName', aliyun_sign["value"])
             request.add_query_param('TemplateCode', aliyun_template["value"])
             request.add_query_param('TemplateParam', "{'code':'"+code+"'}")
-            response = client.do_action_with_exception(request)
-            show_error_log(str(response, encoding='utf-8'))
+            client.do_action_with_exception(request)
             return True
         else:
             return False
@@ -61,8 +60,7 @@ async def send_aliyun_g_mobile(mobile, code):
             request.set_action_name('SendMessageToGlobe')
             request.add_query_param('To', mobile)
             request.add_query_param('Message', aliyun_sms_content["value"].replace("code", code))
-            response = client.do_action_with_exception(request)
-            show_error_log(str(response, encoding='utf-8'))
+            client.do_action_with_exception(request)
             return True
         else:
             return False

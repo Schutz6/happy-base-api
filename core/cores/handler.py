@@ -271,7 +271,6 @@ class ListHandler(BaseHandler):
         search_key = req_data.get("searchKey")
         sort_field = req_data.get("sortField", "_id")
         sort_order = req_data.get("sortOrder", "descending")
-        uid = req_data.get("uid")
 
         # 当前用户信息
         current_user = self.current_user
@@ -283,7 +282,7 @@ class ListHandler(BaseHandler):
         # 需要替换对象ID
         objects = []
 
-        # 字符串查询条件
+        # 综合查询条件
         query_criteria = {"_id": {"$ne": "sequence_id"}}
         if search_key is not None:
             query_list = []
@@ -294,7 +293,7 @@ class ListHandler(BaseHandler):
                         query_list.append({item["name"]: re.compile(search_key)})
             if len(query_list) > 0:
                 query_criteria["$or"] = query_list
-        # 字典查询条件
+        # 单独查询条件
         for item in module["table_json"]:
             if item["type"] == 6 or item["type"] == 8:
                 # 需要替换图片地址
@@ -304,30 +303,20 @@ class ListHandler(BaseHandler):
                 if item.get("key") is not None:
                     objects.append({"field": item["name"], "mid": item.get("key")})
             # 是否是查询条件
-            if item["query"]:
-                if item["type"] == 4:
-                    # 查询字典
-                    value = req_data.get(item["name"])
-                    if value is not None:
+            if item.get("single_query"):
+                value = req_data.get(item["name"])
+                if value is not None:
+                    if item["type"] == 4:
+                        # 查询字典集合
                         query_criteria[item["name"]] = {"$in": [value]}
-                elif item["type"] == 5:
-                    # 查询字典
-                    value = req_data.get(item["name"])
-                    if value is not None:
+                    elif item["type"] == 10:
+                        # 查询分类
+                        value = req_data.get(item["name"])
+                        if value is not None and len(value) > 0:
+                            query_criteria[item["name"]] = value
+                    else:
+                        # 其他查询
                         query_criteria[item["name"]] = value
-                elif item["type"] == 9:
-                    # 查询对象
-                    value = req_data.get(item["name"])
-                    if value is not None:
-                        query_criteria[item["name"]] = value
-                elif item["type"] == 10:
-                    # 查询分类
-                    value = req_data.get(item["name"])
-                    if value is not None and len(value) > 0:
-                        query_criteria[item["name"]] = value
-        # 查询自己的数据
-        if uid is not None:
-            query_criteria["uid"] = int(uid)
         # 排序条件
         if sort_field == "_id":
             sort_data = [(sort_field, -1 if sort_order == 'descending' else 1)]
@@ -382,8 +371,6 @@ class GetListHandler(BaseHandler):
         res = res_func([])
         data = self.request.body.decode('utf-8')
         req_data = json.loads(data)
-        uid = req_data.get("uid")
-        status = req_data.get("status")
 
         current_user = self.current_user
         # 获取模块信息
@@ -394,23 +381,32 @@ class GetListHandler(BaseHandler):
         # 需要替换对象ID
         objects = []
 
-        # 模块字段检查
+        # 查询条件
+        query_criteria = {"_id": {"$ne": "sequence_id"}}
+        # 单独查询条件
         for item in module["table_json"]:
             if item["type"] == 6 or item["type"] == 8:
-                # 是否需要替换图片
+                # 需要替换图片地址
                 replace_img.append(item["name"])
             elif item["type"] == 9:
                 # 对象替换成详情
                 if item.get("key") is not None:
                     objects.append({"field": item["name"], "mid": item.get("key")})
-        # 查询条件
-        query_criteria = {"_id": {"$ne": "sequence_id"}}
-        # 查询自己的数据
-        if uid is not None:
-            query_criteria["uid"] = int(uid)
-        # 查询状态数据
-        if status is not None:
-            query_criteria["status"] = str(status)
+            # 是否是查询条件
+            if item.get("single_query"):
+                value = req_data.get(item["name"])
+                if value is not None:
+                    if item["type"] == 4:
+                        # 查询字典集合
+                        query_criteria[item["name"]] = {"$in": [value]}
+                    elif item["type"] == 10:
+                        # 查询分类
+                        value = req_data.get(item["name"])
+                        if value is not None and len(value) > 0:
+                            query_criteria[item["name"]] = value
+                    else:
+                        # 其他查询
+                        query_criteria[item["name"]] = value
         query = await mongo_helper.fetch_all(module["mid"], query_criteria, [("sort", -1), ("_id", -1)])
         results = []
         for item in query:
@@ -619,7 +615,6 @@ class ExportDataHandler(BaseHandler):
         search_key = req_data.get("searchKey")
         sort_field = req_data.get("sortField", "_id")
         sort_order = req_data.get("sortOrder", "descending")
-        uid = req_data.get("uid")
 
         # 当前用户信息
         current_user = self.current_user
@@ -642,16 +637,13 @@ class ExportDataHandler(BaseHandler):
                         query_list.append({item["name"]: re.compile(search_key)})
             if len(query_list) > 0:
                 query_criteria["$or"] = query_list
-        # 查询自己的数据
-        if uid is not None:
-            query_criteria["uid"] = int(uid)
 
         # 头部数据
         head_row = []
         # 需要导出的字段
         fields = []
 
-        # 字典查询条件
+        # 单独查询条件
         for item in module["table_json"]:
             if item["type"] in [1, 2, 3, 5, 6, 7, 8]:
                 # 记录导出头部
@@ -666,21 +658,19 @@ class ExportDataHandler(BaseHandler):
                 if item.get("key") is not None:
                     objects.append({"field": item["name"], "mid": item.get("key")})
             # 是否是查询条件
-            if item["query"]:
-                if item["type"] == 4:
-                    # 查询字典
-                    value = req_data.get(item["name"])
-                    if value is not None:
+            if item.get("single_query"):
+                value = req_data.get(item["name"])
+                if value is not None:
+                    if item["type"] == 4:
+                        # 查询字典集合
                         query_criteria[item["name"]] = {"$in": [value]}
-                elif item["type"] == 5:
-                    # 查询字典
-                    value = req_data.get(item["name"])
-                    if value is not None:
-                        query_criteria[item["name"]] = value
-                elif item["type"] == 10:
-                    # 查询分类
-                    value = req_data.get(item["name"])
-                    if value is not None and len(value) > 0:
+                    elif item["type"] == 10:
+                        # 查询分类
+                        value = req_data.get(item["name"])
+                        if value is not None and len(value) > 0:
+                            query_criteria[item["name"]] = value
+                    else:
+                        # 其他查询
                         query_criteria[item["name"]] = value
 
         # 排序条件

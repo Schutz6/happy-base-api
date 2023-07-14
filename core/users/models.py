@@ -83,4 +83,5 @@ class User(object):
                 "address": req_data.get("address"),
                 "introduction": req_data.get("introduction"),
                 "birthday": req_data.get("birthday"),
+                "pid": req_data.get("pid", 0),
                 "add_time": now_utc()}

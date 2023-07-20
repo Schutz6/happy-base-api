@@ -322,7 +322,8 @@ class ListHandler(BaseHandler):
                         query_criteria[item["name"]] = value
         # 排序条件
         if sort_field == "_id":
-            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1)]
+            sort_data = [("add_time", -1 if sort_order == 'descending' else 1),
+                         ("_id", -1 if sort_order == 'descending' else 1)]
         else:
             sort_data = [(sort_field, -1 if sort_order == 'descending' else 1), ("_id", -1)]
 

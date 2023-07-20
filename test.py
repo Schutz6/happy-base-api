@@ -1,6 +1,8 @@
 import asyncio
+import base64
 
 from tornado import locks
+from tornado.httpclient import AsyncHTTPClient
 from base.utils import mongo_helper
 
 lock = locks.Lock()
@@ -29,6 +31,14 @@ async def demo():
     await demo_transaction()
 
 
+async def download_img():
+    # 下载图片，并转成base64
+    http_client = AsyncHTTPClient()
+    response = await http_client.fetch("https://xxxxxx/xx.jpg")
+    print(base64.b64encode(response.buffer.read()).decode("utf8"))
+
+
 if __name__ == '__main__':
     # 启动测试代码
-    asyncio.run(demo())
+    # asyncio.run(demo())
+    asyncio.run(download_img())

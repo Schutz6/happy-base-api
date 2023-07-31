@@ -52,10 +52,14 @@ class AddHandler(BaseHandler):
                 elif item["type"] == 3:
                     # Float类型转换
                     add_json[item['name']] = float(add_json.get(item['name']))
-                elif item["type"] == 6 or item["type"] == 8:
-                    # 图片/富文本 中图片地址转换
-                    img = add_json.get(item['name'])
-                    add_json[item['name']] = img.replace(settings['SITE_URL'], "#Image#")
+                elif item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
+                    # 图片/富文本/视频 地址转换
+                    url = add_json.get(item['name'])
+                    add_json[item['name']] = url.replace(settings['SITE_URL'], "#URL#")
+                elif item["type"] == 12 or item["type"] == 14:
+                    # 多图片/多视频 地址转换
+                    url_list = add_json.get(item['name'])
+                    add_json[item['name']] = ",".join(url_list).replace(settings['SITE_URL'], "#URL#").split(",")
                 # 判断是否有唯一字段校验
                 if item["unique"]:
                     query = await mongo_helper.fetch_one(module["mid"], {item['name']: add_json.get(item['name'])})
@@ -206,10 +210,14 @@ class UpdateHandler(BaseHandler):
                     elif item["type"] == 3:
                         # Float类型转换
                         update_json[item['name']] = float(update_json[item['name']])
-                    elif item["type"] == 6 or item["type"] == 8:
-                        # 图片/富文本 中图片地址转换
-                        img = update_json[item['name']]
-                        update_json[item['name']] = img.replace(settings['SITE_URL'], "#Image#")
+                    elif item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
+                        # 图片/富文本/视频 地址转换
+                        url = update_json.get(item['name'])
+                        update_json[item['name']] = url.replace(settings['SITE_URL'], "#URL#")
+                    elif item["type"] == 12 or item["type"] == 14:
+                        # 多图片/多视频 地址转换
+                        url_list = update_json.get(item['name'])
+                        update_json[item['name']] = ",".join(url_list).replace(settings['SITE_URL'], "#URL#").split(",")
             # 修改数据
             await mongo_helper.update_one(module["mid"], {"_id": _id}, {"$set": update_json})
             if module["cache"] == 1:
@@ -277,8 +285,10 @@ class ListHandler(BaseHandler):
         # 获取模块信息
         module = current_user["module"]
 
-        # 需要替换图片地址
-        replace_img = []
+        # 需要替换地址
+        replace_url = []
+        # 需要批量替换地址
+        replace_urls = []
         # 需要替换对象ID
         objects = []
 
@@ -295,9 +305,12 @@ class ListHandler(BaseHandler):
                 query_criteria["$or"] = query_list
         # 单独查询条件
         for item in module["table_json"]:
-            if item["type"] == 6 or item["type"] == 8:
-                # 需要替换图片地址
-                replace_img.append(item["name"])
+            if item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
+                # 需要替换地址
+                replace_url.append(item["name"])
+            elif item["type"] == 12 or item["type"] == 14:
+                # 需要批量替换地址
+                replace_urls.append(item["name"])
             elif item["type"] == 9:
                 # 对象替换成详情
                 if item.get("key") is not None:
@@ -338,10 +351,14 @@ class ListHandler(BaseHandler):
         for item in page_data.get("list", []):
             item["id"] = item["_id"]
             item.pop("_id")
-            # 替换图片地址
-            for img in replace_img:
-                if item.get(img) is not None:
-                    item[img] = item[img].replace("#Image#", settings['SITE_URL'])
+            # 替换地址
+            for url_key in replace_url:
+                if item.get(url_key) is not None:
+                    item[url_key] = item[url_key].replace("#URL#", settings['SITE_URL'])
+            # 批量替换地址
+            for url_key in replace_urls:
+                if item.get(url_key) is not None:
+                    item[url_key] = ",".join(item[url_key]).replace("#URL#", settings['SITE_URL']).split(",")
             # 查询对象详情
             for obj in objects:
                 if item.get(obj["field"]) is not None:
@@ -380,8 +397,10 @@ class GetListHandler(BaseHandler):
         # 获取模块信息
         module = current_user["module"]
 
-        # 需要替换图片地址
-        replace_img = []
+        # 需要替换地址
+        replace_url = []
+        # 需要批量替换地址
+        replace_urls = []
         # 需要替换对象ID
         objects = []
 
@@ -389,9 +408,12 @@ class GetListHandler(BaseHandler):
         query_criteria = {"_id": {"$ne": "sequence_id"}}
         # 单独查询条件
         for item in module["table_json"]:
-            if item["type"] == 6 or item["type"] == 8:
-                # 需要替换图片地址
-                replace_img.append(item["name"])
+            if item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
+                # 需要替换地址
+                replace_url.append(item["name"])
+            elif item["type"] == 12 or item["type"] == 14:
+                # 需要批量替换地址
+                replace_urls.append(item["name"])
             elif item["type"] == 9:
                 # 对象替换成详情
                 if item.get("key") is not None:
@@ -419,10 +441,14 @@ class GetListHandler(BaseHandler):
         for item in query:
             item["id"] = item["_id"]
             item.pop("_id")
-            # 替换图片地址
-            for img in replace_img:
-                if item.get(img) is not None:
-                    item[img] = item[img].replace("#Image#", settings['SITE_URL'])
+            # 替换地址
+            for url_key in replace_url:
+                if item.get(url_key) is not None:
+                    item[url_key] = item[url_key].replace("#URL#", settings['SITE_URL'])
+            # 批量替换地址
+            for url_key in replace_urls:
+                if item.get(url_key) is not None:
+                    item[url_key] = ",".join(item[url_key]).replace("#URL#", settings['SITE_URL']).split(",")
             # 查询对象详情
             for obj in objects:
                 if item.get(obj["field"]) is not None:
@@ -455,14 +481,19 @@ class GetCategoryHandler(BaseHandler):
         # 获取模块信息
         module = current_user["module"]
 
-        # 需要替换图片地址
-        replace_img = []
+        # 需要替换地址
+        replace_url = []
+        # 需要批量替换地址
+        replace_urls = []
 
         # 模块字段检查
         for item in module["table_json"]:
-            if item["type"] == 6:
-                # 是否需要替换图片
-                replace_img.append(item["name"])
+            if item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
+                # 需要替换地址
+                replace_url.append(item["name"])
+            elif item["type"] == 12 or item["type"] == 14:
+                # 需要批量替换地址
+                replace_urls.append(item["name"])
         # 查询分类关联的数据
         statistics_mid = None
         if statistics is not None:
@@ -474,10 +505,14 @@ class GetCategoryHandler(BaseHandler):
         query = await CoreService.get_category(module["mid"])
         results = []
         for item in query:
-            # 替换图片地址
-            for img in replace_img:
-                if item.get(img) is not None:
-                    item[img] = item[img].replace("#Image#", settings['SITE_URL'])
+            # 替换地址
+            for url_key in replace_url:
+                if item.get(url_key) is not None:
+                    item[url_key] = item[url_key].replace("#URL#", settings['SITE_URL'])
+            # 批量替换地址
+            for url_key in replace_urls:
+                if item.get(url_key) is not None:
+                    item[url_key] = ",".join(item[url_key]).replace("#URL#", settings['SITE_URL']).split(",")
             # 查询分类下使用数量
             if statistics is not None and statistics_mid is not None:
                 item["Statistics.num"] = await mongo_helper.fetch_count_info(statistics_mid, {
@@ -504,8 +539,10 @@ class GetInfoHandler(BaseHandler):
         # 获取模块信息
         module = current_user["module"]
 
-        # 需要替换图片地址
-        replace_img = []
+        # 需要替换地址
+        replace_url = []
+        # 需要批量替换地址
+        replace_urls = []
         # 需要替换对象ID
         objects = []
 
@@ -513,9 +550,12 @@ class GetInfoHandler(BaseHandler):
             _id = int(_id)
             # 模块字段检查
             for item in module["table_json"]:
-                if item["type"] == 6 or item["type"] == 8:
-                    # 是否需要替换图片
-                    replace_img.append(item["name"])
+                if item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
+                    # 是否需要替换地址
+                    replace_url.append(item["name"])
+                elif item["type"] == 12 or item["type"] == 14:
+                    # 需要批量替换地址
+                    replace_urls.append(item["name"])
                 elif item["type"] == 9:
                     # 对象替换成详情
                     if item.get("key") is not None:
@@ -527,10 +567,14 @@ class GetInfoHandler(BaseHandler):
             if query is not None:
                 query["id"] = query["_id"]
                 query.pop("_id")
-                # 替换图片地址
-                for img in replace_img:
-                    if query.get(img) is not None:
-                        query[img] = query[img].replace("#Image#", settings['SITE_URL'])
+                # 替换地址
+                for url_key in replace_url:
+                    if query.get(url_key) is not None:
+                        query[url_key] = query[url_key].replace("#URL#", settings['SITE_URL'])
+                # 批量替换地址
+                for url_key in replace_urls:
+                    if query.get(url_key) is not None:
+                        query[url_key] = ",".join(query[url_key]).replace("#URL#", settings['SITE_URL']).split(",")
                 # 查询对象详情
                 for obj in objects:
                     if query.get(obj["field"]) is not None:
@@ -628,8 +672,10 @@ class ExportDataHandler(BaseHandler):
         # 获取模块信息
         module = current_user["module"]
 
-        # 需要替换图片地址
-        replace_img = []
+        # 需要替换地址
+        replace_url = []
+        # 需要批量替换地址
+        replace_urls = []
         # 需要替换对象ID
         objects = []
 
@@ -657,9 +703,12 @@ class ExportDataHandler(BaseHandler):
                 head_row.append(item["remarks"])
                 fields.append(item["name"])
 
-            if item["type"] == 6 or item["type"] == 8:
-                # 需要替换图片地址
-                replace_img.append(item["name"])
+            if item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
+                # 需要替换地址
+                replace_url.append(item["name"])
+            elif item["type"] == 12 or item["type"] == 14:
+                # 需要批量替换地址
+                replace_urls.append(item["name"])
             elif item["type"] == 9:
                 # 对象替换成详情
                 if item.get("key") is not None:
@@ -696,10 +745,14 @@ class ExportDataHandler(BaseHandler):
         for item in query:
             item.pop("_id")
             item.pop("add_time")
-            # 替换图片地址
-            for img in replace_img:
-                if item.get(img) is not None:
-                    item[img] = item[img].replace("#Image#", settings['SITE_URL'])
+            # 替换地址
+            for url_key in replace_url:
+                if item.get(url_key) is not None:
+                    item[url_key] = item[url_key].replace("#URL#", settings['SITE_URL'])
+            # 批量替换地址
+            for url_key in replace_urls:
+                if item.get(url_key) is not None:
+                    item[url_key] = ",".join(item[url_key]).replace("#URL#", settings['SITE_URL']).split(",")
             # 查询对象详情
             for obj in objects:
                 if item.get(obj["field"]) is not None:

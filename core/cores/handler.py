@@ -475,7 +475,10 @@ class GetCategoryHandler(BaseHandler):
         res = res_func([])
         data = self.request.body.decode('utf-8')
         req_data = json.loads(data)
+        # 是否查询统计
         statistics = req_data.get("statistics")
+        # 是否查询分类
+        type_id = req_data.get("type_id", 0)
 
         current_user = self.current_user
         # 获取模块信息
@@ -502,7 +505,7 @@ class GetCategoryHandler(BaseHandler):
             if code is not None:
                 statistics_mid = code["mid"]
         # 获取分类列表
-        query = await CoreService.get_category(module["mid"])
+        query = await CoreService.get_category(module["mid"], int(type_id))
         results = []
         for item in query:
             # 替换地址

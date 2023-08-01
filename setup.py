@@ -3,6 +3,8 @@ import os
 import shutil
 import compileall
 
+from base.utils import show_error_log
+
 
 def build_package(version):
     """构建新版本"""
@@ -44,18 +46,21 @@ def build_package(version):
 
     # 删除不要到文件
     for src_file in build_dist.rglob("*"):
-        if src_file.is_file():
-            # 文件
-            if src_file.name.endswith(".pyc"):
-                if src_file.name in ['setup.pyc', 'config.pyc', 'test.pyc']:
-                    os.remove(src_file)
+        try:
+            if src_file.is_file():
+                # 文件
+                if src_file.name.endswith(".pyc"):
+                    if src_file.name in ['setup.pyc', 'config.pyc', 'test.pyc']:
+                        os.remove(src_file)
+                else:
+                    if src_file.name not in ['config.py', 'requirements.txt']:
+                        os.remove(src_file)
             else:
-                if src_file.name not in ['config.py', 'requirements.txt']:
-                    os.remove(src_file)
-        else:
-            # 目录
-            if src_file.name in ['venv', '.git', '.idea']:
-                shutil.rmtree(src_file)
+                # 目录
+                if src_file.name in ['venv', '.git', '.idea']:
+                    shutil.rmtree(src_file)
+        except Exception as e:
+            show_error_log(e)
 
 
 if __name__ == '__main__':

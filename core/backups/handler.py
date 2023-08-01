@@ -21,7 +21,13 @@ class DumpHandler(BaseHandler):
         res = res_func({})
         time_path = time.strftime("%Y%m%d%H%M%S", time.localtime())
         backup_path = os.path.join(os.path.dirname(__file__), settings['BACKUP_URL'], time_path)
-        os.system("mongodump -h 127.0.0.1 -d " + settings["mongo"]["database"] + " -o " + backup_path)
+        if settings["mongo"].get("password") is None:
+            os.system("mongodump -h " + settings["mongo"]["host"] + ":" + str(settings["mongo"]["port"]) + " -d " +
+                      settings["mongo"]["database"] + " -o " + backup_path)
+        else:
+            os.system("mongodump -h " + settings["mongo"]["host"] + ":" + str(settings["mongo"]["port"]) + " -d " +
+                      settings["mongo"]["database"] + " -o " + backup_path + " -u=" + settings["mongo"][
+                          "user"] + " -p=" + settings["mongo"]["password"] + " --authenticationDatabase admin")
         directory = os.path.join(backup_path, settings["mongo"]["database"])
         # 添加到备份库
         await mongo_helper.insert_one(Backup.collection_name, await Backup.get_json({"directory": directory}))
@@ -43,8 +49,15 @@ class RestoreHandler(BaseHandler):
         if _id is not None:
             backup = await mongo_helper.fetch_one(Backup.collection_name, {"_id": _id})
             if backup is not None:
-                os.system(
-                    "mongorestore -h 127.0.0.1 -d " + settings["mongo"]["database"] + " --drop " + backup["directory"])
+                if settings["mongo"].get("password") is None:
+                    os.system(
+                        "mongorestore -h " + settings["mongo"]["host"] + ":" + str(settings["mongo"]["port"]) + " -d " +
+                        settings["mongo"]["database"] + " --drop " + backup["directory"])
+                else:
+                    os.system(
+                        "mongorestore -h " + settings["mongo"]["host"] + ":" + str(settings["mongo"]["port"]) + " -d " +
+                        settings["mongo"]["database"] + " --drop " + backup["directory"] + " -u=" + settings["mongo"][
+                            "user"] + " -p=" + settings["mongo"]["password"] + " --authenticationDatabase admin")
         self.write(res)
 
 

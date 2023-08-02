@@ -6,9 +6,9 @@ settings = {
     "secret_key": "R7gKOqXTiti9HuXG",
     "app_jwt_expire": 30 * 24 * 3600,
     "admin_jwt_expire": 24 * 3600,
-    "SAVE_URL": "/opt/homebrew/var/www/static",
+    "SAVE_URL": "/usr/local/var/www/static",
     "SITE_URL": "http://localhost:8080/static",
-    "BACKUP_URL": "/opt/homebrew/var/backups",
+    "BACKUP_URL": "/usr/local/var/backups",
     'redis': {
         "host": "127.0.0.1",
         "port": 6379,
@@ -17,6 +17,6 @@ settings = {
     'mongo': {
         "host": "127.0.0.1",
         "port": 27017,
-        "database": "happy-base"
+        "database": "base-db"
     }
 }

@@ -1,6 +1,5 @@
 import json
 
-from core.menus.models import Menu
 from base.keys import Keys
 from base.utils import redis_helper, mongo_helper
 
@@ -22,13 +21,13 @@ class MenuService(object):
         menus = redis_helper.redis.get(Keys.menusKey + '-'.join(roles))
         if menus is None:
             # 查询一级菜单
-            query_one = await mongo_helper.fetch_all(Menu.collection_name,
-                                                     {"pid": 0, "status": 1, "roles": {"$in": roles}},
+            query_one = await mongo_helper.fetch_all("Menu",
+                                                     {"pid": 0, "status": "1", "roles": {"$in": roles}},
                                                      [("sort", -1), ("_id", -1)])
             for one in query_one:
                 # 查询二级菜单
-                query_two = await mongo_helper.fetch_all(Menu.collection_name, {"pid": one["_id"], "status": 1,
-                                                                                "roles": {"$in": roles}},
+                query_two = await mongo_helper.fetch_all("Menu", {"pid": one["_id"], "status": "1",
+                                                                  "roles": {"$in": roles}},
                                                          [("sort", -1), ("_id", -1)])
                 children = []
                 for two in query_two:

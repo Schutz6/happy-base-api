@@ -8,11 +8,15 @@ from openpyxl.reader.excel import load_workbook
 from base.decorators import authenticated_core
 from base.handler import BaseHandler
 from base.res import res_func, res_fail_func
-from base.utils import mongo_helper, now_utc, get_random
+from base.utils import mongo_helper, now_utc, get_random, get_md5
 from base.xlsx import save_to_excel
 from config import settings
 from core.cores.func import get_obj_info, recursion_category_delete
 from core.cores.service import CoreService
+from core.dicts.service import DictService
+from core.menus.service import MenuService
+from core.params.service import ParamService
+from core.users.service import UserService
 
 
 class AddHandler(BaseHandler):
@@ -38,13 +42,21 @@ class AddHandler(BaseHandler):
         add_json = {}
         # 判断哪些字段需要添加
         for item in module["table_json"]:
-            # 判断是否存在UID，是否可编辑
+            # 判断是否存在UID，且不能编辑
             if item["name"] == "uid" and item["edit"] is False:
                 add_json["uid"] = current_user["_id"]
+            # 判断是否创建时间，且不能编辑
+            if item["name"] == "add_time" and item["edit"] is False:
+                add_json["add_time"] = now_utc()
             value = req_data.get(item["name"])
             if value is not None:
                 # 加入字段
                 add_json[item["name"]] = value
+
+                # 判断是否用户模块
+                if "User" == module["mid"] and item["name"] == "password":
+                    # 加密密码
+                    add_json["password"] = get_md5(add_json["password"])
 
                 if item["type"] == 2 or item["type"] == 9:
                     # Int/Object类型转换
@@ -76,11 +88,23 @@ class AddHandler(BaseHandler):
             # 不用校验，直接入库
             _id = await mongo_helper.get_next_id(module["mid"])
             add_json["_id"] = _id
-            add_json["add_time"] = now_utc()
             await mongo_helper.insert_one(module["mid"], add_json)
             if module["cache"] == 1:
                 # 删除缓存
                 await CoreService.remove_category(module["mid"])
+                # 判断需要删除缓存的模块
+                if module["mid"] == 'Param':
+                    # 删除参数缓存
+                    ParamService.remove_params(None)
+                elif 'DictValue' == module["mid"]:
+                    dict_value = await mongo_helper.fetch_one("DictValue", {"_id": _id})
+                    if dict_value is not None:
+                        # 删除字典
+                        DictService.delete_cache(dict_value["type_name"])
+                elif module["mid"] == "Menu":
+                    # 删除菜单缓存
+                    MenuService.remove_menus()
+
         self.write(res)
 
 
@@ -108,6 +132,9 @@ class RecursionDeleteHandler(BaseHandler):
             await recursion_category_delete(module["mid"], _id)
             # 删除缓存
             await CoreService.remove_category(module["mid"])
+            if module["mid"] == "Menu":
+                # 删除菜单缓存
+                MenuService.remove_menus()
         else:
             res = res_fail_func(None)
         self.write(res)
@@ -133,11 +160,29 @@ class DeleteHandler(BaseHandler):
 
         if _id is not None:
             _id = int(_id)
-            # 删除数据
-            await mongo_helper.delete_one(module["mid"], {"_id": _id})
             if module["cache"] == 1:
                 # 删除缓存
                 await CoreService.remove_obj(module["mid"], _id)
+                if 'Param' == module["mid"]:
+                    param = await mongo_helper.fetch_one("Param", {"_id": _id})
+                    if param is not None:
+                        # 删除参数缓存
+                        ParamService.remove_params(param["key"])
+                elif 'DictType' == module["mid"]:
+                    dict_type = await mongo_helper.fetch_one("DictType", {"_id": _id})
+                    if dict_type is not None:
+                        # 删除字典
+                        DictService.delete_cache(dict_type["name"])
+                elif 'DictValue' == module["mid"]:
+                    dict_value = await mongo_helper.fetch_one("DictValue", {"_id": _id})
+                    if dict_value is not None:
+                        # 删除字典
+                        DictService.delete_cache(dict_value["type_name"])
+                elif 'User' == module["mid"]:
+                    # 删除用户缓存
+                    UserService.delete_cache(_id)
+            # 删除数据
+            await mongo_helper.delete_one(module["mid"], {"_id": _id})
         else:
             res = res_fail_func(None)
         self.write(res)
@@ -168,6 +213,9 @@ class BatchDeleteHandler(BaseHandler):
             if module["cache"] == 1:
                 # 删除缓存
                 await CoreService.remove_obj(module["mid"], _id)
+                if 'User' == module["mid"]:
+                    # 删除用户缓存
+                    UserService.delete_cache(_id)
 
         self.write(res)
 
@@ -204,6 +252,11 @@ class UpdateHandler(BaseHandler):
                     # 处理其他字段
                     update_json[item["name"]] = value
 
+                    # 判断是否用户模块
+                    if "User" == module["mid"] and item["name"] == "password":
+                        # 加密密码
+                        update_json["password"] = get_md5(update_json["password"])
+
                     if item["type"] == 2:
                         # Int类型转换
                         update_json[item['name']] = int(update_json[item['name']])
@@ -223,6 +276,22 @@ class UpdateHandler(BaseHandler):
             if module["cache"] == 1:
                 # 删除缓存
                 await CoreService.remove_obj(module["mid"], _id)
+                if 'Param' == module["mid"]:
+                    param = await mongo_helper.fetch_one("Param", {"_id": _id})
+                    if param is not None:
+                        # 删除参数缓存
+                        ParamService.remove_params(param["key"])
+                elif 'DictValue' == module["mid"]:
+                    dict_value = await mongo_helper.fetch_one("DictValue", {"_id": _id})
+                    if dict_value is not None:
+                        # 删除字典缓存
+                        DictService.delete_cache(dict_value["type_name"])
+                elif module["mid"] == "Menu":
+                    # 删除菜单缓存
+                    MenuService.remove_menus()
+                elif 'User' == module["mid"]:
+                    # 删除用户缓存
+                    UserService.delete_cache(_id)
         else:
             res = res_fail_func(None)
         self.write(res)
@@ -336,9 +405,12 @@ class ListHandler(BaseHandler):
         # 排序条件
         if sort_field == "_id":
             sort_data = [("add_time", -1 if sort_order == 'descending' else 1),
+                         ("sort", -1 if sort_order == 'descending' else 1),
                          ("_id", -1 if sort_order == 'descending' else 1)]
         else:
-            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1), ("_id", -1)]
+            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1),
+                         ("sort", -1 if sort_order == 'descending' else 1),
+                         ("_id", -1 if sort_order == 'descending' else 1)]
 
         # 查询分页数据
         page_data = await mongo_helper.fetch_page_info(module["mid"], query_criteria,
@@ -350,6 +422,7 @@ class ListHandler(BaseHandler):
         results = []
         for item in page_data.get("list", []):
             item["id"] = item["_id"]
+            item['password'] = ""
             item.pop("_id")
             # 替换地址
             for url_key in replace_url:
@@ -440,6 +513,7 @@ class GetListHandler(BaseHandler):
         results = []
         for item in query:
             item["id"] = item["_id"]
+            item['password'] = ""
             item.pop("_id")
             # 替换地址
             for url_key in replace_url:
@@ -569,6 +643,7 @@ class GetInfoHandler(BaseHandler):
                 query = await mongo_helper.fetch_one(module["mid"], {"_id": _id})
             if query is not None:
                 query["id"] = query["_id"]
+                query['password'] = ""
                 query.pop("_id")
                 # 替换地址
                 for url_key in replace_url:

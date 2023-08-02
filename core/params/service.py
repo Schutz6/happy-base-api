@@ -1,6 +1,5 @@
 import json
 
-from core.params.models import Param
 from base.keys import Keys
 from base.utils import redis_helper, mongo_helper
 
@@ -11,7 +10,7 @@ class ParamService(object):
     async def get_param(key):
         param = redis_helper.redis.get(Keys.paramsKey + key)
         if param is None:
-            param = await mongo_helper.fetch_one(Param.collection_name, {"key": key})
+            param = await mongo_helper.fetch_one("Param", {"key": key})
             if param is not None:
                 # 存储
                 redis_helper.redis.set(Keys.paramsKey + key, json.dumps(param))
@@ -34,7 +33,7 @@ class ParamService(object):
         results = []
         params = redis_helper.redis.get(Keys.paramsKey + "0")
         if params is None:
-            query = await mongo_helper.fetch_all(Param.collection_name, {"status": 0}, [("_id", -1)])
+            query = await mongo_helper.fetch_all("Param", {"status": 0}, [("_id", -1)])
             for item in query:
                 results.append((item["key"], item["value"]))
             if len(results) > 0:

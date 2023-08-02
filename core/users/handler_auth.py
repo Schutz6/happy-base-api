@@ -53,7 +53,7 @@ class LoginHandler(BaseHandler):
             # 对比密码是否正确
             if user['password'] == get_md5(password):
                 # 判断账号是否正常
-                if user['status'] == 1:
+                if user['status'] == "1":
                     payload = {
                         'id': user['_id'],
                         'username': user['username'],
@@ -90,7 +90,7 @@ class UserHandler(BaseHandler):
         res = res_func({})
         current_user = self.current_user
         current_user["id"] = current_user["_id"]
-        current_user["avatar"] = settings['SITE_URL'] + current_user["avatar"]
+        current_user["avatar"] = current_user["avatar"].replace("#URL#", settings['SITE_URL'])
         res['data'] = current_user
 
         # 更新登录信息
@@ -129,7 +129,7 @@ class UserHandler(BaseHandler):
         avatar = req_data.get("avatar")
         if avatar is not None:
             # 替换地址
-            avatar = avatar.replace(settings['SITE_URL'], "")
+            avatar = avatar.replace(settings['SITE_URL'], "#URL#")
             await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]}, {"$set": {"avatar": avatar}})
 
         # 删除缓存

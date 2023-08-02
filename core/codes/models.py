@@ -13,14 +13,16 @@ class Code(object):
     # 模块名称
     name = None
     # 使用缓存
-    cache = None
+    cache = 0
+    # 是否追溯
+    retrace = 0
     # 接口集合
     api_json = []
     # 表结构
     """
-    type 类型 1=String 2=Int 3=Float 4=List<Dict> 5=Dict 6=Image 7=Text 8=Html 9=Object 10=Category 11=List<Object>
     {"name": "字段", "type": "类型", "remarks": "备注", "default": "默认值", 
-    "key": "绑定对象/字典", "show": "表格显示", "query": "综合查询", "single_query": "单独查询", "sort": "排序字段", "unique": "唯一校验"}
+    "key": "绑定对象/字典", "show": "表格显示", "query": "综合查询", "single_query": "单独查询", "sort": "排序字段", "unique": "唯一校验",
+    "edit": "是否编辑", "must": "是否必填"}
     """
     table_json = []
 
@@ -31,6 +33,7 @@ class Code(object):
         return {"_id": _id,
                 "mid": req_data.get("mid"),
                 "name": req_data.get("name"),
-                "cache": req_data.get("cache"),
+                "cache": req_data.get("cache", 0),
+                "retrace": req_data.get("retrace", 0),
                 "api_json": req_data.get("api_json", []),
                 "table_json": req_data.get("table_json", [])}

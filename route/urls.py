@@ -1,5 +1,4 @@
 from core.users import urls as user_urls
-from core.roles import urls as role_urls
 from core.tasks import urls as task_urls
 from core.files import urls as file_urls
 from core.dicts import urls as dict_urls
@@ -16,7 +15,6 @@ from ext.user import urls as ext_user_urls
 urlpatterns = []
 
 urlpatterns += user_urls.urlpatterns
-urlpatterns += role_urls.urlpatterns
 urlpatterns += task_urls.urlpatterns
 urlpatterns += file_urls.urlpatterns
 urlpatterns += dict_urls.urlpatterns

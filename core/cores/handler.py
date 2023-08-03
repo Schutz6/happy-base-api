@@ -384,6 +384,7 @@ class ListHandler(BaseHandler):
                 # 对象替换成详情
                 if item.get("key") is not None:
                     objects.append({"field": item["name"], "mid": item.get("key")})
+
             # 是否是查询条件
             if item.get("single_query"):
                 value = req_data.get(item["name"])
@@ -393,7 +394,7 @@ class ListHandler(BaseHandler):
                         query_criteria[item["name"]] = int(value)
                     elif item["type"] == 4:
                         # 查询字典集合
-                        query_criteria[item["name"]] = {"$in": [value]}
+                        query_criteria[item["name"]] = {"$in": value}
                     elif item["type"] == 10:
                         # 查询分类
                         value = req_data.get(item["name"])
@@ -500,7 +501,7 @@ class GetListHandler(BaseHandler):
                         query_criteria[item["name"]] = int(value)
                     elif item["type"] == 4:
                         # 查询字典集合
-                        query_criteria[item["name"]] = {"$in": [value]}
+                        query_criteria[item["name"]] = {"$in": value}
                     elif item["type"] == 10:
                         # 查询分类
                         value = req_data.get(item["name"])
@@ -687,8 +688,8 @@ class ImportDataHandler(BaseHandler):
 
         # 字典查询条件
         for item in module["table_json"]:
-            # 过滤带.的字段
-            if item["name"].find(".") == -1:
+            # 过滤带.的字段，并且是显示字段
+            if item["name"].find(".") == -1 and item["show"]:
                 fields.append({"type": item["type"], "name": item["name"]})
 
         time_path = time.strftime("%Y%m%d", time.localtime())
@@ -723,8 +724,14 @@ class ImportDataHandler(BaseHandler):
                         if field['type'] == 4 or field['type'] == 12 or field['type'] == 14 or field['type'] == 10:
                             # 字符串转成json
                             add_json[field['name']] = json.loads(value)
+                        elif field['type'] == 1 or field['type'] == 9 or field['type'] == 15:
+                            # 转int
+                            add_json[field['name']] = int(value)
+                        elif field['type'] == 2:
+                            # 转float
+                            add_json[field['name']] = float(value)
                         else:
-                            add_json[field['name']] = value
+                            add_json[field['name']] = str(value)
                         column_index += 1
                     # 加入数据库
                     _id = await mongo_helper.get_next_id(module["mid"])
@@ -776,7 +783,7 @@ class ExportDataHandler(BaseHandler):
         # 单独查询条件
         for item in module["table_json"]:
             # 过滤带.的字段
-            if item["name"].find(".") == -1:
+            if item["name"].find(".") == -1 and item["show"]:
                 # 记录导出头部
                 head_row.append(item["remarks"])
                 fields.append({"type": item["type"], "name": item["name"]})
@@ -789,7 +796,7 @@ class ExportDataHandler(BaseHandler):
                         query_criteria[item["name"]] = int(value)
                     elif item["type"] == 4:
                         # 查询字典集合
-                        query_criteria[item["name"]] = {"$in": [value]}
+                        query_criteria[item["name"]] = {"$in": value}
                     elif item["type"] == 10:
                         # 查询分类
                         value = req_data.get(item["name"])

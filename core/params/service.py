@@ -33,7 +33,7 @@ class ParamService(object):
         results = []
         params = redis_helper.redis.get(Keys.paramsKey + "0")
         if params is None:
-            query = await mongo_helper.fetch_all("Param", {"status": 0}, [("_id", -1)])
+            query = await mongo_helper.fetch_all("Param", {"status": "0"}, [("_id", -1)])
             for item in query:
                 results.append((item["key"], item["value"]))
             if len(results) > 0:

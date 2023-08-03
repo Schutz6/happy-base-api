@@ -44,12 +44,6 @@ class LoginHandler(BaseHandler):
                 res['message'] = '账号已锁定'
                 self.write(res)
                 return
-            # 判断是否已设置密码
-            if user['has_password'] == 0:
-                res['code'] = 10024
-                res['message'] = '未设置密码'
-                self.write(res)
-                return
             # 对比密码是否正确
             if user['password'] == get_md5(password):
                 # 判断账号是否正常
@@ -179,7 +173,7 @@ class ChangePwdHandler(BaseHandler):
         if user is not None:
             if _type == 1:
                 # 判断是否第一次修改密码
-                if user["has_password"] == 1:
+                if user.get("password") is not None:
                     if user["password"] != get_md5(old_password):
                         res['code'] = 10006
                         res['message'] = '密码错误'
@@ -188,10 +182,10 @@ class ChangePwdHandler(BaseHandler):
                                                       {"$set": {"password": get_md5(new_password)}})
                 else:
                     await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]},
-                                                  {"$set": {"password": get_md5(new_password), "has_password": 1}})
+                                                  {"$set": {"password": get_md5(new_password)}})
             elif _type == 2:
                 # 判断是否第一次修改密码
-                if user["has_pay_password"] == 1:
+                if user.get("pay_password") is not None:
                     if user["pay_password"] != get_md5(old_password):
                         res['code'] = 10006
                         res['message'] = '密码错误'
@@ -200,8 +194,7 @@ class ChangePwdHandler(BaseHandler):
                                                       {"$set": {"pay_password": get_md5(new_password)}})
                 else:
                     await mongo_helper.update_one(User.collection_name, {"_id": user["_id"]},
-                                                  {"$set": {"pay_password": get_md5(new_password),
-                                                            "has_pay_password": 1}})
+                                                  {"$set": {"pay_password": get_md5(new_password)}})
             # 刷新缓存
             UserService.delete_cache(user["_id"])
         else:

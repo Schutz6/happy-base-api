@@ -63,8 +63,7 @@ class RegisterHandler(BaseHandler):
             user_data["username"] = username
             user_data["gender"] = "no"
             user_data["password"] = get_md5(password)
-            user_data["has_password"] = 1
-            user_data["status"] = 1
+            user_data["status"] = "1"
             user_data["avatar"] = get_random_head()
             user_data["roles"] = ["user"]
             user_data["add_time"] = now_utc()

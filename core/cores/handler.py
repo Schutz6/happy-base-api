@@ -245,8 +245,8 @@ class UpdateHandler(BaseHandler):
             for item in module["table_json"]:
                 value = req_data.get(item["name"])
                 if value is not None:
-                    # 唯一字段/Object字段不能修改/带.字典不能修改
-                    if item["unique"] or item["type"] == 9 or item["name"].find(".") > -1:
+                    # 带.字典不能修改
+                    if item["name"].find(".") > -1:
                         # 处理下一个字段
                         continue
                     # 处理其他字段

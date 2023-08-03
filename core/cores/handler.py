@@ -687,8 +687,9 @@ class ImportDataHandler(BaseHandler):
 
         # 字典查询条件
         for item in module["table_json"]:
-            if item["type"] in [1, 2, 3, 5, 6, 7, 8]:
-                fields.append(item["name"])
+            # 过滤带.的字段
+            if item["name"].find(".") == -1:
+                fields.append({"type": item["type"], "name": item["name"]})
 
         time_path = time.strftime("%Y%m%d", time.localtime())
         upload_path = os.path.join(os.path.dirname(__file__), settings['SAVE_URL'] + '/files', time_path)
@@ -716,9 +717,14 @@ class ImportDataHandler(BaseHandler):
                 while index <= ws.max_row:
                     column_index = 1
                     add_json = {}
-                    for key in fields:
+                    for field in fields:
                         value = ws.cell(row=index, column=column_index).value
-                        add_json[key] = value
+                        # 判断类型，有些特殊的字段需要处理
+                        if field['type'] == 4 or field['type'] == 12 or field['type'] == 14 or field['type'] == 10:
+                            # 字符串转成json
+                            add_json[field['name']] = json.loads(value)
+                        else:
+                            add_json[field['name']] = value
                         column_index += 1
                     # 加入数据库
                     _id = await mongo_helper.get_next_id(module["mid"])
@@ -750,13 +756,6 @@ class ExportDataHandler(BaseHandler):
         # 获取模块信息
         module = current_user["module"]
 
-        # 需要替换地址
-        replace_url = []
-        # 需要批量替换地址
-        replace_urls = []
-        # 需要替换对象ID
-        objects = []
-
         # 字符串查询条件
         query_criteria = {"_id": {"$ne": "sequence_id"}}
         if search_key is not None:
@@ -776,21 +775,11 @@ class ExportDataHandler(BaseHandler):
 
         # 单独查询条件
         for item in module["table_json"]:
-            if item["type"] in [1, 2, 3, 5, 6, 7, 8]:
+            # 过滤带.的字段
+            if item["name"].find(".") == -1:
                 # 记录导出头部
                 head_row.append(item["remarks"])
-                fields.append(item["name"])
-
-            if item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
-                # 需要替换地址
-                replace_url.append(item["name"])
-            elif item["type"] == 12 or item["type"] == 14:
-                # 需要批量替换地址
-                replace_urls.append(item["name"])
-            elif item["type"] == 9:
-                # 对象替换成详情
-                if item.get("key") is not None:
-                    objects.append({"field": item["name"], "mid": item.get("key")})
+                fields.append({"type": item["type"], "name": item["name"]})
             # 是否是查询条件
             if item.get("single_query"):
                 value = req_data.get(item["name"])
@@ -812,9 +801,13 @@ class ExportDataHandler(BaseHandler):
 
         # 排序条件
         if sort_field == "_id":
-            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1)]
+            sort_data = [("add_time", -1 if sort_order == 'descending' else 1),
+                         ("sort", -1 if sort_order == 'descending' else 1),
+                         ("_id", -1 if sort_order == 'descending' else 1)]
         else:
-            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1), ("_id", -1)]
+            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1),
+                         ("sort", -1 if sort_order == 'descending' else 1),
+                         ("_id", -1 if sort_order == 'descending' else 1)]
 
         # 查询数据
         query = await mongo_helper.fetch_all(module["mid"], query_criteria, sort_data)
@@ -822,28 +815,14 @@ class ExportDataHandler(BaseHandler):
         results = []
         for item in query:
             item.pop("_id")
-            item.pop("add_time")
-            # 替换地址
-            for url_key in replace_url:
-                if item.get(url_key) is not None:
-                    item[url_key] = item[url_key].replace("#URL#", settings['SITE_URL'])
-            # 批量替换地址
-            for url_key in replace_urls:
-                if item.get(url_key) is not None:
-                    item[url_key] = ",".join(item[url_key]).replace("#URL#", settings['SITE_URL']).split(",")
-            # 查询对象详情
-            for obj in objects:
-                if item.get(obj["field"]) is not None:
-                    info = await get_obj_info(obj["mid"], item[obj["field"]])
-                    if info is not None:
-                        # 匹配字段
-                        for table in module["table_json"]:
-                            if table["name"].find(obj["mid"]) > -1:
-                                # 匹配上字段，给该字段赋值
-                                item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
             obj = []
-            for key in fields:
-                obj.append(item[key])
+            for field in fields:
+                # 判断类型，有些特殊的字段需要处理
+                if field['type'] == 4 or field['type'] == 12 or field['type'] == 14 or field['type'] == 10:
+                    # 转成字符串
+                    obj.append(json.dumps(item[field['name']]))
+                else:
+                    obj.append(item[field['name']])
             results.append(obj)
 
         # 保存文件位置

@@ -62,7 +62,8 @@ class CoreService(object):
             results = []
             # 查询一级分类
             if type_id > 0:
-                query_one = await mongo_helper.fetch_all(mid, {"pid": 0, "type_id": type_id}, [("sort", -1), ("_id", -1)])
+                query_one = await mongo_helper.fetch_all(mid, {"pid": 0, "type_id": type_id},
+                                                         [("sort", -1), ("_id", -1)])
             else:
                 query_one = await mongo_helper.fetch_all(mid, {"pid": 0}, [("sort", -1), ("_id", -1)])
             for one in query_one:
@@ -71,7 +72,8 @@ class CoreService(object):
                 results.append(one)
                 # 查询二级分类
                 if type_id > 0:
-                    query_two = await mongo_helper.fetch_all(mid, {"pid": one["id"], "type_id": type_id},  [("sort", -1), ("_id", -1)])
+                    query_two = await mongo_helper.fetch_all(mid, {"pid": one["id"], "type_id": type_id},
+                                                             [("sort", -1), ("_id", -1)])
                 else:
                     query_two = await mongo_helper.fetch_all(mid, {"pid": one["id"]}, [("sort", -1), ("_id", -1)])
                 for two in query_two:
@@ -80,13 +82,25 @@ class CoreService(object):
                     results.append(two)
                     # 查询三级分类
                     if type_id > 0:
-                        query_three = await mongo_helper.fetch_all(mid, {"pid": two["id"], "type_id": type_id}, [("sort", -1), ("_id", -1)])
+                        query_three = await mongo_helper.fetch_all(mid, {"pid": two["id"], "type_id": type_id},
+                                                                   [("sort", -1), ("_id", -1)])
                     else:
                         query_three = await mongo_helper.fetch_all(mid, {"pid": two["id"]}, [("sort", -1), ("_id", -1)])
                     for three in query_three:
                         three["id"] = three["_id"]
                         three.pop("_id")
                         results.append(three)
+                        # 查询四级分类
+                        if type_id > 0:
+                            query_four = await mongo_helper.fetch_all(mid, {"pid": three["id"], "type_id": type_id},
+                                                                      [("sort", -1), ("_id", -1)])
+                        else:
+                            query_four = await mongo_helper.fetch_all(mid, {"pid": three["id"]},
+                                                                      [("sort", -1), ("_id", -1)])
+                        for four in query_four:
+                            four["id"] = four["_id"]
+                            four.pop("_id")
+                            results.append(four)
             # 存储
             if len(results) > 0:
                 redis_helper.redis.set(Keys.categoryKey + mid + ":" + str(type_id), json.dumps(results))

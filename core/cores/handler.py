@@ -104,7 +104,6 @@ class AddHandler(BaseHandler):
                 elif module["mid"] == "Menu":
                     # 删除菜单缓存
                     MenuService.remove_menus()
-
         self.write(res)
 
 
@@ -348,6 +347,7 @@ class ListHandler(BaseHandler):
         search_key = req_data.get("searchKey")
         sort_field = req_data.get("sortField", "_id")
         sort_order = req_data.get("sortOrder", "descending")
+        orgs = req_data.get("orgs")
 
         # 当前用户信息
         current_user = self.current_user
@@ -412,6 +412,9 @@ class ListHandler(BaseHandler):
             sort_data = [(sort_field, -1 if sort_order == 'descending' else 1),
                          ("sort", -1 if sort_order == 'descending' else 1),
                          ("_id", -1 if sort_order == 'descending' else 1)]
+        # 按部门查询
+        if orgs is not None:
+            query_criteria["orgs"] = {"$in": [orgs]}
 
         # 查询分页数据
         page_data = await mongo_helper.fetch_page_info(module["mid"], query_criteria,
@@ -598,7 +601,26 @@ class GetCategoryHandler(BaseHandler):
                 item["Statistics.num"] = await mongo_helper.fetch_count_info(statistics_mid, {
                     "categorys": {"$elemMatch": {"value": item["id"]}}})
             results.append(item)
-        res['data'] = results
+        # 如果是部门数据，需要根据用户权限筛选
+        if module["mid"] == "Department":
+            if current_user.get("orgs") is not None:
+                flag = False
+                orgs = []
+                for item in results:
+                    # 判断用户所在的部门
+                    if current_user["orgs"][len(current_user["orgs"])-1]["value"] == item["id"]:
+                        flag = True
+                    if flag:
+                        item["show"] = True
+                        orgs.append(item)
+                    else:
+                        item["show"] = False
+                        orgs.append(item)
+                res['data'] = orgs
+            else:
+                res['data'] = results
+        else:
+            res['data'] = results
         self.write(res)
 
 

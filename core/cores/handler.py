@@ -692,7 +692,7 @@ class ImportDataHandler(BaseHandler):
         # 字典查询条件
         for item in module["table_json"]:
             # 过滤带.的字段，并且是显示字段
-            if item["name"].find(".") == -1 and item["show"]:
+            if item["name"].find(".") == -1:
                 fields.append({"type": item["type"], "name": item["name"]})
 
         time_path = time.strftime("%Y%m%d", time.localtime())
@@ -727,10 +727,10 @@ class ImportDataHandler(BaseHandler):
                         if field['type'] == 4 or field['type'] == 12 or field['type'] == 14 or field['type'] == 10:
                             # 字符串转成json
                             add_json[field['name']] = json.loads(value)
-                        elif field['type'] == 1 or field['type'] == 9 or field['type'] == 15:
+                        elif field['type'] == 2 or field['type'] == 9 or field['type'] == 15:
                             # 转int
                             add_json[field['name']] = int(value)
-                        elif field['type'] == 2:
+                        elif field['type'] == 3:
                             # 转float
                             add_json[field['name']] = float(value)
                         else:
@@ -786,7 +786,7 @@ class ExportDataHandler(BaseHandler):
         # 单独查询条件
         for item in module["table_json"]:
             # 过滤带.的字段
-            if item["name"].find(".") == -1 and item["show"]:
+            if item["name"].find(".") == -1:
                 # 记录导出头部
                 head_row.append(item["remarks"])
                 fields.append({"type": item["type"], "name": item["name"]})

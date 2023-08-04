@@ -423,7 +423,8 @@ class ListHandler(BaseHandler):
         results = []
         for item in page_data.get("list", []):
             item["id"] = item["_id"]
-            item['password'] = ""
+            if item.get("password") is not None:
+                item['password'] = ""
             item.pop("_id")
             # 替换地址
             for url_key in replace_url:
@@ -514,7 +515,8 @@ class GetListHandler(BaseHandler):
         results = []
         for item in query:
             item["id"] = item["_id"]
-            item['password'] = ""
+            if item.get("password") is not None:
+                item['password'] = ""
             item.pop("_id")
             # 替换地址
             for url_key in replace_url:
@@ -644,7 +646,8 @@ class GetInfoHandler(BaseHandler):
                 query = await mongo_helper.fetch_one(module["mid"], {"_id": _id})
             if query is not None:
                 query["id"] = query["_id"]
-                query['password'] = ""
+                if query.get("password") is not None:
+                    query['password'] = ""
                 query.pop("_id")
                 # 替换地址
                 for url_key in replace_url:

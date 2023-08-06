@@ -372,6 +372,7 @@ class ListHandler(BaseHandler):
                         query_list.append({item["name"]: re.compile(search_key)})
             if len(query_list) > 0:
                 query_criteria["$or"] = query_list
+
         # 单独查询条件
         for item in module["table_json"]:
             if item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
@@ -470,6 +471,7 @@ class GetListHandler(BaseHandler):
         res = res_func([])
         data = self.request.body.decode('utf-8')
         req_data = json.loads(data)
+        orgs = req_data.get("orgs")
 
         current_user = self.current_user
         # 获取模块信息
@@ -514,6 +516,10 @@ class GetListHandler(BaseHandler):
                     else:
                         # 其他查询
                         query_criteria[item["name"]] = value
+        # 按部门查询
+        if orgs is not None:
+            query_criteria["orgs"] = {"$in": [orgs]}
+
         query = await mongo_helper.fetch_all(module["mid"], query_criteria, [("sort", -1), ("_id", -1)])
         results = []
         for item in query:
@@ -608,7 +614,7 @@ class GetCategoryHandler(BaseHandler):
                 orgs = []
                 for item in results:
                     # 判断用户所在的部门
-                    if current_user["orgs"][len(current_user["orgs"])-1]["value"] == item["id"]:
+                    if current_user["orgs"][len(current_user["orgs"]) - 1]["value"] == item["id"]:
                         flag = True
                     if flag:
                         item["show"] = True
@@ -713,9 +719,9 @@ class ImportDataHandler(BaseHandler):
 
         # 字典查询条件
         for item in module["table_json"]:
-            # 过滤带.的字段，并且是显示字段
-            if item["name"].find(".") == -1:
-                fields.append({"type": item["type"], "name": item["name"]})
+            # 处理导入的字段
+            if item["name"] in module["import_rule"]["fields"]:
+                fields.append({"type": item["type"], "name": item["name"], "key": item["key"]})
 
         time_path = time.strftime("%Y%m%d", time.localtime())
         upload_path = os.path.join(os.path.dirname(__file__), settings['SAVE_URL'] + '/files', time_path)
@@ -737,33 +743,91 @@ class ImportDataHandler(BaseHandler):
                 wb = load_workbook(file_path)
                 # 获得sheet对象
                 ws = wb.active
-                # 读取数据
-                index = 2
 
-                while index <= ws.max_row:
-                    column_index = 1
-                    add_json = {}
-                    for field in fields:
-                        value = ws.cell(row=index, column=column_index).value
-                        # 判断类型，有些特殊的字段需要处理
-                        if field['type'] == 4 or field['type'] == 12 or field['type'] == 14 or field['type'] == 10:
-                            # 字符串转成json
-                            add_json[field['name']] = json.loads(value)
-                        elif field['type'] == 2 or field['type'] == 9 or field['type'] == 15:
-                            # 转int
-                            add_json[field['name']] = int(value)
-                        elif field['type'] == 3:
-                            # 转float
-                            add_json[field['name']] = float(value)
-                        else:
-                            add_json[field['name']] = str(value)
-                        column_index += 1
-                    # 加入数据库
-                    _id = await mongo_helper.get_next_id(module["mid"])
-                    add_json["_id"] = _id
-                    add_json["add_time"] = now_utc()
-                    await mongo_helper.insert_one(module["mid"], add_json)
-                    index = index + 1
+                # 导入规则
+                rules = module["import_rule"]["rules"]
+                for rule in rules:
+                    # 开始读取行数
+                    start_row = rule["start_row"]
+                    # 结束读取行数
+                    max_row = ws.max_row
+                    if rule["end_row"] > 0:
+                        max_row = rule["end_row"]
+                    while start_row <= max_row:
+                        column_index = 1
+                        add_json = {}
+                        for field in fields:
+                            value = ws.cell(row=start_row, column=column_index).value
+                            # 判断类型
+                            if field["name"].find(".") > -1:
+                                # 对象处理
+                                id_key = None
+                                name = field["name"].replace(field["key"]+".", "")
+                                for item in module["table_json"]:
+                                    if item["key"] == field["key"]:
+                                        if id_key is None:
+                                            id_key = item["name"]
+                                    if item["name"] == field["name"]:
+                                        # 判断对象ID是否已赋值
+                                        if add_json.get(id_key) is None:
+                                            obj = await mongo_helper.fetch_one(field["key"], {name: value})
+                                            if obj is not None:
+                                                add_json[id_key] = obj["_id"]
+                                        break
+                            elif field['type'] == 4:
+                                # 多字典，转换
+                                values = value.split(",")
+                                items = []
+                                for text in values:
+                                    dict_value = await mongo_helper.fetch_one("DictValue",
+                                                                              {"type_name": field["key"],
+                                                                               "text": text})
+                                    if dict_value is not None:
+                                        items.append(dict_value["value"])
+                                add_json[field['name']] = items
+                            elif field['type'] == 5:
+                                # 单字典，转换
+                                dict_value = await mongo_helper.fetch_one("DictValue",
+                                                                          {"type_name": field["key"],
+                                                                           "text": value})
+                                if dict_value is not None:
+                                    add_json[field['name']] = dict_value["value"]
+                            elif field['type'] == 10:
+                                # 分类数据转换
+                                values = value.split(",")
+                                categorys = []
+                                level = 1
+                                for item in values:
+                                    # 查询分类数据
+                                    category = await mongo_helper.fetch_one(field["key"], {"name": item, "level": level})
+                                    if category is not None:
+                                        categorys.append({"text": category["name"], "value": category["_id"]})
+                                    level += 1
+                                add_json[field['name']] = categorys
+                            elif field['type'] == 6 or field['type'] == 8 or field['type'] == 13:
+                                # 单文件，转换
+                                add_json[field['name']] = value.replace(settings['SITE_URL'], "#URL#")
+                            elif field['type'] == 12 or field['type'] == 14:
+                                # 多文件，转换
+                                values = value.split(",")
+                                urls = []
+                                for url in values:
+                                    urls.append(url.replace(settings['SITE_URL'], "#URL#"))
+                                add_json[field['name']] = urls
+                            elif field['type'] == 2 or field['type'] == 9 or field['type'] == 15:
+                                # 转int
+                                add_json[field['name']] = int(value)
+                            elif field['type'] == 3:
+                                # 转float
+                                add_json[field['name']] = float(value)
+                            else:
+                                add_json[field['name']] = str(value)
+                            column_index += 1
+                        # 加入数据库
+                        _id = await mongo_helper.get_next_id(module["mid"])
+                        add_json["_id"] = _id
+                        await mongo_helper.insert_one(module["mid"], add_json)
+                        start_row = start_row + 1
                 res['message'] = '导入成功'
         self.write(res)
 
@@ -782,13 +846,26 @@ class ExportDataHandler(BaseHandler):
         search_key = req_data.get("searchKey")
         sort_field = req_data.get("sortField", "_id")
         sort_order = req_data.get("sortOrder", "descending")
+        orgs = req_data.get("orgs")
 
         # 当前用户信息
         current_user = self.current_user
         # 获取模块信息
         module = current_user["module"]
 
-        # 字符串查询条件
+        # 头部数据
+        head_row = []
+        # 需要导出的字段
+        fields = []
+
+        # 需要替换地址
+        replace_url = []
+        # 需要批量替换地址
+        replace_urls = []
+        # 需要替换对象ID
+        objects = []
+
+        # 综合查询条件
         query_criteria = {"_id": {"$ne": "sequence_id"}}
         if search_key is not None:
             query_list = []
@@ -800,18 +877,24 @@ class ExportDataHandler(BaseHandler):
             if len(query_list) > 0:
                 query_criteria["$or"] = query_list
 
-        # 头部数据
-        head_row = []
-        # 需要导出的字段
-        fields = []
-
         # 单独查询条件
         for item in module["table_json"]:
-            # 过滤带.的字段
-            if item["name"].find(".") == -1:
-                # 记录导出头部
+            # 处理导出的字段
+            if item["name"] in module["export_rule"]["fields"]:
                 head_row.append(item["remarks"])
-                fields.append({"type": item["type"], "name": item["name"]})
+                fields.append({"type": item["type"], "name": item["name"], "key": item["key"]})
+
+            if item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
+                # 需要替换地址
+                replace_url.append(item["name"])
+            elif item["type"] == 12 or item["type"] == 14:
+                # 需要批量替换地址
+                replace_urls.append(item["name"])
+            elif item["type"] == 9:
+                # 对象替换成详情
+                if item.get("key") is not None:
+                    objects.append({"field": item["name"], "mid": item.get("key")})
+
             # 是否是查询条件
             if item.get("single_query"):
                 value = req_data.get(item["name"])
@@ -830,34 +913,93 @@ class ExportDataHandler(BaseHandler):
                     else:
                         # 其他查询
                         query_criteria[item["name"]] = value
+        # 判断是否有需要导出的字段
+        if len(head_row) > 0:
+            # 排序条件
+            if sort_field == "_id":
+                sort_data = [("add_time", -1 if sort_order == 'descending' else 1),
+                             ("sort", -1 if sort_order == 'descending' else 1),
+                             ("_id", -1 if sort_order == 'descending' else 1)]
+            else:
+                sort_data = [(sort_field, -1 if sort_order == 'descending' else 1),
+                             ("sort", -1 if sort_order == 'descending' else 1),
+                             ("_id", -1 if sort_order == 'descending' else 1)]
+            # 按部门查询
+            if orgs is not None:
+                query_criteria["orgs"] = {"$in": [orgs]}
 
-        # 排序条件
-        if sort_field == "_id":
-            sort_data = [("add_time", -1 if sort_order == 'descending' else 1),
-                         ("sort", -1 if sort_order == 'descending' else 1),
-                         ("_id", -1 if sort_order == 'descending' else 1)]
+            # 查询数据
+            query = await mongo_helper.fetch_all(module["mid"], query_criteria, sort_data)
+
+            results = []
+            for item in query:
+                item["id"] = item["_id"]
+                if item.get("password") is not None:
+                    item['password'] = ""
+                item.pop("_id")
+                # 替换地址
+                for url_key in replace_url:
+                    if item.get(url_key) is not None:
+                        item[url_key] = item[url_key].replace("#URL#", settings['SITE_URL'])
+                # 批量替换地址
+                for url_key in replace_urls:
+                    if item.get(url_key) is not None:
+                        item[url_key] = ",".join(item[url_key]).replace("#URL#", settings['SITE_URL']).split(",")
+                # 查询对象详情
+                for obj in objects:
+                    if item.get(obj["field"]) is not None:
+                        info = await get_obj_info(obj["mid"], item[obj["field"]])
+                        if info is not None:
+                            # 匹配字段
+                            for table in module["table_json"]:
+                                if table["name"].find(obj["mid"]) > -1:
+                                    # 匹配上字段，给该字段赋值
+                                    item[table["name"]] = info[table["name"].replace(obj["mid"] + ".", "")]
+                results.append(item)
+            # 导出的数据
+            datas = []
+            for item in results:
+                obj = []
+                for field in fields:
+                    # 判断类型，有些特殊的字段需要处理
+                    if field['type'] == 4:
+                        # 多字典，转换
+                        texts = []
+                        for value in item[field['name']]:
+                            dict_value = await mongo_helper.fetch_one("DictValue",
+                                                                      {"type_name": field["key"], "value": value})
+                            if dict_value is not None:
+                                texts.append(dict_value["text"])
+                        if len(texts) > 0:
+                            obj.append(",".join(texts))
+                    elif field['type'] == 5:
+                        # 单字典，转换
+                        dict_value = await mongo_helper.fetch_one("DictValue",
+                                                                  {"type_name": field["key"],
+                                                                   "value": item[field['name']]})
+                        if dict_value is not None:
+                            obj.append(dict_value["text"])
+                    elif field['type'] == 10:
+                        # 类型转换
+                        texts = []
+                        for category in item[field['name']]:
+                            texts.append(category["text"])
+                        if len(texts) > 0:
+                            obj.append(",".join(texts))
+                    elif field['type'] == 12:
+                        # 多图片转换
+                        obj.append(",".join(item[field['name']]))
+                    elif field['type'] == 14:
+                        # 多文件转换
+                        obj.append(",".join(item[field['name']]))
+                    else:
+                        # 转成字符串
+                        obj.append(str(item[field['name']]))
+                datas.append(obj)
+            # 保存文件位置
+            save_excel_name = str(now_utc()) + ".xlsx"
+            res["data"] = save_to_excel(datas, head_row, save_excel_name)
         else:
-            sort_data = [(sort_field, -1 if sort_order == 'descending' else 1),
-                         ("sort", -1 if sort_order == 'descending' else 1),
-                         ("_id", -1 if sort_order == 'descending' else 1)]
-
-        # 查询数据
-        query = await mongo_helper.fetch_all(module["mid"], query_criteria, sort_data)
-
-        results = []
-        for item in query:
-            item.pop("_id")
-            obj = []
-            for field in fields:
-                # 判断类型，有些特殊的字段需要处理
-                if field['type'] == 4 or field['type'] == 12 or field['type'] == 14 or field['type'] == 10:
-                    # 转成字符串
-                    obj.append(json.dumps(item[field['name']]))
-                else:
-                    obj.append(item[field['name']])
-            results.append(obj)
-
-        # 保存文件位置
-        save_excel_name = str(now_utc()) + ".xlsx"
-        res["data"] = save_to_excel(results, head_row, save_excel_name)
+            res['code'] = 50000
+            res['message'] = "导出失败"
         self.write(res)

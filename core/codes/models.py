@@ -25,6 +25,10 @@ class Code(object):
     "edit": "是否编辑", "must": "是否必填"}
     """
     table_json = []
+    # 导入规则
+    import_rule = None
+    # 导出规则
+    export_rule = None
 
     # 格式化json
     @staticmethod
@@ -36,4 +40,6 @@ class Code(object):
                 "cache": req_data.get("cache", 0),
                 "retrace": req_data.get("retrace", 0),
                 "api_json": req_data.get("api_json", []),
-                "table_json": req_data.get("table_json", [])}
+                "table_json": req_data.get("table_json", []),
+                "import_rule": req_data.get("import_rule"),
+                "export_rule": req_data.get("export_rule")}

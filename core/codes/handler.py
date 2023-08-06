@@ -75,13 +75,17 @@ class UpdateHandler(BaseHandler):
         retrace = req_data.get("retrace", 0)
         api_json = req_data.get("api_json", [])
         table_json = req_data.get("table_json", [])
+        import_rule = req_data.get("import_rule")
+        export_rule = req_data.get("export_rule")
 
         if _id is not None:
             # 修改数据
             await mongo_helper.update_one(Code.collection_name, {"_id": _id},
                                           {"$set": {"name": name, "cache": cache, "retrace": retrace,
                                                     "api_json": api_json,
-                                                    "table_json": table_json}})
+                                                    "table_json": table_json,
+                                                    "import_rule": import_rule,
+                                                    "export_rule": export_rule}})
             # 删除缓存
             await CoreService.remove_mid(mid)
         self.write(res)

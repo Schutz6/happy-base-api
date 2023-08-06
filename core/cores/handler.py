@@ -748,11 +748,12 @@ class ImportDataHandler(BaseHandler):
                 rules = module["import_rule"]["rules"]
                 for rule in rules:
                     # 开始读取行数
-                    start_row = rule["start_row"]
+                    start_row = int(rule["start_row"])
+                    end_row = int(rule["end_row"])
                     # 结束读取行数
                     max_row = ws.max_row
-                    if rule["end_row"] > 0:
-                        max_row = rule["end_row"]
+                    if end_row > 0:
+                        max_row = end_row
                     while start_row <= max_row:
                         column_index = 1
                         add_json = {}

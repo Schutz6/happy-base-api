@@ -829,6 +829,7 @@ class ImportDataHandler(BaseHandler):
                                 # 直接初始化密码和角色
                                 add_json["password"] = get_md5("123456")
                                 add_json["roles"] = ["user"]
+                                add_json["status"] = "1"
                             column_index += 1
                         # 加入数据库
                         _id = await mongo_helper.get_next_id(module["mid"])

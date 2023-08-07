@@ -708,6 +708,9 @@ class ImportDataHandler(BaseHandler):
     @authenticated_core
     async def post(self):
         res = res_func(None)
+        # 将导入的数据归类
+        field_key = self.request.arguments.get("field_key")
+        field_value = self.request.arguments.get("field_value")
 
         # 当前用户信息
         current_user = self.current_user
@@ -834,6 +837,9 @@ class ImportDataHandler(BaseHandler):
                         # 加入数据库
                         _id = await mongo_helper.get_next_id(module["mid"])
                         add_json["_id"] = _id
+                        if field_key is not None and field_value is not None:
+                            # 导入数据归类
+                            add_json[field_key[0].decode('utf-8')] = int(field_value[0].decode('utf-8'))
                         await mongo_helper.insert_one(module["mid"], add_json)
                         start_row = start_row + 1
                 res['message'] = '导入成功'

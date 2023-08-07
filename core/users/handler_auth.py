@@ -84,7 +84,8 @@ class UserHandler(BaseHandler):
         res = res_func({})
         current_user = self.current_user
         current_user["id"] = current_user["_id"]
-        current_user["avatar"] = current_user["avatar"].replace("#URL#", settings['SITE_URL'])
+        if current_user.get("avatar") is not None:
+            current_user["avatar"] = current_user["avatar"].replace("#URL#", settings['SITE_URL'])
         res['data'] = current_user
 
         # 更新登录信息

@@ -759,79 +759,76 @@ class ImportDataHandler(BaseHandler):
                         add_json = {}
                         for field in fields:
                             value = ws.cell(row=start_row, column=column_index).value
+                            if value is not None:
+                                # 判断类型
+                                if field["name"].find(".") > -1:
+                                    # 对象处理
+                                    id_key = None
+                                    name = field["name"].replace(field["key"]+".", "")
+                                    for item in module["table_json"]:
+                                        if item["key"] == field["key"]:
+                                            if id_key is None:
+                                                id_key = item["name"]
+                                        if item["name"] == field["name"]:
+                                            # 判断对象ID是否已赋值
+                                            if add_json.get(id_key) is None:
+                                                obj = await mongo_helper.fetch_one(field["key"], {name: value})
+                                                if obj is not None:
+                                                    add_json[id_key] = obj["_id"]
+                                            break
+                                elif field['type'] == 4:
+                                    # 多字典，转换
+                                    values = value.split(",")
+                                    items = []
+                                    for text in values:
+                                        dict_value = await mongo_helper.fetch_one("DictValue",
+                                                                                  {"type_name": field["key"],
+                                                                                   "text": text})
+                                        if dict_value is not None:
+                                            items.append(dict_value["value"])
+                                    add_json[field['name']] = items
+                                elif field['type'] == 5:
+                                    # 单字典，转换
+                                    dict_value = await mongo_helper.fetch_one("DictValue",
+                                                                              {"type_name": field["key"],
+                                                                               "text": value})
+                                    if dict_value is not None:
+                                        add_json[field['name']] = dict_value["value"]
+                                elif field['type'] == 10:
+                                    # 分类数据转换
+                                    values = value.split(",")
+                                    categorys = []
+                                    level = 1
+                                    for item in values:
+                                        # 查询分类数据
+                                        category = await mongo_helper.fetch_one(field["key"], {"name": item, "level": level})
+                                        if category is not None:
+                                            categorys.append({"text": category["name"], "value": category["_id"]})
+                                        level += 1
+                                    add_json[field['name']] = categorys
+                                elif field['type'] == 6 or field['type'] == 8 or field['type'] == 13:
+                                    # 单文件，转换
+                                    add_json[field['name']] = value.replace(settings['SITE_URL'], "#URL#")
+                                elif field['type'] == 12 or field['type'] == 14:
+                                    # 多文件，转换
+                                    values = value.split(",")
+                                    urls = []
+                                    for url in values:
+                                        urls.append(url.replace(settings['SITE_URL'], "#URL#"))
+                                    add_json[field['name']] = urls
+                                elif field['type'] == 2 or field['type'] == 9 or field['type'] == 15:
+                                    # 转int
+                                    add_json[field['name']] = int(value)
+                                elif field['type'] == 3:
+                                    # 转float
+                                    add_json[field['name']] = float(value)
+                                else:
+                                    add_json[field['name']] = str(value)
                             # 判断是否User模块
                             if module['mid'] == "User":
                                 # 直接初始化密码和角色
                                 add_json["password"] = get_md5("123456")
                                 add_json["roles"] = ["user"]
-                                if field["name"] == "password":
-                                    continue
-                                elif field["name"] == "roles":
-                                    continue
-                            # 判断类型
-                            if field["name"].find(".") > -1:
-                                # 对象处理
-                                id_key = None
-                                name = field["name"].replace(field["key"]+".", "")
-                                for item in module["table_json"]:
-                                    if item["key"] == field["key"]:
-                                        if id_key is None:
-                                            id_key = item["name"]
-                                    if item["name"] == field["name"]:
-                                        # 判断对象ID是否已赋值
-                                        if add_json.get(id_key) is None:
-                                            obj = await mongo_helper.fetch_one(field["key"], {name: value})
-                                            if obj is not None:
-                                                add_json[id_key] = obj["_id"]
-                                        break
-                            elif field['type'] == 4:
-                                # 多字典，转换
-                                values = value.split(",")
-                                items = []
-                                for text in values:
-                                    dict_value = await mongo_helper.fetch_one("DictValue",
-                                                                              {"type_name": field["key"],
-                                                                               "text": text})
-                                    if dict_value is not None:
-                                        items.append(dict_value["value"])
-                                add_json[field['name']] = items
-                            elif field['type'] == 5:
-                                # 单字典，转换
-                                dict_value = await mongo_helper.fetch_one("DictValue",
-                                                                          {"type_name": field["key"],
-                                                                           "text": value})
-                                if dict_value is not None:
-                                    add_json[field['name']] = dict_value["value"]
-                            elif field['type'] == 10:
-                                # 分类数据转换
-                                values = value.split(",")
-                                categorys = []
-                                level = 1
-                                for item in values:
-                                    # 查询分类数据
-                                    category = await mongo_helper.fetch_one(field["key"], {"name": item, "level": level})
-                                    if category is not None:
-                                        categorys.append({"text": category["name"], "value": category["_id"]})
-                                    level += 1
-                                add_json[field['name']] = categorys
-                            elif field['type'] == 6 or field['type'] == 8 or field['type'] == 13:
-                                # 单文件，转换
-                                add_json[field['name']] = value.replace(settings['SITE_URL'], "#URL#")
-                            elif field['type'] == 12 or field['type'] == 14:
-                                # 多文件，转换
-                                values = value.split(",")
-                                urls = []
-                                for url in values:
-                                    urls.append(url.replace(settings['SITE_URL'], "#URL#"))
-                                add_json[field['name']] = urls
-                            elif field['type'] == 2 or field['type'] == 9 or field['type'] == 15:
-                                # 转int
-                                add_json[field['name']] = int(value)
-                            elif field['type'] == 3:
-                                # 转float
-                                add_json[field['name']] = float(value)
-                            else:
-                                add_json[field['name']] = str(value)
                             column_index += 1
                         # 加入数据库
                         _id = await mongo_helper.get_next_id(module["mid"])
@@ -971,40 +968,43 @@ class ExportDataHandler(BaseHandler):
             for item in results:
                 obj = []
                 for field in fields:
-                    # 判断类型，有些特殊的字段需要处理
-                    if field['type'] == 4:
-                        # 多字典，转换
-                        texts = []
-                        for value in item[field['name']]:
+                    if item.get(field['name']) is not None:
+                        # 判断类型，有些特殊的字段需要处理
+                        if field['type'] == 4:
+                            # 多字典，转换
+                            texts = []
+                            for value in item[field['name']]:
+                                dict_value = await mongo_helper.fetch_one("DictValue",
+                                                                          {"type_name": field["key"], "value": value})
+                                if dict_value is not None:
+                                    texts.append(dict_value["text"])
+                            if len(texts) > 0:
+                                obj.append(",".join(texts))
+                        elif field['type'] == 5:
+                            # 单字典，转换
                             dict_value = await mongo_helper.fetch_one("DictValue",
-                                                                      {"type_name": field["key"], "value": value})
+                                                                      {"type_name": field["key"],
+                                                                       "value": item[field['name']]})
                             if dict_value is not None:
-                                texts.append(dict_value["text"])
-                        if len(texts) > 0:
-                            obj.append(",".join(texts))
-                    elif field['type'] == 5:
-                        # 单字典，转换
-                        dict_value = await mongo_helper.fetch_one("DictValue",
-                                                                  {"type_name": field["key"],
-                                                                   "value": item[field['name']]})
-                        if dict_value is not None:
-                            obj.append(dict_value["text"])
-                    elif field['type'] == 10:
-                        # 类型转换
-                        texts = []
-                        for category in item[field['name']]:
-                            texts.append(category["text"])
-                        if len(texts) > 0:
-                            obj.append(",".join(texts))
-                    elif field['type'] == 12:
-                        # 多图片转换
-                        obj.append(",".join(item[field['name']]))
-                    elif field['type'] == 14:
-                        # 多文件转换
-                        obj.append(",".join(item[field['name']]))
+                                obj.append(dict_value["text"])
+                        elif field['type'] == 10:
+                            # 类型转换
+                            texts = []
+                            for category in item[field['name']]:
+                                texts.append(category["text"])
+                            if len(texts) > 0:
+                                obj.append(",".join(texts))
+                        elif field['type'] == 12:
+                            # 多图片转换
+                            obj.append(",".join(item[field['name']]))
+                        elif field['type'] == 14:
+                            # 多文件转换
+                            obj.append(",".join(item[field['name']]))
+                        else:
+                            # 转成字符串
+                            obj.append(str(item[field['name']]))
                     else:
-                        # 转成字符串
-                        obj.append(str(item[field['name']]))
+                        obj.append("")
                 datas.append(obj)
             # 保存文件位置
             save_excel_name = str(now_utc()) + ".xlsx"

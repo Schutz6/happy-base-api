@@ -759,6 +759,15 @@ class ImportDataHandler(BaseHandler):
                         add_json = {}
                         for field in fields:
                             value = ws.cell(row=start_row, column=column_index).value
+                            # 判断是否User模块
+                            if module['mid'] == "User":
+                                # 直接初始化密码和角色
+                                add_json["password"] = get_md5("123456")
+                                add_json["roles"] = ["user"]
+                                if field["name"] == "password":
+                                    continue
+                                elif field["name"] == "roles":
+                                    continue
                             # 判断类型
                             if field["name"].find(".") > -1:
                                 # 对象处理

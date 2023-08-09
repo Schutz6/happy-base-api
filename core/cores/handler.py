@@ -743,7 +743,7 @@ class ImportDataHandler(BaseHandler):
                 file_path = os.path.join(upload_path, filename)
                 with open(file_path, 'wb') as up:
                     up.write(meta['body'])
-                wb = load_workbook(file_path)
+                wb = load_workbook(file_path, data_only=True)
                 # 获得sheet对象
                 ws = wb.active
 

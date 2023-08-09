@@ -12,6 +12,8 @@ async def get_obj_info(mid, _id):
     :return: 详情
     """
     info = None
+    if _id is None or _id == '':
+        return info
     module = await CoreService.get_module(mid)
     if module is not None:
         if module["cache"] == 0:

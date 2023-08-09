@@ -36,6 +36,8 @@ class CoreService(object):
 
     @staticmethod
     async def get_obj(mid, _id):
+        if _id is None or _id == '':
+            return None
         """获取模块"""
         obj = redis_helper.redis.get(Keys.objectKey + mid + ":" + str(_id))
         if obj is None:

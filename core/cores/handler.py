@@ -987,6 +987,8 @@ class ExportDataHandler(BaseHandler):
                                     texts.append(dict_value["text"])
                             if len(texts) > 0:
                                 obj.append(",".join(texts))
+                            else:
+                                obj.append("")
                         elif field['type'] == 5:
                             # 单字典，转换
                             dict_value = await mongo_helper.fetch_one("DictValue",
@@ -994,6 +996,8 @@ class ExportDataHandler(BaseHandler):
                                                                        "value": item[field['name']]})
                             if dict_value is not None:
                                 obj.append(dict_value["text"])
+                            else:
+                                obj.append("")
                         elif field['type'] == 10:
                             # 类型转换
                             texts = []
@@ -1001,6 +1005,8 @@ class ExportDataHandler(BaseHandler):
                                 texts.append(category["text"])
                             if len(texts) > 0:
                                 obj.append(",".join(texts))
+                            else:
+                                obj.append("")
                         elif field['type'] == 12:
                             # 多图片转换
                             obj.append(",".join(item[field['name']]))

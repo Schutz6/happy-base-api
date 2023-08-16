@@ -8,7 +8,7 @@ from openpyxl.reader.excel import load_workbook
 from base.decorators import authenticated_core
 from base.handler import BaseHandler
 from base.res import res_func, res_fail_func
-from base.utils import mongo_helper, now_utc, get_random, get_md5
+from base.utils import mongo_helper, now_utc, get_random, get_md5, local_to_utc
 from base.xlsx import save_to_excel
 from config import settings
 from core.cores.func import get_obj_info, recursion_category_delete
@@ -44,7 +44,7 @@ class AddHandler(BaseHandler):
         for item in module["table_json"]:
             # 判断是否存在UID，且不能编辑
             if item["name"] == "uid" and item["edit"] is False:
-                add_json["uid"] = current_user["_id"]
+                add_json["uid"] = current_user.get("_id")
             # 判断是否创建时间，且不能编辑
             if item["name"] == "add_time" and item["edit"] is False:
                 add_json["add_time"] = now_utc()
@@ -56,22 +56,23 @@ class AddHandler(BaseHandler):
                 # 判断是否用户模块
                 if "User" == module["mid"] and item["name"] == "password":
                     # 加密密码
-                    add_json["password"] = get_md5(add_json["password"])
+                    add_json["password"] = get_md5(value)
 
                 if item["type"] == 2 or item["type"] == 9:
                     # Int/Object类型转换
-                    add_json[item['name']] = int(add_json.get(item['name']))
+                    add_json[item['name']] = int(value)
                 elif item["type"] == 3:
                     # Float类型转换
-                    add_json[item['name']] = float(add_json.get(item['name']))
+                    add_json[item['name']] = float(value)
                 elif item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
                     # 图片/富文本/视频 地址转换
-                    url = add_json.get(item['name'])
-                    add_json[item['name']] = url.replace(settings['SITE_URL'], "#URL#")
+                    add_json[item['name']] = value.replace(settings['SITE_URL'], "#URL#")
                 elif item["type"] == 12 or item["type"] == 14:
                     # 多图片/多视频 地址转换
-                    url_list = add_json.get(item['name'])
-                    add_json[item['name']] = ",".join(url_list).replace(settings['SITE_URL'], "#URL#").split(",")
+                    add_json[item['name']] = ",".join(value).replace(settings['SITE_URL'], "#URL#").split(",")
+                elif item["type"] == 15 or item["type"] == 16 or item["type"] == 17:
+                    # 将本地时间转换成UTC
+                    add_json[item['name']] = local_to_utc(int(value))
                 # 判断是否有唯一字段校验
                 if item["unique"]:
                     query = await mongo_helper.fetch_one(module["mid"], {item['name']: add_json.get(item['name'])})
@@ -104,6 +105,21 @@ class AddHandler(BaseHandler):
                 elif module["mid"] == "Menu":
                     # 删除菜单缓存
                     MenuService.remove_menus()
+            # 记录追溯日志
+            if module["retrace"] == 1:
+                uid = current_user.get("_id")
+                # if uid is not None:
+                #     retrace_mid = module["mid"]+"Retrace"
+                #     retrace_id = await mongo_helper.get_next_id(retrace_mid)
+                #     # 追溯表ID
+                #     add_json["_id"] = retrace_id
+                #     # 操作类型（新增）
+                #     add_json["operation_type"] = 1
+                #     # 操作人
+                #     add_json["operator"] = uid
+                #     # 操作时间
+                #     add_json["operation_time"] = now_utc()
+                #     await mongo_helper.insert_one(retrace_mid, add_json)
         self.write(res)
 
 
@@ -254,22 +270,23 @@ class UpdateHandler(BaseHandler):
                     # 判断是否用户模块
                     if "User" == module["mid"] and item["name"] == "password":
                         # 加密密码
-                        update_json["password"] = get_md5(update_json["password"])
+                        update_json["password"] = get_md5(value)
 
                     if item["type"] == 2:
                         # Int类型转换
-                        update_json[item['name']] = int(update_json[item['name']])
+                        update_json[item['name']] = int(value)
                     elif item["type"] == 3:
                         # Float类型转换
-                        update_json[item['name']] = float(update_json[item['name']])
+                        update_json[item['name']] = float(value)
                     elif item["type"] == 6 or item["type"] == 8 or item["type"] == 13:
                         # 图片/富文本/视频 地址转换
-                        url = update_json.get(item['name'])
-                        update_json[item['name']] = url.replace(settings['SITE_URL'], "#URL#")
+                        update_json[item['name']] = value.replace(settings['SITE_URL'], "#URL#")
                     elif item["type"] == 12 or item["type"] == 14:
                         # 多图片/多视频 地址转换
-                        url_list = update_json.get(item['name'])
-                        update_json[item['name']] = ",".join(url_list).replace(settings['SITE_URL'], "#URL#").split(",")
+                        update_json[item['name']] = ",".join(value).replace(settings['SITE_URL'], "#URL#").split(",")
+                    elif item["type"] == 15 or item["type"] == 16 or item["type"] == 17:
+                        # 将本地时间转换成UTC
+                        update_json[item['name']] = local_to_utc(int(value))
             # 修改数据
             await mongo_helper.update_one(module["mid"], {"_id": _id}, {"$set": update_json})
             if module["cache"] == 1:

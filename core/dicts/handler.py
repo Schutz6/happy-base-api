@@ -43,7 +43,7 @@ class GetDictListHandler(BaseHandler):
                 results.append({"text": item["text"], "value": item["value"]})
         else:
             for item in query:
-                results.append({"text": item["text"], "value": item["value"]})
+                results.append({"text": item["text"], "value": item["value"], "color": item.get("color")})
         res['data'] = results
 
         self.write(res)

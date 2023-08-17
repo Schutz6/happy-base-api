@@ -760,6 +760,7 @@ class ImportDataHandler(BaseHandler):
                 file_path = os.path.join(upload_path, filename)
                 with open(file_path, 'wb') as up:
                     up.write(meta['body'])
+                download_path = '/files/' + time_path + '/' + filename
                 wb = load_workbook(file_path, data_only=True)
                 # 获得sheet对象
                 ws = wb.active
@@ -859,6 +860,7 @@ class ImportDataHandler(BaseHandler):
                             add_json[field_key[0].decode('utf-8')] = int(field_value[0].decode('utf-8'))
                         await mongo_helper.insert_one(module["mid"], add_json)
                         start_row = start_row + 1
+                res['data'] = settings['SITE_URL'] + download_path
                 res['message'] = '导入成功'
         self.write(res)
 

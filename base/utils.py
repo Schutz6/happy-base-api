@@ -176,7 +176,7 @@ class MongoHelper(object):
 
         """
         cursor = self.db[collection_name].find(filters).sort(sort_data)
-        result = await cursor.to_list(length=500)
+        result = await cursor.to_list(length=None)
         result_list = [i for i in result]
         return result_list
 
@@ -201,7 +201,7 @@ class MongoHelper(object):
             sort_data = [("_id", -1)]
         skip = page_size * (page_no - 1)
         cursor = self.db[collection_name].find(filters).sort(sort_data).limit(page_size).skip(skip)
-        result = await cursor.to_list(length=500)
+        result = await cursor.to_list(length=None)
         result_dict = {"page_size": page_size, "page_no": page_no, "list": [i for i in result]}
         return result_dict
 
@@ -235,7 +235,7 @@ class MongoHelper(object):
 
         """
         cursor = self.db[collection_name].aggregate(filters)
-        result = await cursor.to_list(length=100)
+        result = await cursor.to_list(length=None)
         result_list = [i for i in result]
         return result_list
 

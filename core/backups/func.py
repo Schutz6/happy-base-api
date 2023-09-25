@@ -1,6 +1,6 @@
 from core.tasks.models import Task
 from core.users.models import User
-from base.utils import mongo_helper, get_md5, get_random_head
+from base.utils import mongo_helper, get_md5, get_random_head, now_utc
 
 
 async def init_db_data():
@@ -9,6 +9,8 @@ async def init_db_data():
     if num == 0:
         # 初始化用户
         await init_user()
+        # 初始化字典
+        await init_dict()
         # 初始化菜单
         await init_menu()
         # 初始化参数
@@ -35,79 +37,89 @@ async def init_user():
                                    "roles": ["admin"]})
 
 
+async def init_dict():
+    """初始化字典"""
+    await mongo_helper.insert_one("DictType",
+                                  {"_id": await mongo_helper.get_next_id("DictType"), "name": "Project",
+                                   "describe": "项目", "add_time": now_utc()})
+    await mongo_helper.insert_one("DictValue",
+                                  {"_id": await mongo_helper.get_next_id("DictValue"), "type_name": "Project",
+                                   "text": "基础系统", "value": "base", "sort": 90, "add_time": now_utc()})
+
+
 async def init_menu():
     """初始化菜单"""
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": 0,
                                    "name": "首页概况", "icon": "/icons/icon-overview.png",
                                    "url": "/pages/index/index", "roles": ["super", 'admin'], "level": 1, "sort": 900,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
     pid = await mongo_helper.insert_one("Menu",
                                         {"_id": await mongo_helper.get_next_id("Menu"), "pid": 0,
                                          "name": "系统管理", "icon": "/icons/icon-system.png",
                                          "url": "#", "roles": ["super", 'admin'], "level": 1, "sort": 100,
-                                         "status": "1"})
+                                         "status": "1", "projects": ["base"]})
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": pid,
                                    "name": "用户管理", "icon": "/icons/icon-user.png",
                                    "url": "/pages/core/list?mid=User", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 190,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": pid,
                                    "name": "菜单管理", "icon": "/icons/icon-menu.png",
                                    "url": "/pages/system/menu/menu?mid=Menu", "roles": ["super"], "level": 2,
                                    "sort": 170,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": pid,
                                    "name": "字典管理", "icon": "/icons/icon-dict.png",
                                    "url": "/pages/system/dictType/dictType?mid=DictType", "roles": ["super", 'admin'],
                                    "level": 2,
                                    "sort": 160,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": pid,
                                    "name": "参数管理", "icon": "/icons/icon-param.png",
                                    "url": "/pages/core/list?mid=Param", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 150,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": pid,
                                    "name": "任务管理", "icon": "/icons/icon-task.png",
                                    "url": "/pages/system/task/task", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 140,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": pid,
                                    "name": "文件管理", "icon": "/icons/icon-file.png",
                                    "url": "/pages/system/files/files", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 130,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": pid,
                                    "name": "系统日志", "icon": "/icons/icon-log.png",
                                    "url": "/pages/system/logs/logs", "roles": ["super", 'admin'], "level": 2,
                                    "sort": 120,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": pid,
                                    "name": "IP黑名单", "icon": "/icons/icon-blacklist.png",
                                    "url": "/pages/system/blacklist/blacklist", "roles": ["super"], "level": 2,
                                    "sort": 110,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": pid,
                                    "name": "模块管理", "icon": "/icons/icon-code.png",
                                    "url": "/pages/system/code/code", "roles": ["super"], "level": 2,
                                    "sort": 100,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
     await mongo_helper.insert_one("Menu",
                                   {"_id": await mongo_helper.get_next_id("Menu"), "pid": pid,
                                    "name": "备份管理", "icon": "/icons/icon-db.png",
                                    "url": "/pages/system/backup/backup", "roles": ["super"], "level": 2,
                                    "sort": 90,
-                                   "status": "1"})
+                                   "status": "1", "projects": ["base"]})
 
 
 async def init_param():

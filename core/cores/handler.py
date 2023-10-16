@@ -820,11 +820,19 @@ class ImportDataHandler(BaseHandler):
                                     values = value.split(",")
                                     categorys = []
                                     level = 1
+                                    up_category = None
                                     for item in values:
                                         # 查询分类数据
-                                        category = await mongo_helper.fetch_one(field["key"], {"name": item, "level": level})
+                                        if level == 1:
+                                            category = await mongo_helper.fetch_one(field["key"],
+                                                                                    {"name": item, "level": level})
+                                        else:
+                                            category = await mongo_helper.fetch_one(field["key"],
+                                                                                    {"pid": up_category["_id"],
+                                                                                     "name": item, "level": level})
                                         if category is not None:
                                             categorys.append({"text": category["name"], "value": category["_id"]})
+                                            up_category = category
                                         level += 1
                                     add_json[field['name']] = categorys
                                 elif field['type'] == 6 or field['type'] == 8 or field['type'] == 13:
